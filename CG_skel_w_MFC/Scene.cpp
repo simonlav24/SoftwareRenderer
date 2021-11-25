@@ -45,7 +45,14 @@ void Scene::draw()
 		if (i == activeCamera)
 			continue;
 		vec4 camPos = viewPort(m_renderer->getDims(), homo2noHomo(m * cameras[i]->Eye));
-		m_renderer->drawCameraIndicator(camPos);
+		m_renderer->drawPlusSign(camPos, vec3(1.0, 0.0, 0.0));
+	}
+
+	// for all lights: draw indicator
+	for (int i = 0; i < lights.size(); i++)
+	{
+		vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
+		m_renderer->drawPlusSign(lightPos, vec3(1.0, 1.0, 1.0));
 	}
 	
 	drawOriginPoint();
@@ -162,6 +169,8 @@ void Scene::transformActiveModel(const mat4& transform, bool scalling)
 		cameras[activeCamera]->At = transform * cameras[activeCamera]->At;
 		cameras[activeCamera]->LookAt(cameras[activeCamera]->Eye, cameras[activeCamera]->At, cameras[activeCamera]->Up);
 		break;
+	case light:
+		lights[activeLight]->transformWorld(transform);
 	}
 }
 
@@ -390,4 +399,13 @@ void Scene::reshapeCamera(int width, int height)
 		cameras[activeCamera]->Ortho(left, right, bottom, top, znear, zfar);
 	else
 		cameras[activeCamera]->Frustum(left, right, bottom, top, znear, zfar);
+}
+
+void Scene::addLight()
+{
+	// add a default cam
+	Light* light = new Light();
+
+	lights.push_back(light);
+	activeLight = lights.size() - 1;
 }

@@ -5,6 +5,7 @@
 #include "GL\freeglut.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3+c
+#define INDEX_ZB(width,x,y) (x+y*width)
 #define DEFAULT_DIMS 512
 
 Renderer::Renderer() :m_width(DEFAULT_DIMS), m_height(DEFAULT_DIMS)
@@ -20,6 +21,7 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 
 Renderer::~Renderer(void)
 {
+	DestroyBuffers();
 }
 
 
@@ -30,11 +32,13 @@ void Renderer::CreateBuffers(int width, int height)
 	m_height=height;	
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
+	m_zbuffer = new float[m_width * m_height];
 }
 
 void Renderer::DestroyBuffers()
 {
 	delete[] m_outBuffer;
+	delete[] m_zbuffer;
 }
 
 void Renderer::SetDemoBuffer()
@@ -59,7 +63,11 @@ void Renderer::drawPixel(int x, int y, const vec3& color)
 	if (x < 0 || x > m_width - 1 || y < 0 || y > m_height - 1)
 		return;
 	m_outBuffer[INDEX(m_width, x, y, 0)] = color.x; m_outBuffer[INDEX(m_width, x, y, 1)] = color.y; m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
+}
 
+void Renderer::drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color)
+{
+	drawLine((int)x0, (int)y0, (int)x1, (int)y1, color);
 }
 
 void Renderer::drawLine(int x0, int y0, int x1, int y1, const vec3& color)
@@ -142,14 +150,20 @@ void Renderer::DrawTriangles(const std::vector<vec3>& vertices, const int count,
 {
 	for (int i = 0; i < count; i+=3)
 	{
-		drawLine((int)vertices[i + 0].x, (int)vertices[i + 0].y, (int)vertices[i + 1].x, (int)vertices[i + 1].y, color);
-		drawLine((int)vertices[i + 1].x, (int)vertices[i + 1].y, (int)vertices[i + 2].x, (int)vertices[i + 2].y, color);
-		drawLine((int)vertices[i + 2].x, (int)vertices[i + 2].y, (int)vertices[i + 0].x, (int)vertices[i + 0].y, color);
-		if (i + 3 > count)
-		{
-			break;
-		}
+		drawTriangle(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
 	}
+}
+
+void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
+{
+	// find max y
+}
+
+void Renderer::drawTriangle(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
+{
+	drawLine(p0.x, p0.y, p1.x, p1.y, color);
+	drawLine(p1.x, p1.y, p2.x, p2.y, color);
+	drawLine(p2.x, p2.y, p0.x, p0.y, color);
 }
 
 void Renderer::clearBuffer()
@@ -171,9 +185,9 @@ vec2 Renderer::getDims()
 	return vec2(m_width, m_height);
 }
 
-void Renderer::drawCameraIndicator(vec4 pos)
+void Renderer::drawPlusSign(vec4 pos, vec3 color)
 {
-	vec3 color = vec3(1.0, 0.0, 0.0);
+	//vec3 color = vec3(1.0, 0.0, 0.0);
 	drawLine((int)pos.x, (int)pos.y - 2, (int)pos.x, (int)pos.y + 4, color);
 	drawLine((int)pos.x + 1, (int)pos.y - 2, (int)pos.x + 1, (int)pos.y + 4, color);
 

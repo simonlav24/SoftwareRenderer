@@ -43,7 +43,6 @@ public:
 	// multiply by Transform matrix
 	void transformModel(const mat4& transform, bool scalling=false);
 	void transformWorld(const mat4& transform);
-	void transformNormals(const mat4& transform);
 	
 	vec3 getPosition() override;
 };

@@ -4,9 +4,11 @@
 #include <vector>
 #include <string>
 #include "Renderer.h"
+#include "Light.h"
+
 using namespace std;
 
-enum transformFrame { world, model, camera };
+enum transformFrame { world, model, camera, light };
 enum transformMode { position, scale, rotation };
 
 class Model {
@@ -19,11 +21,6 @@ public:
 	void virtual transformModel(const mat4& trans, bool scalling=false)=0;
 	void virtual transformWorld(const mat4& trans)=0;
 	vec3 virtual getPosition()=0;
-};
-
-
-class Light {
-
 };
 
 class Camera {
@@ -77,21 +74,27 @@ public:
 	void drawDemo();
 	
 	void createPrimitive();
-	void reshapeCamera(int width, int height);
 
 	void switchActiveModel();
 	void deleteActiveModel();
 	void switchActiveCamera();
+	
+	// cameras
 	void addCamera();
 	void rotateZoomCamera(int dx, int dy, int scroll);
 	void translateCamera(int dx, int dy);
 	void lookAtModel();
 	void resetCameraPosition();
+	void reshapeCamera(int width, int height);
+	Camera& currentCamera();
+
+	// lights
+	void addLight();
 
 	int activeModel;
 	int activeLight;
 	int activeCamera;
-	Camera& currentCamera();
+	
 	
 	bool showBoundingBox;
 	bool showFaceNormals;

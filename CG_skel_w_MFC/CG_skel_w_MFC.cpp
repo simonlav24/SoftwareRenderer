@@ -41,6 +41,7 @@
 #define TRANSFORM_MODEL 0
 #define TRANSFORM_WORLD 1
 #define TRANSFORM_CAMERA 2
+#define TRANSFORM_LIGHT 3
 
 #define MODE_POSITION 0
 #define MODE_SCALE 1
@@ -54,6 +55,8 @@
 #define CAMERA_EDIT_FRUS 5
 #define CAMERA_EDIT_FOVY 6
 #define CAMERA_LOOK_MODEL 7
+
+#define LIGHT_ADD 0
 
 Scene* scene;
 Renderer* renderer;
@@ -70,16 +73,11 @@ GLfloat step{ 0.5 };
 static GLfloat t = 0;
 void display(void)
 {
-	// temporary rotate current model
 	if (scene->activeModel != -1)
 	{
-		//scene->transformActiveModel(RotateY(5));
-
 	}
 	if (scene->activeCamera != -1)
 	{
-		t += 0.1;
-		//scene->currentCamera().Frustum(-5.0 - 0*2.5*sin(t), 5.0 + 0*2.5 * sin(t), -5.0, 5.0, 5.0, 14.0);
 	}
 
 	// Call the scene and ask it to draw itself
@@ -349,6 +347,9 @@ void frameStateMenu(int id)
 	case TRANSFORM_CAMERA:
 		scene->tState = camera;
 		break;
+	case TRANSFORM_LIGHT:
+		scene->tState = light;
+		break;
 	}
 }
 
@@ -385,6 +386,16 @@ void showMenu(int id)
 		break;
 	case SHOW_TOGGLE_GRID:
 		scene->showGrid = !scene->showGrid;
+		break;
+	}
+}
+
+void lightMenu(int id)
+{
+	switch (id)
+	{
+	case LIGHT_ADD:
+		scene->addLight();
 		break;
 	}
 }
@@ -451,6 +462,7 @@ void initMenu()
 	glutAddMenuEntry("Model", TRANSFORM_MODEL);
 	glutAddMenuEntry("World", TRANSFORM_WORLD);
 	glutAddMenuEntry("Camera", TRANSFORM_CAMERA);
+	glutAddMenuEntry("Light", TRANSFORM_LIGHT);
 
 	int menuShow = glutCreateMenu(showMenu);
 	glutAddMenuEntry("Toggle Bounding Box", SHOW_TOGGLE_BOUNDING_BOX);
@@ -473,11 +485,15 @@ void initMenu()
 	glutAddMenuEntry("Edit Projection Perspective", CAMERA_EDIT_FOVY);
 	glutAddMenuEntry("Reset Camera Position", CAMERA_RESET);
 
+	int menuLight = glutCreateMenu(lightMenu);
+	glutAddMenuEntry("Add Light", LIGHT_ADD);
+
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
 	glutAddSubMenu("Switch Frame", menuFrame);
 	glutAddSubMenu("Transformation Mode", menuMode);
 	glutAddSubMenu("Camera", menuCamera);
+	glutAddSubMenu("Light", menuLight);
 	glutAddSubMenu("Show", menuShow);
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);

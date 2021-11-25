@@ -259,6 +259,7 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 
 		// view port transform
 		vec3 screenPoint = viewPort(rendererDims, nonHomogene);
+		cout << screenPoint << endl;
 
 		triangles.push_back(screenPoint);
 	}

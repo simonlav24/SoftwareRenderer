@@ -29,40 +29,17 @@
 
 ### tasks:
 
-- [x] see something
-- [x] objects
-  - [x] load from obj
-  - [x] primitives
-- [x] cameras
-  - [x] rotate camera using mouse (left click - hold)
-  - [x] strafe camera using mouse (middle click - hold)
-- [x] MeshModel transformations
-  - [x] model transformation
-  - [x] world transformation
-  - [x] camera transformation
-  - [x] window/screen transformation
-- [x] bounding box
-  - [x] calculation
-  - [x] drawing
-- [x] normals per vertices
-  - [x] calculation
-  - [x] drawing
-- [x] normals per face
-  - [x] calculation
-  - [x] drawing
-- [x] gui
-  - [x] add object
-    - [x] add obj MeshModel
-    - [x] add primitiveModel
-  - [x] add camera
-    - [x] add by orth-projection
-    - [x] add by perspective projection
-    - [x] add by fovy
-  - [x] resize view and keep projection aspect ratio
-  - [x] switch between objects
-- [x] switch between cameras
-  - [x] switch between frame of reference
-  - [x] resize the renderer
-  - [x] step size of transformation
-  
-- [x] render camera indicator
+- [ ] Clipping
+- [ ] Geometry
+  - [ ] uniform material for each model
+  - [ ] non-uniform material
+- [ ] Scene
+  - [ ] light source
+    - [x] light class
+    - [ ] type, color, position
+    - [ ] parallel
+    - [ ] point
+  - [ ] ambient light
+- [ ] Renderer
+  - [ ] z-buffer algorithm
+  - [ ] flat, gouraud, phong shading user switchable
