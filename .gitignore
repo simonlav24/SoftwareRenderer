@@ -1,0 +1,11 @@
+/.vs
+/Debug
+/CG_skel_w_MFC/Debug
+/CG_skel_w_MFC/Release
+/freeglut/Release
+/freeglut/Debug
+/glew/Release
+/glew/Debug
+/Release
+/freeglut/lib
+/glew/lib
