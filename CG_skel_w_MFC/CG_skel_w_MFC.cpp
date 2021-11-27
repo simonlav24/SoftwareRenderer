@@ -408,11 +408,13 @@ void cameraMenu(int id)
 	case CAMERA_ADD_ORTHO:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(0.0, 0.0, 10.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
+		renderer->viewerPos = scene->currentCamera().Eye;
 		scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 		break;
 	case CAMERA_ADD_PERSP:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
+		renderer->viewerPos = scene->currentCamera().Eye;
 		scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 		break;
 	case CAMERA_SWITCH:
@@ -529,6 +531,7 @@ int my_main(int argc, char** argv)
 
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
+	renderer->viewerPos = scene->currentCamera().Eye;
 	scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 
 	//----------------------------------------------------------------------------

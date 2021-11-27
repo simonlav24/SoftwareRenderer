@@ -256,7 +256,7 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 		normal = normalTransform * normal;
 		vec4 center = centerPoints[i / 3];
 		center = centerTransform * center;
-		vec4 eye = r->viewerDirection;
+		vec4 eye = r->viewerPos;
 
 		if (dot(center - eye, normal) > 0.0)
 			continue;
