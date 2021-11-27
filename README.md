@@ -42,5 +42,6 @@
     - [ ] point
   - [ ] ambient light
 - [ ] Renderer
-  - [ ] z-buffer algorithm
+  - [x] z-buffer
   - [ ] flat, gouraud, phong shading user switchable
+    - [x] flat

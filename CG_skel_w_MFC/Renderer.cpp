@@ -4,9 +4,12 @@
 #include "InitShader.h"
 #include "GL\freeglut.h"
 
-#define INDEX(width,x,y,c) (x+y*width)*3+c
-#define INDEX_ZB(width,x,y) (x+y*width)
+#define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
+#define INDEX_ZB(width,x,y) ((x)+(y)*(width))
 #define DEFAULT_DIMS 512
+
+#define det(p2, p0, p1)  0.5*((p0.x-p2.x)*(p1.y-p2.y)-(p1.x-p2.x)*(p0.y-p2.y))
+#define area(p1, p2, p3) abs(0.5*(p1.x*(p2.y-p3.y)+p2.x*(p3.y-p1.y)+p3.x*(p1.y-p2.y)))
 
 Renderer::Renderer() :m_width(DEFAULT_DIMS), m_height(DEFAULT_DIMS)
 {
@@ -33,6 +36,21 @@ void Renderer::CreateBuffers(int width, int height)
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
 	m_zbuffer = new float[m_width * m_height];
+}
+
+void Renderer::clearBuffer()
+{
+	GLfloat bgColor[2] = { 0.050 , 0.215 };
+	GLfloat color;
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			color = (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
+			m_outBuffer[INDEX(m_width, x, y, 0)] = color; m_outBuffer[INDEX(m_width, x, y, 1)] = color; m_outBuffer[INDEX(m_width, x, y, 2)] = color;
+			m_zbuffer[INDEX_ZB(m_width, x, y)] = 101;
+		}
+	}
 }
 
 void Renderer::DestroyBuffers()
@@ -70,114 +88,198 @@ void Renderer::drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const ve
 	drawLine((int)x0, (int)y0, (int)x1, (int)y1, color);
 }
 
-void Renderer::drawLine(int x0, int y0, int x1, int y1, const vec3& color)
+void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 {
-	if (x0 > m_width + border || x0 < -border || x1 > m_width + border || x1 < -border || y0 > m_height + border || y0 < -border || y1 > m_height + border || y1 < -border)
+	if (a.x > m_width + border || a.x < -border || b.x > m_width + border || b.x < -border || a.y > m_height + border || a.y < -border || b.y > m_height + border || b.y < -border)
 		return;
-	if (abs(y1 - y0) < abs(x1 - x0))
+	vec3 start, end;
+	bool steep;
+	if (abs(b.y - a.y) < abs(b.x - a.x))
 	{
-		if (x0 < x1)
-			lineflat(x0, y0, x1, y1, color);
+		if (a.x < b.x)
+		{
+			start = a;
+			end = b;
+		}
 		else
-			lineflat(x1, y1, x0, y0, color);
+		{
+			start = b;
+			end = a;
+		}
+		steep = false;
 	}
 	else
 	{
-		if (y0 < y1)
-			lineSteep(x0, y0, x1, y1, color);
+		if (a.y < b.y)
+		{
+			start = a;
+			end = b;
+		}
 		else
-			lineSteep(x1, y1, x0, y0, color);
+		{
+			start = b;
+			end = a;
+		}
+		steep = true;
+	}
+	int dx = end.x - start.x;
+	int dy = end.y - start.y;
+	if (steep)
+	{
+		int xdir = 1;
+		if (dx < 0)
+		{
+			xdir *= -1;
+			dx *= -1;
+		}
+		int d = 2 * dx - dy;
+		int x = start.x;
+		for (int y = start.y; y < end.y; y++)
+		{
+			if (d > 0)
+			{
+				x += xdir;
+				d += 2 * (dx - dy);
+			}
+			else
+			{
+				d += 2 * dx;
+			}
+			drawPixel(x, y, color);
+		}
+	}
+	else
+	{
+		int ydir = 1;
+		if (dy < 0)
+		{
+			ydir *= -1;
+			dy *= -1;
+		}
+		int d = 2 * dy - dx;
+		int y = start.y;
+		for (int x = start.x; x < end.x; x++)
+		{
+			if (d > 0)
+			{
+				y += ydir;
+				d += 2 * (dy - dx);
+			}
+			else
+			{
+				d += 2 * dy;
+			}
+			drawPixel(x, y, color);
+		}
 	}
 }
 
-void  Renderer::lineSteep(int x0, int y0, int x1, int y1, const vec3& color)
+void Renderer::drawLine(int x0, int y0, int x1, int y1, const vec3& color)
 {
-	///forward moves x
-	int dx = x1 - x0;
-	int dy = y1 - y0;
-	int xdir = 1;
-	if (dx < 0)
-	{
-		xdir *= -1;
-		dx *= -1;
-	}
-	int d = 2 * dx - dy;
-	int x = x0;
-	for (int y = y0; y < y1; y++)
-	{
-		if (d > 0)
-		{
-			x += xdir;
-			d += 2 * (dx - dy);
-		}
-		else
-		{
-			d += 2 * dx;
-		}
-		drawPixel(x, y, color);
-	}
-
-}
-void  Renderer::lineflat(int x0, int y0, int x1, int y1, const vec3& color)
-{
-	///forward moves y
-	int dx = x1 - x0;
-	int dy = y1 - y0;
-	int ydir = 1;
-	if (dy < 0)
-	{
-		ydir *= -1;
-		dy *= -1;
-	}
-	int d = 2 * dy - dx;
-	int y = y0;
-	for (int x = x0; x < x1; x++)
-	{
-		if (d > 0)
-		{
-			y += ydir;
-			d += 2 * (dy - dx);
-		}
-		else
-		{
-			d += 2 * dy;
-		}
-		drawPixel(x, y, color);
-	}
+	drawLine(vec3(x0, y0, 0), vec3(x1, y1, 0), color);
 }
 
 void Renderer::DrawTriangles(const std::vector<vec3>& vertices, const int count, const vec3& color)
 {
 	for (int i = 0; i < count; i+=3)
 	{
-		drawTriangle(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
+		drawTriangleFlat(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
+		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
 	}
+}
+
+vec3 findCoeficients(vec3 point, vec3 p0, vec3 p1, vec3 p2)
+{
+	// find area using determinant
+	GLfloat A = area(p0, p1, p2);
+	GLfloat A0 = area(point, p1, p2);
+	GLfloat A1 = area(point, p0, p2);
+	GLfloat A2 = area(point, p0, p1);
+	//GLfloat A2 = 1 - A0 - A1;
+	//cout << A0 + A1 + A2 << " " << A << endl;
+
+	return vec3(A0 / A, A1 / A, A2 / A);
+
+}
+
+float sdot(vec3 p1, vec3 p2, vec3 p3)
+{
+	return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+}
+
+bool isInside(vec3 pt, vec3 v1, vec3 v2, vec3 v3)
+{
+	float d1, d2, d3;
+	bool has_neg, has_pos;
+
+	d1 = sdot(pt, v1, v2);
+	d2 = sdot(pt, v2, v3);
+	d3 = sdot(pt, v3, v1);
+
+	has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+	has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+	return !(has_neg && has_pos);
 }
 
 void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
 {
-	// find max y
-}
+	int yMax = max(p0.y, max(p1.y, p2.y));
+	int yMin = min(p0.y, min(p1.y, p2.y));
 
-void Renderer::drawTriangle(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
-{
-	drawLine(p0.x, p0.y, p1.x, p1.y, color);
-	drawLine(p1.x, p1.y, p2.x, p2.y, color);
-	drawLine(p2.x, p2.y, p0.x, p0.y, color);
-}
+	int xMax = max(p0.x, max(p1.x, p2.x));
+	int xMin = min(p0.x, min(p1.x, p2.x));
+	
+	if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+		return;
 
-void Renderer::clearBuffer()
-{
-	GLfloat bgColor[2] = { 0.050 , 0.215};
-	GLfloat color;
-	for (int y = 0; y < m_height; y++)
+	vec3 c1(1.0, 0, 0);
+	vec3 c2(0, 1.0, 0);
+	vec3 c3(0, 0, 1.0);
+
+	vec3 alpha;
+	vec3 Color;
+
+	GLfloat zValue;
+
+	for (int y = yMin; y <= yMax; y++)
 	{
-		for (int x = 0; x < m_width; x++)
+		for (int x = xMin; x <= xMax; x++)
 		{
-			color = (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
-			m_outBuffer[INDEX(m_width, x, y, 0)] = color; m_outBuffer[INDEX(m_width, x, y, 1)] = color; m_outBuffer[INDEX(m_width, x, y, 2)] = color;
+			if (isInside(vec3(x, y, 0), p0, p1, p2))
+			{
+				alpha = findCoeficients(vec3(x, y, 0), p0, p1, p2);
+				zValue = alpha.x * p0.z + alpha.y * p1.z + alpha.z * p2.z;
+				//if(rand() > RAND_MAX - 100)
+				//	cout << zValue << " " << m_zbuffer[INDEX_ZB(m_width, x, y)] << endl;
+				vec3 Color = alpha.x * c1 + alpha.y * c2 + alpha.z * c3;
+				if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
+				{
+					m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
+					drawPixel(x, y, Color);
+				}
+
+			}
 		}
 	}
+}
+
+
+
+GLfloat lineIntersection(vec3 p1, vec3 p2, vec3 p3, vec3 p4)
+{
+	GLfloat Denom = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+	GLfloat x = (p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x);
+	return x / Denom;
+	//GLfloat y = (p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x);
+	//return vec3(x / Denom, y / Denom, 0);
+}
+
+void Renderer::drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
+{
+	drawLine(p0, p1, color);
+	drawLine(p1, p2, color);
+	drawLine(p2, p0, color);
 }
 
 vec2 Renderer::getDims()
@@ -193,6 +295,17 @@ void Renderer::drawPlusSign(vec4 pos, vec3 color)
 
 	drawLine((int)pos.x - 2, (int)pos.y, (int)pos.x + 4, (int)pos.y, color);
 	drawLine((int)pos.x - 2, (int)pos.y + 1, (int)pos.x + 4, (int)pos.y + 1, color);
+}
+
+void Renderer::drawLightIndicator(vec4 pos, vec3 color)
+{
+	GLfloat size = 15.0;
+	GLfloat size2 = 10.6;
+	vec3 Pos(pos.x, pos.y, pos.z);
+	drawLine(Pos + vec3(-size, 0.0, 0.0), Pos + vec3(size, 0.0, 0.0), color);
+	drawLine(Pos + vec3(0.0, -size, 0.0), Pos + vec3(0.0, size, 0.0), color);
+	drawLine(Pos + vec3(-size2, -size2, 0.0), Pos + vec3(size2, size2, 0.0), color);
+	drawLine(Pos + vec3(-size2, size2, 0.0), Pos + vec3(size2, -size2, 0.0), color);
 }
 
 void Renderer::reshape(int width, int height)

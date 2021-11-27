@@ -29,6 +29,8 @@ protected :
 
 public:
 
+	vec3 color;
+
 	MeshModel(string fileName);
 	~MeshModel(void);
 	void loadFile(string fileName);

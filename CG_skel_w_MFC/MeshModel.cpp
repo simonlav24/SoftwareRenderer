@@ -261,8 +261,7 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 		if (dot(center - eye, normal) > 0.0)
 			continue;
 
-
-
+		// transformations pipeline
 		vec3 point = vertex_positions[i];
 
 		// convert point to homogeneous

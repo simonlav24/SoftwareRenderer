@@ -52,7 +52,7 @@ void Scene::draw()
 	for (int i = 0; i < lights.size(); i++)
 	{
 		vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
-		m_renderer->drawPlusSign(lightPos, vec3(1.0, 1.0, 1.0));
+		m_renderer->drawLightIndicator(lightPos, vec3(1.0, 1.0, 1.0));
 	}
 	
 	drawOriginPoint();

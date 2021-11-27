@@ -3,7 +3,7 @@
 
 Light::Light()
 {
-	position = vec3(8.0, 8.0, 8.0);
+	position = vec3();
 	color = vec3(1.0, 1.0, 1.0);
 }
 
