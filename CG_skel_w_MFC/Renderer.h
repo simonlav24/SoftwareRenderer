@@ -38,7 +38,8 @@ public:
 	void SetDemoBuffer();
 	void DestroyBuffers();
 	
-	// extra stuff:
+	// viewer direction vec:
+	vec4 viewerDirection;
 
 	// draw single pixel (0 < RGB < 1)
 	void drawPixel(int x, int y, const vec3& color);

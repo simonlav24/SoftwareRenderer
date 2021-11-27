@@ -168,6 +168,7 @@ void Scene::transformActiveModel(const mat4& transform, bool scalling)
 	case camera:
 		cameras[activeCamera]->At = transform * cameras[activeCamera]->At;
 		cameras[activeCamera]->LookAt(cameras[activeCamera]->Eye, cameras[activeCamera]->At, cameras[activeCamera]->Up);
+		m_renderer->viewerDirection = cameras[activeCamera]->Eye;
 		break;
 	case light:
 		lights[activeLight]->transformWorld(transform);
@@ -215,6 +216,7 @@ void Scene::translateCamera(int dx, int dy)
 
 	
 	cameras[activeCamera]->LookAt(homo2noHomo(eye), homo2noHomo(at), up);
+	m_renderer->viewerDirection = eye;
 }
 
 void Scene::rotateZoomCamera(int dx, int dy, int scroll)
@@ -281,6 +283,7 @@ void Scene::rotateZoomCamera(int dx, int dy, int scroll)
 	}
 
 	cameras[activeCamera]->LookAt(eye, at, up);
+	m_renderer->viewerDirection = eye;
 }
 
 void Scene::lookAtModel()
@@ -288,11 +291,13 @@ void Scene::lookAtModel()
 	vec4 at = cameras[activeCamera]->At;
 	vec3 pos = models[activeModel]->getPosition();
 	cameras[activeCamera]->LookAt(cameras[activeCamera]->Eye, pos, cameras[activeCamera]->Up);
+	m_renderer->viewerDirection = cameras[activeCamera]->Eye;
 }
 
 void Scene::resetCameraPosition()
 {
 	cameras[activeCamera]->LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
+	m_renderer->viewerDirection = cameras[activeCamera]->Eye;
 }
 
 void Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)

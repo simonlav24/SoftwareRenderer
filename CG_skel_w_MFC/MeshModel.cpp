@@ -243,9 +243,26 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 	//mat4 M = projection * transpose(cTransform) * _world_t ransform * _model_transform;
 	mat4 M = projection * cTransform * _world_transform * _model_transform;
 
+	mat4 normalTransform = _world_transform * _normal_transform;
+	mat4 centerTransform = _world_transform * _model_transform;
+
 	vector<vec3> triangles;
 	for (int i = 0; i < vertexCount; i++)
 	{
+
+		// backface culling
+		vec4 normal = faceNormals[i / 3];
+		normal.w = 0;
+		normal = normalTransform * normal;
+		vec4 center = centerPoints[i / 3];
+		center = centerTransform * center;
+		vec4 eye = r->viewerDirection;
+
+		if (dot(center - eye, normal) > 0.0)
+			continue;
+
+
+
 		vec3 point = vertex_positions[i];
 
 		// convert point to homogeneous
@@ -259,7 +276,6 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 
 		// view port transform
 		vec3 screenPoint = viewPort(rendererDims, nonHomogene);
-		cout << screenPoint << endl;
 
 		triangles.push_back(screenPoint);
 	}

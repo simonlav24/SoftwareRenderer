@@ -30,6 +30,7 @@
 ### tasks:
 
 - [ ] Clipping
+- [ ] user input from website
 - [ ] Geometry
   - [ ] uniform material for each model
   - [ ] non-uniform material
