@@ -3,6 +3,7 @@
 #include "vec.h"
 #include "mat.h"
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -14,6 +15,7 @@ protected :
 	//useful arrays contaning info about the models
 	vec3* vertex_positions;
 	vec3* vertexNormals;
+	vec3* normal_positions;
 	vec3* faceNormals;
 	vec3* centerPoints;
 	//transform matrix
@@ -27,7 +29,9 @@ protected :
 	int faceCount = 0;
 	// 2 vertices for bounding box definition
 	vec3 bounding_box[2];
+public:
 	Material mat;
+	
 
 public:
 

@@ -85,6 +85,7 @@ MeshModel::MeshModel(string fileName)
 
 	loadFile(fileName);
 	mat.color = vec3(random(0.5, 1.0), random(0.5, 1.0), random(0.5, 1.0));
+	cout << "color: " << mat.color << endl;
 }
 
 MeshModel::~MeshModel(void)
@@ -93,6 +94,7 @@ MeshModel::~MeshModel(void)
 	delete[] vertexNormals;
 	delete[] faceNormals;
 	delete[] centerPoints;
+	delete[] normal_positions;
 }
 
 void MeshModel::loadFile(string fileName)
@@ -158,6 +160,7 @@ void MeshModel::loadFile(string fileName)
 	//init vertex_positions array
 	vertexCount = faces.size() * 3;
 	vertex_positions = new vec3[vertexCount];
+	normal_positions = new vec3[vertexCount];
 	// iterate through all stored faces and create triangles
 	for (int i = 0, k = 0; i < faces.size(); i++)
 	{
@@ -204,6 +207,14 @@ void MeshModel::loadFile(string fileName)
 		vertexNormals[i] = normalize(vertexNormals[i]);
 	}
 
+	for (int i = 0, k = 0; i < faces.size(); i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			normal_positions[k++] = vertices[faces[i].v[j] - 1];
+		}
+	}
+	
 }
 
 vec3 transformPoint(vec4 point, mat4 m, vec2 rendererDims)
@@ -251,7 +262,8 @@ void MeshModel::draw(Renderer* r, mat4& ProjCam)
 	mat4 worldModel = _world_transform * _model_transform;
 	
 	vector<vec4> modelVertices;
-	vector<vec4> modelNormals;
+	vector<vec4> modelFaceNormals;
+	vector<vec4> modelVertexNormals;
 
 	for (int i = 0; i < vertexCount; i++)
 	{
@@ -267,7 +279,15 @@ void MeshModel::draw(Renderer* r, mat4& ProjCam)
 		if (dot(center - eye, normal) > 0.0)
 			continue;
 
-		modelNormals.push_back(normal);
+		modelFaceNormals.push_back(normal);
+
+		// vertex normals
+		vec3 vnormal = normal_positions[i];
+		vec4 vnormal4 = vec4(vnormal);
+		vnormal4.w = 0;
+		vnormal4 = normalTransform * vnormal4;
+
+		modelVertexNormals.push_back((vnormal4));
 
 		//fNormals.push_back(normal);
 
@@ -289,8 +309,7 @@ void MeshModel::draw(Renderer* r, mat4& ProjCam)
 
 		//triangles.push_back(screenPoint);
 	}
-
-	r->drawModel(modelVertices, modelNormals, ProjCam, mat);
+	r->drawModel(modelVertices, modelFaceNormals, modelVertexNormals, ProjCam, mat);
 	drawWorldAxis(r, ProjCam);
 }
 
@@ -492,28 +511,6 @@ void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projectio
 		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 1.0, 0.0));
 	}
 }
-/*
-void MeshModel::transformModel(const mat4& transform, bool scalling)
-{
-	// multiply by trans model from Left
-	_model_transform = transform * _model_transform;
-	
-	// check if scaling
-	mat4 normalScale = transform;
-	if (scalling)
-	{
-		normalScale[0][0] = 1 / normalScale[0][0];
-		normalScale[1][1] = 1 / normalScale[1][1];
-		normalScale[2][2] = 1 / normalScale[2][2];
-	}
-	_normal_transform = normalScale * _normal_transform;
-}
-
-void MeshModel::transformWorld(const mat4& transform)
-{
-	// multiply by trans model from Left
-	_world_transform = transform * _world_transform;
-}*/
 
 void MeshModel::transform(const mat4& transform, bool world, bool scalling)
 {
@@ -620,6 +617,8 @@ PrimMeshModel::PrimMeshModel()
 	//calculating vertex normals
 	vertexNormalsCount = vertices.size();
 	vertexNormals = new vec3[vertexNormalsCount];
+	normal_positions = new vec3[vertexCount];
+
 	if (vertices_normals.empty()) { //if no given vn-s, calculating manualy (according to formula)
 		for (int i = 0; i < faceCount; i++) {
 			vec3 p1 = vertex_positions[3 * i], p2 = vertex_positions[3 * i + 1], p3 = vertex_positions[3 * i + 2];
@@ -640,6 +639,14 @@ PrimMeshModel::PrimMeshModel()
 	//normalize
 	for (int i = 0; i < vertexNormalsCount; i++) {
 		vertexNormals[i] = normalize(vertexNormals[i]);
+	}
+
+	for (int i = 0, k = 0; i < faces.size(); i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			normal_positions[k++] = vertices[faces[i].v[j] - 1];
+		}
 	}
 
 }

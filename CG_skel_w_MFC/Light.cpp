@@ -5,6 +5,9 @@ Light::Light()
 {
 	position = vec3();
 	color = vec3(1.0, 1.0, 1.0);
+	ambientIntensity = 1.0;
+	diffuseIntensity = 1.0;
+	specularIntensity = 1.0;
 }
 
 void Light::transformWorld(const mat4& transform)

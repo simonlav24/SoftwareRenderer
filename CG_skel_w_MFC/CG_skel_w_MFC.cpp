@@ -20,6 +20,7 @@
 #include "Renderer.h"
 #include <string>
 #include "InputDialog.h"
+#include "MeshModel.h"
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 
@@ -59,6 +60,11 @@
 
 #define LIGHT_ADD 0
 
+#define LIGHTMODE_WIRE 0
+#define LIGHTMODE_FLAT 1
+#define LIGHTMODE_PHONG 2
+#define LIGHTMODE_GOURAUD 3
+
 Scene* scene;
 Renderer* renderer;
 
@@ -76,11 +82,13 @@ void display(void)
 {
 	if (scene->activeModel != -1)
 	{
+		//static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient = 2.5 * sin(0.1 * t) + 2.5;
+		//cout << static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient << endl;
 	}
 	if (scene->activeCamera != -1)
 	{
 	}
-
+	t += 0.25;
 	// Call the scene and ask it to draw itself
 	scene->draw();
 }
@@ -177,6 +185,7 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		break;
 
+	case 'e':
 	case 'z':
 		switch (scene->tMode)
 		{
@@ -235,9 +244,6 @@ void keyboard(unsigned char key, int x, int y)
 		cout << "ambientIntensity " << renderer->ambientIntensity << endl;
 		break;
 	}
-	
-
-
 }
 
 void mouse(int button, int state, int x, int y)
@@ -359,6 +365,26 @@ void frameStateMenu(int id)
 		break;
 	case TRANSFORM_LIGHT:
 		scene->tState = light;
+		break;
+	}
+}
+
+// Light mode switcher submenu
+void lightSetupMenu(int id)
+{
+	switch (id)
+	{
+	case LIGHTMODE_WIRE:
+		renderer->lightSetup = WireFrame;
+		break;
+	case LIGHTMODE_FLAT:
+		renderer->lightSetup = Flat;
+		break;
+	case LIGHTMODE_GOURAUD:
+		renderer->lightSetup = Gouraud;
+		break;
+	case LIGHTMODE_PHONG:
+		renderer->lightSetup = Phong;
 		break;
 	}
 }
@@ -500,12 +526,19 @@ void initMenu()
 	int menuLight = glutCreateMenu(lightMenu);
 	glutAddMenuEntry("Add Light", LIGHT_ADD);
 
+	int menuLightSetup = glutCreateMenu(lightSetupMenu);
+	glutAddMenuEntry("WireFrame", LIGHTMODE_WIRE);
+	glutAddMenuEntry("Flat Shading", LIGHTMODE_FLAT);
+	glutAddMenuEntry("Phong Shading", LIGHTMODE_PHONG);
+	glutAddMenuEntry("Gouraud Shading", LIGHTMODE_GOURAUD);
+
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
 	glutAddSubMenu("Switch Frame", menuFrame);
 	glutAddSubMenu("Transformation Mode", menuMode);
 	glutAddSubMenu("Camera", menuCamera);
 	glutAddSubMenu("Light", menuLight);
+	glutAddSubMenu("Light Setup", menuLightSetup);
 	glutAddSubMenu("Show", menuShow);
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);

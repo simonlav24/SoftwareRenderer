@@ -8,7 +8,7 @@
 
 using namespace std;
 
-enum LightSetup { WireFrame, Flat, Phong };
+enum LightSetup { WireFrame, Flat, Phong, Gouraud };
 
 class Renderer
 {
@@ -64,10 +64,14 @@ public:
 	void drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color);
 	void drawLine(vec3 a, vec3 b, const vec3& color);
 
-	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals, mat4& ProjCam, Material& mat);
+	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, mat4& ProjCam, Material& mat);
 
 	void drawPlusSign(vec4 pos, vec3 color);
 	void drawLightIndicator(vec4 pos, vec3 color);
+
+	GLfloat calculateAmbient(Material& mat);
+	GLfloat calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
+	GLfloat calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
 
 	void reshape(int width, int height);
 

@@ -9,7 +9,9 @@ struct Material
 	GLfloat ambientCoeficient;
 	GLfloat diffuseCoeficient;
 	GLfloat specularCoeficient;
-	Material() :ambientCoeficient(0.1), diffuseCoeficient(0.5), specularCoeficient(0.1), color(0.8, 0.8, 0.8) {}
+	GLfloat shininessCoeficient;
+	Material() :ambientCoeficient(0.1), diffuseCoeficient(0.5), specularCoeficient(0.5),
+		color(0.8, 0.8, 0.8), shininessCoeficient(6.0){}
 };
 
 class Light {
@@ -17,7 +19,9 @@ public:
 	Light();
 	vec3 position;
 	vec3 color;
-
+	GLfloat ambientIntensity;
+	GLfloat diffuseIntensity;
+	GLfloat specularIntensity;
 	void transformWorld(const mat4& transform);
 };
 

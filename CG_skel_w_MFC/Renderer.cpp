@@ -29,7 +29,7 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 void Renderer::Init()
 {
 	ambientIntensity = 0.1;
-	lightSetup = Phong;
+	lightSetup = Flat;
 }
 
 Renderer::~Renderer(void)
@@ -234,6 +234,50 @@ bool isInside(vec3 pt, vec3 v1, vec3 v2, vec3 v3)
 	return !(has_neg && has_pos);
 }
 
+GLfloat Renderer::calculateAmbient(Material& mat)
+{
+	GLfloat Iambient = 0.0;
+	for (int l = 0; l < sceneLights->size(); l++)
+	{
+		Iambient += max(0.0, mat.ambientCoeficient * sceneLights->at(l)->ambientIntensity);
+	}
+	return Iambient;
+}
+
+GLfloat Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
+{
+	GLfloat Idiffuse = 0.0;
+	vec3 dirToLight;
+	for (int l = 0; l < sceneLights->size(); l++)
+	{
+		dirToLight = sceneLights->at(l)->position - pointInWorld;
+		GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
+		Idiffuse += max(0.0, mat.diffuseCoeficient * dotProd * sceneLights->at(l)->diffuseIntensity);
+	}
+	return Idiffuse;
+}
+
+GLfloat Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
+{
+	GLfloat Ispecular = 0.0;
+	vec3 dirToLight, reflected;
+	for (int l = 0; l < sceneLights->size(); l++)
+	{
+		dirToLight = normalize(pointInWorld - sceneLights->at(l)->position);
+		//if (dot(dirToLight, normalInWorld) > 0)
+		//	continue;
+		reflected = dirToLight - 2.0 * dot(dirToLight, normalInWorld) * normalInWorld;
+		vec3 dirToViewer = vec3(viewerPos.x, viewerPos.y, viewerPos.z) - pointInWorld;
+		dirToViewer = dirToViewer * -1;
+		GLfloat dotProd = dot(normalize(reflected), normalize(dirToViewer));
+		dotProd = pow(dotProd, mat.shininessCoeficient);
+		Ispecular += max(0.0, mat.specularCoeficient * dotProd * sceneLights->at(l)->specularIntensity);
+	}
+	return Ispecular;
+}
+
+
+
 void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
 {
 	int yMax = max(p0.y, max(p1.y, p2.y));
@@ -276,7 +320,7 @@ void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
 	}
 }
 
-void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals, mat4& ProjCam, Material& mat)
+void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, mat4& ProjCam, Material& mat)
 {
 	if (lightSetup == WireFrame)
 	{
@@ -287,6 +331,156 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals
 			triangles.push_back(screenPoint);
 		}
 		drawTrianglesWire(triangles, mat);
+	}
+
+	else if (lightSetup == Flat)
+	{
+		vec3 eyeInWorld = homo2noHomo(viewerPos);
+		GLfloat Idiffuse = 0.0;
+		GLfloat Itot = 0.0;
+
+		for (int i = 0; i < modelVertices.size(); i++)
+		{
+			vec4 p0 = modelVertices[i];
+			vec4 p1 = modelVertices[i + 1];
+			vec4 p2 = modelVertices[i + 2];
+
+			// calculate screen points
+			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
+			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
+			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
+
+			vec3 np0 = homo2noHomo(p0);
+			vec3 np1 = homo2noHomo(p1);
+			vec3 np2 = homo2noHomo(p2);
+
+			int yMax = max(sp0.y, max(sp1.y, sp2.y));
+			int yMin = min(sp0.y, min(sp1.y, sp2.y));
+
+			int xMax = max(sp0.x, max(sp1.x, sp2.x));
+			int xMin = min(sp0.x, min(sp1.x, sp2.x));
+
+			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+			{
+				i += 2;
+				continue;
+			}
+
+			GLfloat zValue;
+			vec3 alpha;
+			vec3 pointInWorld;
+			vec3 normalInWorld;
+			vec3 Color;
+
+			// find color
+			// point in world
+			pointInWorld = (np0 + np1 + np2)/3.0;
+			// normal in world
+			normalInWorld = vec3(modelFaceNormals[i].x, modelFaceNormals[i].y, modelFaceNormals[i].z);
+			// lights in world
+			//Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
+			Idiffuse = calculateSpecular(pointInWorld, normalInWorld, mat);
+			
+			Itot = Idiffuse;
+			Color = mat.color * Idiffuse;
+
+			for (int y = yMin; y <= yMax; y++)
+			{
+				for (int x = xMin; x <= xMax; x++)
+				{
+					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
+					{
+						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
+						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
+						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
+						{
+							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
+							drawPixel(x, y, Color);
+						}
+
+					}
+				}
+			}
+			i += 2;
+		}
+	}
+
+	else if (lightSetup == Gouraud)
+	{
+		vec3 eyeInWorld = homo2noHomo(viewerPos);
+		GLfloat Iambient = 0.0;
+		GLfloat Idiffuse = 0.0;
+		GLfloat Ispeculat = 0.0;
+		GLfloat Itot = 0.0;
+
+		for (int i = 0; i < modelVertices.size(); i++)
+		{
+			vec4 p0 = modelVertices[i];
+			vec4 p1 = modelVertices[i + 1];
+			vec4 p2 = modelVertices[i + 2];
+
+			// calculate screen points
+			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
+			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
+			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
+
+			vec3 np0 = homo2noHomo(p0);
+			vec3 np1 = homo2noHomo(p1);
+			vec3 np2 = homo2noHomo(p2);
+
+			int yMax = max(sp0.y, max(sp1.y, sp2.y));
+			int yMin = min(sp0.y, min(sp1.y, sp2.y));
+
+			int xMax = max(sp0.x, max(sp1.x, sp2.x));
+			int xMin = min(sp0.x, min(sp1.x, sp2.x));
+
+			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+			{
+				i += 2;
+				continue;
+			}
+
+			GLfloat zValue;
+			vec3 alpha;
+			vec3 pointInWorld;
+			vec3 normalInWorld;
+			vec3 Color;
+
+			vec3 Colors[3];
+			// find colors of points around
+			for (int c = 0; c < 3; c++)
+			{
+				pointInWorld = homo2noHomo(modelVertices[i + c]);
+				normalInWorld = vec3(modelVertexNormals[i + c].x, modelVertexNormals[i + c].y, modelVertexNormals[i + c].z);
+				GLfloat Iambient = 0*calculateAmbient(mat);
+				GLfloat Idiffuse = 0*calculateDiffusion(pointInWorld, normalInWorld, mat);
+				GLfloat Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
+				//cout << "light: " << Iambient <<" "<< Idiffuse <<" "<< Ispecular << endl;
+				Colors[c] = mat.color * (Iambient + Idiffuse + Ispecular);
+			}
+
+			for (int y = yMin; y <= yMax; y++)
+			{
+				for (int x = xMin; x <= xMax; x++)
+				{
+					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
+					{
+						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
+						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
+
+						Color = alpha.x * Colors[0] + alpha.y * Colors[1] + alpha.z * Colors[2];
+
+						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
+						{
+							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
+							drawPixel(x, y, Color);
+						}
+
+					}
+				}
+			}
+			i += 2;
+		}
 	}
 
 	else if (lightSetup == Phong)
@@ -328,8 +522,13 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals
 			vec3 alpha;
 			vec3 pointInWorld;
 			vec3 normalInWorld;
-			vec3 dirToLight;
 			vec3 Color;
+
+			vec3 normals[3];
+			for (int n = 0; n < 3; n++)
+			{
+				normals[n] = vec3(modelVertexNormals[i + n].x, modelVertexNormals[i + n].y, modelVertexNormals[i + n].z);
+			}
 
 			for (int y = yMin; y <= yMax; y++)
 			{
@@ -339,24 +538,15 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals
 					{
 						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
 						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
-						
-						// point in world
+
 						pointInWorld = alpha.x * np0 + alpha.y * np1 + alpha.z * np2;
-						// normal in world
-						normalInWorld = vec3(modelNormals[i].x, modelNormals[i].y, modelNormals[i].z); //-----> here might be a problem
-						// lights in world
-						Idiffuse = 0.0;
-						for (int l = 0; l < sceneLights->size(); l++)
-						{
-							dirToLight = sceneLights->at(l)->position - pointInWorld;
+						normalInWorld = alpha.x * normals[0] + alpha.y * normals[1] + alpha.z * normals[2];
 
-							GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
-							Idiffuse += mat.diffuseCoeficient * dotProd * 1.0;
-						}
+						GLfloat Iambient = calculateAmbient(mat);
+						GLfloat Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
+						GLfloat Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
 
-						Itot = Idiffuse;
-						Color = mat.color * Idiffuse;
-
+						Color = mat.color * (Iambient + Idiffuse + 0*Ispecular);
 
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{
@@ -368,58 +558,6 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals
 				}
 			}
 			i += 2;
-		}
-	}
-
-	else if (lightSetup == Flat)
-	{
-		for (int i = 0; i < modelVertices.size(); i++)
-		{
-			vec4 p0 = modelVertices[i];
-			vec4 p1 = modelVertices[i + 1];
-			vec4 p2 = modelVertices[i + 2];
-			i += 2;
-
-			// calculate screen points
-			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
-			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
-			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
-
-			// calculate square of work
-			int yMax = max(sp0.y, max(sp1.y, sp2.y));
-			int yMin = min(sp0.y, min(sp1.y, sp2.y));
-
-			int xMax = max(sp0.x, max(sp1.x, sp2.x));
-			int xMin = min(sp0.x, min(sp1.x, sp2.x));
-
-			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
-				continue;
-
-			vec3 c1(1.0, 0, 0);
-			vec3 c2(0, 1.0, 0);
-			vec3 c3(0, 0, 1.0);
-			vec3 alpha;
-			vec3 Color;
-			GLfloat zValue;
-
-			for (int y = yMin; y <= yMax; y++)
-			{
-				for (int x = xMin; x <= xMax; x++)
-				{
-					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
-					{
-						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
-						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
-						vec3 Color = alpha.x * c1 + alpha.y * c2 + alpha.z * c3;
-						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
-						{
-							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							drawPixel(x, y, Color);
-						}
-
-					}
-				}
-			}
 		}
 	}
 }

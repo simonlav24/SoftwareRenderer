@@ -113,6 +113,22 @@ struct vec2 {
 	{ return static_cast<GLfloat*>( &x ); }
 };
 
+inline
+GLfloat q_sqrt2(GLfloat number)
+{
+    long i;
+    GLfloat x2, y;
+    const GLfloat threehalfs = 1.5;
+
+    x2 = number * 0.5;
+    y = number;
+    i = *(long*)&y;
+    i = 0x5f3759df - (i >> 1);
+    y = *(GLfloat*)&i;
+    y = y * (threehalfs - (x2 * y * y));
+    return y;
+}
+
 //----------------------------------------------------------------------------
 //
 //  Non-class vec2 Methods
@@ -259,7 +275,8 @@ GLfloat length( const vec3& v ) {
 
 inline
 vec3 normalize( const vec3& v ) {
-    return v / length(v);
+    //return v / length(v);
+    return v * q_sqrt2(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
 inline

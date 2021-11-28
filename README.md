@@ -37,11 +37,16 @@
 - [ ] Scene
   - [ ] light source
     - [x] light class
-    - [ ] type, color, position
+    - [ ] type
+    - [ ] color of light
     - [ ] parallel
-    - [ ] point
-  - [ ] ambient light
+    - [x] point
+  - [ ] ambient light (?)
 - [ ] Renderer
   - [x] z-buffer
   - [ ] flat, gouraud, phong shading user switchable
-    - [x] flat
+    - [ ] flat (>1 lights still in wip)
+    - [ ] gouraud
+    - [ ] phong
+    - [x] wireframe
+- [ ] fix vertex normals like in face normals

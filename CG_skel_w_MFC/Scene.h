@@ -53,6 +53,7 @@ public:
 
 class Scene {
 
+public:
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
