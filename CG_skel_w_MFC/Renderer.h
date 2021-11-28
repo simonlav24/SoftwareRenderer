@@ -4,6 +4,7 @@
 #include "vec.h"
 #include "mat.h"
 #include "GL/glew.h"
+#include "Light.h"
 
 using namespace std;
 class Renderer
@@ -28,7 +29,9 @@ public:
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
-	void DrawTriangles(const std::vector<vec3>& vertices, const int count, const vec3& color);
+	
+	mat4 camProj;
+
 	void SetCameraTransform(const mat4& cTransform);
 	void SetProjection(const mat4& projection);
 	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
@@ -40,11 +43,16 @@ public:
 	
 	// viewer direction vec:
 	vec4 viewerPos;
+	vector<Light*> *sceneLights;
 
 	// draw single pixel (0 < RGB < 1)
 	void drawPixel(int x, int y, const vec3& color);
+
+	void DrawTriangles(const std::vector<vec3>& vertices, Material& mat);
+	void DrawTriangles(const std::vector<vec3>& vertices, Material& mat, vector<vec4>& faceNormals);
 	void drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color);
-	void drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, const vec3& color);
+	void drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat);
+	void DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4& faceNormal);
 	// clear m_out buffer
 	void clearBuffer();
 
@@ -58,4 +66,8 @@ public:
 	void reshape(int width, int height);
 
 	vec2 getDims();
+
+	
+	// temporary light properties
+	GLfloat ambientIntensity;
 };

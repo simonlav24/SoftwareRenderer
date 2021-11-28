@@ -90,11 +90,11 @@ public:
 
 	// lights
 	void addLight();
+	void moveLight(vec3 pos);
 
 	int activeModel;
 	int activeLight;
 	int activeCamera;
-	
 	
 	bool showBoundingBox;
 	bool showFaceNormals;

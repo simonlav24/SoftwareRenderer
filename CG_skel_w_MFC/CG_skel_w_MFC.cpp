@@ -19,6 +19,7 @@
 #include "Scene.h"
 #include "Renderer.h"
 #include <string>
+#include "InputDialog.h"
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 
@@ -225,8 +226,17 @@ void keyboard(unsigned char key, int x, int y)
 	case 'b':
 		scene->showBoundingBox = !scene->showBoundingBox;
 		break;
+	case '[':
+		renderer->ambientIntensity -= 0.1;
+		cout << "ambientIntensity " << renderer->ambientIntensity << endl;
+		break;
+	case ']':
+		renderer->ambientIntensity += 0.1;
+		cout << "ambientIntensity " << renderer->ambientIntensity << endl;
+		break;
 	}
 	
+
 
 }
 
@@ -533,6 +543,9 @@ int my_main(int argc, char** argv)
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
 	renderer->viewerPos = scene->currentCamera().Eye;
 	scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+
+	scene->addLight();
+	scene->moveLight(vec3(4.0, 4.0, 8.0));
 
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks

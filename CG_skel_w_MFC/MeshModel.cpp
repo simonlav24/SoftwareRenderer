@@ -73,6 +73,10 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
+GLfloat random(GLfloat lower, GLfloat upper) {
+	return lower + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (upper - lower)));
+}
+
 MeshModel::MeshModel(string fileName)
 {
 	// initializations
@@ -80,6 +84,7 @@ MeshModel::MeshModel(string fileName)
 	bounding_box[1] = vec3(0, 0, 0);
 
 	loadFile(fileName);
+	mat.color = vec3(random(0.5, 1.0), random(0.5, 1.0), random(0.5, 1.0));
 }
 
 MeshModel::~MeshModel(void)
@@ -246,10 +251,13 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 	mat4 normalTransform = _world_transform * _normal_transform;
 	mat4 centerTransform = _world_transform * _model_transform;
 
+	mat4 camproj = projection * cTransform;
+	mat4 projWorld = projection * cTransform * _world_transform;
+
 	vector<vec3> triangles;
+	vector<vec4> fNormals;
 	for (int i = 0; i < vertexCount; i++)
 	{
-
 		// backface culling
 		vec4 normal = faceNormals[i / 3];
 		normal.w = 0;
@@ -260,6 +268,8 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 
 		if (dot(center - eye, normal) > 0.0)
 			continue;
+
+		fNormals.push_back(normal);
 
 		// transformations pipeline
 		vec3 point = vertex_positions[i];
@@ -279,7 +289,7 @@ void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& colo
 		triangles.push_back(screenPoint);
 	}
 
-	r->DrawTriangles(triangles, triangles.size(), color);
+	r->DrawTriangles(triangles, mat, fNormals);
 
 	// origin point for debugging
 	drawWorldAxis(r, cTransform, projection);

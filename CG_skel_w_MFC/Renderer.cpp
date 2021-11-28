@@ -11,15 +11,24 @@
 #define det(p2, p0, p1)  0.5*((p0.x-p2.x)*(p1.y-p2.y)-(p1.x-p2.x)*(p0.y-p2.y))
 #define area(p1, p2, p3) abs(0.5*(p1.x*(p2.y-p3.y)+p2.x*(p3.y-p1.y)+p3.x*(p1.y-p2.y)))
 
+#define viewPort(a) vec3((m_width / 2.0) * (a.x + 1), (m_height / 2.0) * (a.y + 1), a.z)
+
 Renderer::Renderer() :m_width(DEFAULT_DIMS), m_height(DEFAULT_DIMS)
 {
 	InitOpenGLRendering();
 	CreateBuffers(DEFAULT_DIMS, DEFAULT_DIMS);
+	Init();
 }
 Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 {
 	InitOpenGLRendering();
 	CreateBuffers(width,height);
+	Init();
+}
+
+void Renderer::Init()
+{
+	ambientIntensity = 0.1;
 }
 
 Renderer::~Renderer(void)
@@ -179,12 +188,14 @@ void Renderer::drawLine(int x0, int y0, int x1, int y1, const vec3& color)
 	drawLine(vec3(x0, y0, 0), vec3(x1, y1, 0), color);
 }
 
-void Renderer::DrawTriangles(const std::vector<vec3>& vertices, const int count, const vec3& color)
+void Renderer::DrawTriangles(const std::vector<vec3>& vertices, Material& mat, vector<vec4>& faceNormals)
 {
-	for (int i = 0; i < count; i+=3)
+	for (int i = 0; i < vertices.size(); i+=3)
 	{
-		drawTriangleFlat(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
-		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
+		//drawTriangleFlat(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
+		//DrawTrianglePhong(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat, faceNormals[i / 3]);
+
+		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat.color);
 	}
 }
 
@@ -222,7 +233,7 @@ bool isInside(vec3 pt, vec3 v1, vec3 v2, vec3 v3)
 	return !(has_neg && has_pos);
 }
 
-void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
+void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
 {
 	int yMax = max(p0.y, max(p1.y, p2.y));
 	int yMin = min(p0.y, min(p1.y, p2.y));
@@ -264,15 +275,87 @@ void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
 	}
 }
 
-
-
-GLfloat lineIntersection(vec3 p1, vec3 p2, vec3 p3, vec3 p4)
+void Renderer::DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4& faceNormal)
 {
-	GLfloat Denom = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-	GLfloat x = (p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x);
-	return x / Denom;
-	//GLfloat y = (p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x);
-	//return vec3(x / Denom, y / Denom, 0);
+	int yMax = max(p0.y, max(p1.y, p2.y));
+	int yMin = min(p0.y, min(p1.y, p2.y));
+
+	int xMax = max(p0.x, max(p1.x, p2.x));
+	int xMin = min(p0.x, min(p1.x, p2.x));
+
+	if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+		return;
+
+	vec3 c1(1.0, 0, 0);
+	vec3 c2(0, 1.0, 0);
+	vec3 c3(0, 0, 1.0);
+
+	vec3 alpha;
+	vec3 Color;
+
+	GLfloat zValue;
+
+	for (int y = yMin; y <= yMax; y++)
+	{
+		for (int x = xMin; x <= xMax; x++)
+		{
+			if (isInside(vec3(x, y, 0), p0, p1, p2))
+			{
+				alpha = findCoeficients(vec3(x, y, 0), p0, p1, p2);
+				zValue = alpha.x * p0.z + alpha.y * p1.z + alpha.z * p2.z;
+				
+				if (zValue > m_zbuffer[INDEX_ZB(m_width, x, y)])
+					continue;
+				/*vec4 point = vec4(x, y, zValue, 0);
+				viewerPos.w = 0;
+				vec4 dirToViewer = viewerPos - point;
+				
+				// ambient
+				GLfloat Ia = mat.ambientCoeficient * ambientIntensity; //--------------> L_a (ambient light intensity) needs a place to be
+
+				// diffuse
+				GLfloat Id = 0.0;
+				for (int i = 0; i < sceneLights->size(); i++)
+				{
+					vec4 lightPos = vec4(sceneLights->at(i)->position); // multiply by camera and projection and screen view port
+					lightPos = camProj * lightPos;
+					lightPos = homo2noHomo(lightPos);
+					lightPos = viewPort(lightPos);
+					lightPos.w = 0;
+					// light pos is correct on screen
+
+					vec3 light = vec3(lightPos.x, lightPos.y, lightPos.z);
+					vec3 point3 = vec3(point.x, point.y, point.z);
+					vec3 n = normalize(cross(p2 - p0, p1 - p0));
+					//drawPixel(point3.x, point3.y, vec3(1.0, 0.0, 0.0));
+					//drawLine(point3, point3 + n, vec3(1.0, 0.0, 0.0));
+					//SwapBuffers();
+					vec3 dirToLight3 = light - point3;
+					vec4 dirToLight = lightPos - point;
+					faceNormal.w = 0;
+
+					
+					vec4 ngot = normalize(faceNormal);
+
+					GLfloat dotProd = max(dot(normalize(dirToLight3), n), 0.0);
+					//cout << dotProd << endl;
+					Id += mat.diffuseCoeficient * dotProd * 100.0;
+				}
+				
+
+
+
+
+
+				Color = mat.color * Id;*/
+				
+				m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
+				drawPixel(x, y, Color);
+				
+
+			}
+		}
+	}
 }
 
 void Renderer::drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color)

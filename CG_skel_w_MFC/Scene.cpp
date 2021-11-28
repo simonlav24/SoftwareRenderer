@@ -18,6 +18,8 @@ void Scene::draw()
 {
 	// clear buffer
 	m_renderer->clearBuffer();
+	m_renderer->sceneLights = &(this->lights);
+	m_renderer->camProj = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
 
 	if(showGrid)
 		drawGrid();
@@ -413,4 +415,9 @@ void Scene::addLight()
 
 	lights.push_back(light);
 	activeLight = lights.size() - 1;
+}
+
+void Scene::moveLight(vec3 pos)
+{
+	lights[activeLight]->position = pos;
 }

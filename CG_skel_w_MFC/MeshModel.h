@@ -26,10 +26,9 @@ protected :
 	int faceCount = 0;
 	// 2 vertices for bounding box definition
 	vec3 bounding_box[2];
+	Material mat;
 
 public:
-
-	vec3 color;
 
 	MeshModel(string fileName);
 	~MeshModel(void);
