@@ -29,6 +29,7 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 void Renderer::Init()
 {
 	ambientIntensity = 0.1;
+	lightSetup = Phong;
 }
 
 Renderer::~Renderer(void)
@@ -275,6 +276,154 @@ void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
 	}
 }
 
+void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals, mat4& ProjCam, Material& mat)
+{
+	if (lightSetup == WireFrame)
+	{
+		vector<vec3> triangles;
+		for (int i = 0; i < modelVertices.size(); i++)
+		{
+			vec3 screenPoint = viewPort(homo2noHomo(ProjCam * modelVertices[i]));
+			triangles.push_back(screenPoint);
+		}
+		drawTrianglesWire(triangles, mat);
+	}
+
+	else if (lightSetup == Phong)
+	{
+		vec3 eyeInWorld = homo2noHomo(viewerPos);
+		GLfloat Iambient = 0.0;
+		GLfloat Idiffuse = 0.0;
+		GLfloat Ispeculat = 0.0;
+		GLfloat Itot = 0.0;
+
+		for (int i = 0; i < modelVertices.size(); i++)
+		{
+			vec4 p0 = modelVertices[i];
+			vec4 p1 = modelVertices[i + 1];
+			vec4 p2 = modelVertices[i + 2];
+
+			// calculate screen points
+			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
+			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
+			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
+
+			vec3 np0 = homo2noHomo(p0);
+			vec3 np1 = homo2noHomo(p1);
+			vec3 np2 = homo2noHomo(p2);
+
+			int yMax = max(sp0.y, max(sp1.y, sp2.y));
+			int yMin = min(sp0.y, min(sp1.y, sp2.y));
+
+			int xMax = max(sp0.x, max(sp1.x, sp2.x));
+			int xMin = min(sp0.x, min(sp1.x, sp2.x));
+
+			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+			{
+				i += 2;
+				continue;
+			}
+
+			GLfloat zValue;
+			vec3 alpha;
+			vec3 pointInWorld;
+			vec3 normalInWorld;
+			vec3 dirToLight;
+			vec3 Color;
+
+			for (int y = yMin; y <= yMax; y++)
+			{
+				for (int x = xMin; x <= xMax; x++)
+				{
+					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
+					{
+						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
+						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
+						
+						// point in world
+						pointInWorld = alpha.x * np0 + alpha.y * np1 + alpha.z * np2;
+						// normal in world
+						normalInWorld = vec3(modelNormals[i].x, modelNormals[i].y, modelNormals[i].z); //-----> here might be a problem
+						// lights in world
+						Idiffuse = 0.0;
+						for (int l = 0; l < sceneLights->size(); l++)
+						{
+							dirToLight = sceneLights->at(l)->position - pointInWorld;
+
+							GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
+							Idiffuse += mat.diffuseCoeficient * dotProd * 1.0;
+						}
+
+						Itot = Idiffuse;
+						Color = mat.color * Idiffuse;
+
+
+						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
+						{
+							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
+							drawPixel(x, y, Color);
+						}
+
+					}
+				}
+			}
+			i += 2;
+		}
+	}
+
+	else if (lightSetup == Flat)
+	{
+		for (int i = 0; i < modelVertices.size(); i++)
+		{
+			vec4 p0 = modelVertices[i];
+			vec4 p1 = modelVertices[i + 1];
+			vec4 p2 = modelVertices[i + 2];
+			i += 2;
+
+			// calculate screen points
+			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
+			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
+			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
+
+			// calculate square of work
+			int yMax = max(sp0.y, max(sp1.y, sp2.y));
+			int yMin = min(sp0.y, min(sp1.y, sp2.y));
+
+			int xMax = max(sp0.x, max(sp1.x, sp2.x));
+			int xMin = min(sp0.x, min(sp1.x, sp2.x));
+
+			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+				continue;
+
+			vec3 c1(1.0, 0, 0);
+			vec3 c2(0, 1.0, 0);
+			vec3 c3(0, 0, 1.0);
+			vec3 alpha;
+			vec3 Color;
+			GLfloat zValue;
+
+			for (int y = yMin; y <= yMax; y++)
+			{
+				for (int x = xMin; x <= xMax; x++)
+				{
+					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
+					{
+						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
+						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
+						vec3 Color = alpha.x * c1 + alpha.y * c2 + alpha.z * c3;
+						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
+						{
+							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
+							drawPixel(x, y, Color);
+						}
+
+					}
+				}
+			}
+		}
+	}
+}
+
 void Renderer::DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4& faceNormal)
 {
 	int yMax = max(p0.y, max(p1.y, p2.y));
@@ -357,7 +506,13 @@ void Renderer::DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4&
 		}
 	}
 }
-
+void Renderer::drawTrianglesWire(const std::vector<vec3>& vertices, Material& mat)
+{
+	for (int i = 0; i < vertices.size(); i += 3)
+	{
+		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat.color);
+	}
+}
 void Renderer::drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
 {
 	drawLine(p0, p1, color);

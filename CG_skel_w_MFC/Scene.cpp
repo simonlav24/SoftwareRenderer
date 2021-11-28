@@ -19,7 +19,8 @@ void Scene::draw()
 	// clear buffer
 	m_renderer->clearBuffer();
 	m_renderer->sceneLights = &(this->lights);
-	m_renderer->camProj = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
+	mat4 ProjCam = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
+	m_renderer->ProjCam = ProjCam;
 
 	if(showGrid)
 		drawGrid();
@@ -28,7 +29,8 @@ void Scene::draw()
 	for (int i = 0; i < models.size(); i++)
 	{
 		vec3 color = i == activeModel ? vec3(1.0, 1.0, 1.0) : vec3(0.5, 0.5, 0.5);
-		models[i]->draw(m_renderer, cameras[activeCamera]->cTransform, cameras[activeCamera]->projection, color);
+		//models[i]->draw(m_renderer, cameras[activeCamera]->cTransform, cameras[activeCamera]->projection, color);
+		models[i]->draw(m_renderer, ProjCam);
 		if (i == activeModel)
 		{
 			if(showBoundingBox)
@@ -161,11 +163,11 @@ void Scene::transformActiveModel(const mat4& transform, bool scalling)
 	{
 	case model:
 		if (activeModel == -1) return;
-		models[activeModel]->transformModel(transform, scalling);
+		models[activeModel]->transform(transform, false, scalling);
 		break;
 	case world:
 		if (activeModel == -1) return;
-		models[activeModel]->transformWorld(transform);
+		models[activeModel]->transform(transform, true, scalling);
 		break;
 	case camera:
 		cameras[activeCamera]->At = transform * cameras[activeCamera]->At;

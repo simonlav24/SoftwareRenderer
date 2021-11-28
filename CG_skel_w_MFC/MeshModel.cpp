@@ -137,8 +137,6 @@ void MeshModel::loadFile(string fileName)
 		}
 	}
 
-
-
 	// calculate bounding box
 	calculateBoundingBox(vertices);
 
@@ -213,11 +211,11 @@ vec3 transformPoint(vec4 point, mat4 m, vec2 rendererDims)
 	return viewPort(rendererDims, homo2noHomo(m * point));
 }
 
-void MeshModel::drawWorldAxis(Renderer* r, mat4& cTransform, mat4& projection)
+void MeshModel::drawWorldAxis(Renderer* r, mat4& projCam)
 {
-	mat4 Mw = projection * cTransform * _world_transform;
+	mat4 Mw = projCam * _world_transform;
 	vec2 rendererDims = r->getDims();
-	
+
 	vec4 zero = vec4(0, 0, 0, 1);
 	zero = Mw * zero;
 	zero = homo2noHomo(zero);
@@ -242,13 +240,67 @@ void MeshModel::drawWorldAxis(Renderer* r, mat4& cTransform, mat4& projection)
 	r->drawLine((int)zeroS.x, (int)zeroS.y, (int)zS.x, (int)zS.y, vec3(0, 0, 1));
 }
 
+void MeshModel::drawWorldAxis(Renderer* r, mat4& cTransform, mat4& projection)
+{
+	drawWorldAxis(r, projection * cTransform);
+}
+
+void MeshModel::draw(Renderer* r, mat4& ProjCam)
+{
+	mat4 normalTransform = _normal_world_transform * _normal_transform;
+	mat4 worldModel = _world_transform * _model_transform;
+	
+	vector<vec4> modelVertices;
+	vector<vec4> modelNormals;
+
+	for (int i = 0; i < vertexCount; i++)
+	{
+		// backface culling
+		vec4 normal = faceNormals[i / 3];
+		normal.w = 0;
+		normal = normalTransform * normal;
+		vec4 center = centerPoints[i / 3];
+		center = worldModel * center;
+		vec4 eye = r->viewerPos;
+		eye.w = 0;
+
+		if (dot(center - eye, normal) > 0.0)
+			continue;
+
+		modelNormals.push_back(normal);
+
+		//fNormals.push_back(normal);
+
+		// transformations pipeline
+		vec3 point = vertex_positions[i];
+
+		// convert point to homogeneous
+		vec4 point4(point.x, point.y, point.z, 1);
+
+		// multiply by model transformations
+		point4 = worldModel * point4;
+
+		modelVertices.push_back(point4);
+		// convert to non-homogeneous
+		//vec4 nonHomogene = homo2noHomo(point4);
+
+		// view port transform
+		//vec3 screenPoint = viewPort(rendererDims, nonHomogene);
+
+		//triangles.push_back(screenPoint);
+	}
+
+	r->drawModel(modelVertices, modelNormals, ProjCam, mat);
+	drawWorldAxis(r, ProjCam);
+}
+
 void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color)
 {
 	vec2 rendererDims = r->getDims();
 	//mat4 M = projection * transpose(cTransform) * _world_t ransform * _model_transform;
 	mat4 M = projection * cTransform * _world_transform * _model_transform;
 
-	mat4 normalTransform = _world_transform * _normal_transform;
+	mat4 normalTransform = _normal_world_transform * _normal_transform;
 	mat4 centerTransform = _world_transform * _model_transform;
 
 	mat4 camproj = projection * cTransform;
@@ -387,7 +439,10 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 {
 	vec2 rendererDims = r->getDims();
-	mat4 projWorld = projection * cTransform * _world_transform;
+	//mat4 projWorld = projection * cTransform * _world_transform;
+	mat4 projWorld = projection * cTransform;
+	mat4 normalWorld = _normal_world_transform * _normal_transform;
+	mat4 modelWorld = _world_transform * _model_transform;
 
 	for (int i = 0; i < faceCount; i++)
 	{
@@ -395,8 +450,8 @@ void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 		vec4 normal = faceNormals[i];
 		normal.w = 0;
 
-		origin = _model_transform * origin;
-		normal = _normal_transform * normal;
+		origin = modelWorld * origin;
+		normal = normalWorld * normal;
 		normal.w = 0;
 		normal = normalize(normal);
 
@@ -437,7 +492,7 @@ void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projectio
 		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 1.0, 0.0));
 	}
 }
-
+/*
 void MeshModel::transformModel(const mat4& transform, bool scalling)
 {
 	// multiply by trans model from Left
@@ -458,6 +513,34 @@ void MeshModel::transformWorld(const mat4& transform)
 {
 	// multiply by trans model from Left
 	_world_transform = transform * _world_transform;
+}*/
+
+void MeshModel::transform(const mat4& transform, bool world, bool scalling)
+{
+	if (world)
+	{
+		_world_transform = transform * _world_transform;
+		mat4 normalScale = transform;
+		if (scalling)
+		{
+			normalScale[0][0] = 1 / normalScale[0][0];
+			normalScale[1][1] = 1 / normalScale[1][1];
+			normalScale[2][2] = 1 / normalScale[2][2];
+		}
+		_normal_world_transform = normalScale * _normal_world_transform;
+	}
+	else
+	{
+		_model_transform = transform * _model_transform;
+		mat4 normalScale = transform;
+		if (scalling)
+		{
+			normalScale[0][0] = 1 / normalScale[0][0];
+			normalScale[1][1] = 1 / normalScale[1][1];
+			normalScale[2][2] = 1 / normalScale[2][2];
+		}
+		_normal_transform = normalScale * _normal_transform;
+	}
 }
 
 PrimMeshModel::PrimMeshModel()
@@ -466,14 +549,15 @@ PrimMeshModel::PrimMeshModel()
 	vector<FaceIdcs> faces;
 	vector<vec3> vertices_normals;
 
-	vertices.push_back(vec3(0.0, 0.0, 0.0));
-	vertices.push_back(vec3(0.0, 0.0, 1.0));
-	vertices.push_back(vec3(0.0, 1.0, 0.0));
-	vertices.push_back(vec3(0.0, 1.0, 1.0));
-	vertices.push_back(vec3(1.0, 0.0, 0.0));
-	vertices.push_back(vec3(1.0, 0.0, 1.0));
-	vertices.push_back(vec3(1.0, 1.0, 0.0));
-	vertices.push_back(vec3(1.0, 1.0, 1.0));
+	vec3 offset(0.5, 0.5, 0.5);
+	vertices.push_back(vec3(0.0, 0.0, 0.0) - offset);
+	vertices.push_back(vec3(0.0, 0.0, 1.0) - offset);
+	vertices.push_back(vec3(0.0, 1.0, 0.0) - offset);
+	vertices.push_back(vec3(0.0, 1.0, 1.0) - offset);
+	vertices.push_back(vec3(1.0, 0.0, 0.0) - offset);
+	vertices.push_back(vec3(1.0, 0.0, 1.0) - offset);
+	vertices.push_back(vec3(1.0, 1.0, 0.0) - offset);
+	vertices.push_back(vec3(1.0, 1.0, 1.0) - offset);
 
 	faces.push_back(FaceIdcs(1, 7, 5));
 	faces.push_back(FaceIdcs(1, 3, 7));

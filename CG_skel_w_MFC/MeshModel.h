@@ -20,6 +20,7 @@ protected :
 	mat4 _model_transform;
 	mat4 _world_transform;
 	mat4 _normal_transform;
+	mat4 _normal_world_transform;
 	// sizes of arrays
 	int vertexCount = 0; //num faces * 3, not actualy count of vertices
 	int vertexNormalsCount = 0;
@@ -35,15 +36,18 @@ public:
 	void loadFile(string fileName);
 	//draw funcs
 	void draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color);
+	void draw(Renderer* r, mat4& ProjCam);
 	void drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection);
 	void drawWorldAxis(Renderer* r, mat4& cTransform, mat4& projection);
+	void drawWorldAxis(Renderer* r, mat4& projCam);
 	void drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection);
 	void drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projection);
 	// calculate bounding box
 	void calculateBoundingBox(vector<vec3>& vertex);	
 	// multiply by Transform matrix
-	void transformModel(const mat4& transform, bool scalling=false);
-	void transformWorld(const mat4& transform);
+	void transform(const mat4& transform, bool world, bool scalling = false);
+	//void transformModel(const mat4& transform, bool scalling=false);
+	//void transformWorld(const mat4& transform);
 	
 	vec3 getPosition() override;
 };

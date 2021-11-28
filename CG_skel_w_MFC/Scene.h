@@ -16,10 +16,11 @@ protected:
 	virtual ~Model() {}
 public:
 	void virtual draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color)=0;
-
+	void virtual draw(Renderer* r, mat4& ProjCam)=0;
 	// multiply by modelTransform matrix
-	void virtual transformModel(const mat4& trans, bool scalling=false)=0;
-	void virtual transformWorld(const mat4& trans)=0;
+	//void virtual transformModel(const mat4& trans, bool scalling=false)=0;
+	//void virtual transformWorld(const mat4& trans)=0;
+	void virtual transform(const mat4& transform, bool world, bool scalling = false)=0;
 	vec3 virtual getPosition()=0;
 };
 

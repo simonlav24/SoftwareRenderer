@@ -7,6 +7,9 @@
 #include "Light.h"
 
 using namespace std;
+
+enum LightSetup { WireFrame, Flat, Phong };
+
 class Renderer
 {
 	float *m_outBuffer; // 3*width*height
@@ -30,7 +33,7 @@ public:
 	~Renderer(void);
 	void Init();
 	
-	mat4 camProj;
+	mat4 ProjCam;
 
 	void SetCameraTransform(const mat4& cTransform);
 	void SetProjection(const mat4& projection);
@@ -50,6 +53,7 @@ public:
 
 	void DrawTriangles(const std::vector<vec3>& vertices, Material& mat);
 	void DrawTriangles(const std::vector<vec3>& vertices, Material& mat, vector<vec4>& faceNormals);
+	void drawTrianglesWire(const std::vector<vec3>& vertices, Material& mat);
 	void drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color);
 	void drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat);
 	void DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4& faceNormal);
@@ -60,13 +64,15 @@ public:
 	void drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color);
 	void drawLine(vec3 a, vec3 b, const vec3& color);
 
+	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelNormals, mat4& ProjCam, Material& mat);
+
 	void drawPlusSign(vec4 pos, vec3 color);
 	void drawLightIndicator(vec4 pos, vec3 color);
 
 	void reshape(int width, int height);
 
 	vec2 getDims();
-
+	LightSetup lightSetup;
 	
 	// temporary light properties
 	GLfloat ambientIntensity;
