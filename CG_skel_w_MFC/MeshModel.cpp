@@ -207,11 +207,12 @@ void MeshModel::loadFile(string fileName)
 		vertexNormals[i] = normalize(vertexNormals[i]);
 	}
 
+	//
 	for (int i = 0, k = 0; i < faces.size(); i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			normal_positions[k++] = vertices[faces[i].v[j] - 1];
+			normal_positions[k++] = vertexNormals[faces[i].v[j] - 1];
 		}
 	}
 	
@@ -494,6 +495,7 @@ void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projectio
 	{
 		vec4 origin = vertices[i];
 		vec4 normal = vertexNormals[i];
+
 		normal.w = 0;
 
 		origin = _model_transform * origin;
@@ -645,7 +647,7 @@ PrimMeshModel::PrimMeshModel()
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			normal_positions[k++] = vertices[faces[i].v[j] - 1];
+			normal_positions[k++] = vertexNormals[faces[i].v[j] - 1];
 		}
 	}
 
