@@ -76,7 +76,7 @@ public:
 	void reshape(int width, int height);
 
 	vec2 getDims();
-	LightSetup lightSetup;
+	LightSetup shadingSetup;
 	
 	// temporary light properties
 	GLfloat ambientIntensity;

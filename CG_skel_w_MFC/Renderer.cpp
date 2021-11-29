@@ -29,7 +29,7 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 void Renderer::Init()
 {
 	ambientIntensity = 0.1;
-	lightSetup = Flat;
+	shadingSetup = Flat;
 }
 
 Renderer::~Renderer(void)
@@ -276,8 +276,6 @@ GLfloat Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Mat
 	return Ispecular;
 }
 
-
-
 void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
 {
 	int yMax = max(p0.y, max(p1.y, p2.y));
@@ -322,7 +320,7 @@ void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
 
 void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, mat4& ProjCam, Material& mat)
 {
-	if (lightSetup == WireFrame)
+	if (shadingSetup == WireFrame)
 	{
 		vector<vec3> triangles;
 		for (int i = 0; i < modelVertices.size(); i++)
@@ -331,9 +329,10 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			triangles.push_back(screenPoint);
 		}
 		drawTrianglesWire(triangles, mat);
+		return;
 	}
 
-	else if (lightSetup == Flat)
+	else if (shadingSetup == Flat)
 	{
 		vec3 eyeInWorld = homo2noHomo(viewerPos);
 		GLfloat Idiffuse = 0.0;
@@ -405,7 +404,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 		}
 	}
 
-	else if (lightSetup == Gouraud)
+	else if (shadingSetup == Gouraud)
 	{
 		vec3 eyeInWorld = homo2noHomo(viewerPos);
 		GLfloat Iambient = 0.0;
@@ -483,7 +482,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 		}
 	}
 
-	else if (lightSetup == Phong)
+	else if (shadingSetup == Phong)
 	{
 		vec3 eyeInWorld = homo2noHomo(viewerPos);
 		GLfloat Iambient = 0.0;

@@ -93,6 +93,8 @@ public:
 	// lights
 	void addLight();
 	void moveLight(vec3 pos);
+	void deleteActiveLight();
+	void switchActiveLight();
 
 	int activeModel;
 	int activeLight;

@@ -170,11 +170,13 @@ void Scene::transformActiveModel(const mat4& transform, bool scalling)
 		models[activeModel]->transform(transform, true, scalling);
 		break;
 	case camera:
+		if (activeCamera == -1) return;
 		cameras[activeCamera]->At = transform * cameras[activeCamera]->At;
 		cameras[activeCamera]->LookAt(cameras[activeCamera]->Eye, cameras[activeCamera]->At, cameras[activeCamera]->Up);
 		m_renderer->viewerPos = cameras[activeCamera]->Eye;
 		break;
 	case light:
+		if (activeLight == -1) return;
 		lights[activeLight]->transformWorld(transform);
 	}
 }
@@ -225,12 +227,10 @@ void Scene::translateCamera(int dx, int dy)
 
 void Scene::rotateZoomCamera(int dx, int dy, int scroll)
 {
-
 	// move eye negative at
 	vec4 eye = cameras[activeCamera]->Eye;
 	vec4 at = cameras[activeCamera]->At;
 	vec4 up = cameras[activeCamera]->Up;
-
 
 	vec4 axis = normalize(cross(at - eye, up));
 	eye = Translate(-at) * eye;
@@ -421,5 +421,26 @@ void Scene::addLight()
 
 void Scene::moveLight(vec3 pos)
 {
+	if (activeLight == -1)
+		return;
 	lights[activeLight]->position = pos;
+}
+
+void Scene::deleteActiveLight()
+{
+	if (activeLight == -1)
+		return;
+	lights.erase(lights.begin() + activeLight);
+	switchActiveLight();
+	if (lights.size() == 0)
+		activeLight = -1;
+}
+
+void Scene::switchActiveLight()
+{
+	if (lights.size() == 0)
+	{
+		return;
+	}
+	activeLight = (activeLight + 1) % lights.size();
 }

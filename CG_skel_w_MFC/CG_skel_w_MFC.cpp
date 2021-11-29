@@ -59,11 +59,13 @@
 #define CAMERA_LOOK_MODEL 7
 
 #define LIGHT_ADD 0
+#define LIGHT_DELETE 1
+#define LIGHT_SWITCH 2
 
-#define LIGHTMODE_WIRE 0
-#define LIGHTMODE_FLAT 1
-#define LIGHTMODE_PHONG 2
-#define LIGHTMODE_GOURAUD 3
+#define SHADING_WIRE 0
+#define SHADING_FLAT 1
+#define SHADING_PHONG 2
+#define SHADING_GOURAUD 3
 
 Scene* scene;
 Renderer* renderer;
@@ -370,21 +372,21 @@ void frameStateMenu(int id)
 }
 
 // Light mode switcher submenu
-void lightSetupMenu(int id)
+void shadingSetupMenu(int id)
 {
 	switch (id)
 	{
-	case LIGHTMODE_WIRE:
-		renderer->lightSetup = WireFrame;
+	case SHADING_WIRE:
+		renderer->shadingSetup = WireFrame;
 		break;
-	case LIGHTMODE_FLAT:
-		renderer->lightSetup = Flat;
+	case SHADING_FLAT:
+		renderer->shadingSetup = Flat;
 		break;
-	case LIGHTMODE_GOURAUD:
-		renderer->lightSetup = Gouraud;
+	case SHADING_GOURAUD:
+		renderer->shadingSetup = Gouraud;
 		break;
-	case LIGHTMODE_PHONG:
-		renderer->lightSetup = Phong;
+	case SHADING_PHONG:
+		renderer->shadingSetup = Phong;
 		break;
 	}
 }
@@ -433,6 +435,11 @@ void lightMenu(int id)
 	case LIGHT_ADD:
 		scene->addLight();
 		break;
+	case LIGHT_DELETE:
+		scene->deleteActiveLight();
+		break;
+	case LIGHT_SWITCH:
+		scene->switchActiveLight();
 	}
 }
 
@@ -525,12 +532,14 @@ void initMenu()
 
 	int menuLight = glutCreateMenu(lightMenu);
 	glutAddMenuEntry("Add Light", LIGHT_ADD);
+	glutAddMenuEntry("Switch Light", LIGHT_SWITCH);
+	glutAddMenuEntry("Delete Light", LIGHT_DELETE);
 
-	int menuLightSetup = glutCreateMenu(lightSetupMenu);
-	glutAddMenuEntry("WireFrame", LIGHTMODE_WIRE);
-	glutAddMenuEntry("Flat Shading", LIGHTMODE_FLAT);
-	glutAddMenuEntry("Phong Shading", LIGHTMODE_PHONG);
-	glutAddMenuEntry("Gouraud Shading", LIGHTMODE_GOURAUD);
+	int menuLightSetup = glutCreateMenu(shadingSetupMenu);
+	glutAddMenuEntry("WireFrame", SHADING_WIRE);
+	glutAddMenuEntry("Flat Shading", SHADING_FLAT);
+	glutAddMenuEntry("Phong Shading", SHADING_PHONG);
+	glutAddMenuEntry("Gouraud Shading", SHADING_GOURAUD);
 
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
@@ -538,7 +547,7 @@ void initMenu()
 	glutAddSubMenu("Transformation Mode", menuMode);
 	glutAddSubMenu("Camera", menuCamera);
 	glutAddSubMenu("Light", menuLight);
-	glutAddSubMenu("Light Setup", menuLightSetup);
+	glutAddSubMenu("Shading mode", menuLightSetup);
 	glutAddSubMenu("Show", menuShow);
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
