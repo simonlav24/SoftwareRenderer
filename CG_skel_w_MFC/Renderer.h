@@ -69,15 +69,12 @@ public:
 	void drawPlusSign(vec4 pos, vec3 color);
 	void drawLightIndicator(vec4 pos, vec3 color);
 
-	GLfloat calculateAmbient(Material& mat);
-	GLfloat calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
-	GLfloat calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
+	vec3 calculateAmbient(Material& mat);
+	vec3 calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
+	vec3 calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
 
 	void reshape(int width, int height);
 
 	vec2 getDims();
 	LightSetup shadingSetup;
-	
-	// temporary light properties
-	GLfloat ambientIntensity;
 };

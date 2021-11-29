@@ -68,8 +68,7 @@ public:
 	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(model), tMode(position),
 		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false)
 		{};
-	void transformActiveModel(const mat4& transform, bool scalling=false);
-	void loadOBJModel(string fileName);
+
 	void draw();
 	void drawOriginPoint();
 	void drawGrid();
@@ -81,6 +80,11 @@ public:
 	void deleteActiveModel();
 	void switchActiveCamera();
 	
+	// models
+	void transformActiveModel(const mat4& transform, bool scalling = false);
+	void loadOBJModel(string fileName);
+	void changeModelColor(vec3 color);
+
 	// cameras
 	void addCamera();
 	void rotateZoomCamera(int dx, int dy, int scroll);
@@ -95,6 +99,7 @@ public:
 	void moveLight(vec3 pos);
 	void deleteActiveLight();
 	void switchActiveLight();
+	void changeLightColor(vec3 color);
 
 	int activeModel;
 	int activeLight;

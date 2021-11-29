@@ -30,23 +30,21 @@
 ### tasks:
 
 - [ ] Clipping
-- [ ] user input from website
+- [x] user input from website
 - [ ] Geometry
-  - [ ] uniform material for each model
+  - [x] uniform material for each model
   - [ ] non-uniform material
 - [ ] Scene
   - [ ] light source
     - [x] light class
-    - [ ] type
-    - [ ] color of light
+    - [x] color of light
     - [ ] parallel
     - [x] point
-  - [ ] ambient light (?)
 - [ ] Renderer
   - [x] z-buffer
-  - [ ] flat, gouraud, phong shading user switchable
-    - [ ] flat (>1 lights still in wip)
-    - [ ] gouraud
-    - [ ] phong
+  - [x] flat, gouraud, phong shading user switchable
+    - [x] flat
+    - [x] gouraud
+    - [x] phong
     - [x] wireframe
 - [ ] fix vertex normals like in face normals

@@ -28,8 +28,7 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 
 void Renderer::Init()
 {
-	ambientIntensity = 0.1;
-	shadingSetup = Flat;
+	shadingSetup = Phong;
 }
 
 Renderer::~Renderer(void)
@@ -234,44 +233,44 @@ bool isInside(vec3 pt, vec3 v1, vec3 v2, vec3 v3)
 	return !(has_neg && has_pos);
 }
 
-GLfloat Renderer::calculateAmbient(Material& mat)
+vec3 Renderer::calculateAmbient(Material& mat)
 {
-	GLfloat Iambient = 0.0;
+	vec3 Iambient(0.0, 0.0, 0.0);
 	for (int l = 0; l < sceneLights->size(); l++)
 	{
-		Iambient += max(0.0, mat.ambientCoeficient * sceneLights->at(l)->ambientIntensity);
+		Iambient += sceneLights->at(l)->color * max(0.0, mat.ambientCoeficient * sceneLights->at(l)->ambientIntensity);
 	}
 	return Iambient;
 }
 
-GLfloat Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
+vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
 {
-	GLfloat Idiffuse = 0.0;
+	vec3 Idiffuse(0.0, 0.0, 0.0);
 	vec3 dirToLight;
 	for (int l = 0; l < sceneLights->size(); l++)
 	{
 		dirToLight = sceneLights->at(l)->position - pointInWorld;
 		GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
-		Idiffuse += max(0.0, mat.diffuseCoeficient * dotProd * sceneLights->at(l)->diffuseIntensity);
+		Idiffuse += sceneLights->at(l)->color * max(0.0, mat.diffuseCoeficient * dotProd * sceneLights->at(l)->diffuseIntensity);
 	}
 	return Idiffuse;
 }
 
-GLfloat Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
+vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
 {
-	GLfloat Ispecular = 0.0;
-	vec3 dirToLight, reflected;
+	vec3 Ispecular(0.0, 0.0, 0.0);
+	vec3 dirFromLight, reflected;
 	for (int l = 0; l < sceneLights->size(); l++)
 	{
-		dirToLight = normalize(pointInWorld - sceneLights->at(l)->position);
-		//if (dot(dirToLight, normalInWorld) > 0)
-		//	continue;
-		reflected = dirToLight - 2.0 * dot(dirToLight, normalInWorld) * normalInWorld;
+		normalInWorld = normalize(normalInWorld);
+		dirFromLight = pointInWorld - sceneLights->at(l)->position;
+		reflected = dirFromLight - 2.0 * dot(dirFromLight, normalInWorld) * normalInWorld;
 		vec3 dirToViewer = vec3(viewerPos.x, viewerPos.y, viewerPos.z) - pointInWorld;
-		dirToViewer = dirToViewer * -1;
 		GLfloat dotProd = dot(normalize(reflected), normalize(dirToViewer));
+		if (dotProd <= 0)
+			continue;
 		dotProd = pow(dotProd, mat.shininessCoeficient);
-		Ispecular += max(0.0, mat.specularCoeficient * dotProd * sceneLights->at(l)->specularIntensity);
+		Ispecular += sceneLights->at(l)->color * max(0.0, mat.specularCoeficient * dotProd * sceneLights->at(l)->specularIntensity);
 	}
 	return Ispecular;
 }
@@ -334,10 +333,6 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 
 	else if (shadingSetup == Flat)
 	{
-		vec3 eyeInWorld = homo2noHomo(viewerPos);
-		GLfloat Idiffuse = 0.0;
-		GLfloat Itot = 0.0;
-
 		for (int i = 0; i < modelVertices.size(); i++)
 		{
 			vec4 p0 = modelVertices[i];
@@ -367,21 +362,16 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 
 			GLfloat zValue;
 			vec3 alpha;
-			vec3 pointInWorld;
-			vec3 normalInWorld;
+			vec3 pointInWorld = vec3(np0 + np1 + np2) / 3.0;
+			vec3 normalInWorld = vec3(modelFaceNormals[i].x, modelFaceNormals[i].y, modelFaceNormals[i].z);
 			vec3 Color;
 
-			// find color
-			// point in world
-			pointInWorld = (np0 + np1 + np2)/3.0;
-			// normal in world
-			normalInWorld = vec3(modelFaceNormals[i].x, modelFaceNormals[i].y, modelFaceNormals[i].z);
-			// lights in world
-			//Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
-			Idiffuse = calculateSpecular(pointInWorld, normalInWorld, mat);
+			vec3 Iambient = calculateAmbient(mat);
+			vec3 Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
+			vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
 			
-			Itot = Idiffuse;
-			Color = mat.color * Idiffuse;
+			vec3 Itot = Idiffuse + Idiffuse + Ispecular;
+			Color = (mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
 
 			for (int y = yMin; y <= yMax; y++)
 			{
@@ -451,11 +441,12 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			{
 				pointInWorld = homo2noHomo(modelVertices[i + c]);
 				normalInWorld = vec3(modelVertexNormals[i + c].x, modelVertexNormals[i + c].y, modelVertexNormals[i + c].z);
-				GLfloat Iambient = 0*calculateAmbient(mat);
-				GLfloat Idiffuse = 0*calculateDiffusion(pointInWorld, normalInWorld, mat);
-				GLfloat Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
-				//cout << "light: " << Iambient <<" "<< Idiffuse <<" "<< Ispecular << endl;
-				Colors[c] = mat.color * (Iambient + Idiffuse + Ispecular);
+				vec3 Iambient = calculateAmbient(mat);
+				vec3 Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
+				vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
+
+				vec3 Itot = Iambient + Idiffuse + Ispecular;
+				Colors[c] = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
 			}
 
 			for (int y = yMin; y <= yMax; y++)
@@ -485,9 +476,6 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 	else if (shadingSetup == Phong)
 	{
 		vec3 eyeInWorld = homo2noHomo(viewerPos);
-		GLfloat Iambient = 0.0;
-		GLfloat Idiffuse = 0.0;
-		GLfloat Ispeculat = 0.0;
 		GLfloat Itot = 0.0;
 
 		for (int i = 0; i < modelVertices.size(); i++)
@@ -541,11 +529,13 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						pointInWorld = alpha.x * np0 + alpha.y * np1 + alpha.z * np2;
 						normalInWorld = alpha.x * normals[0] + alpha.y * normals[1] + alpha.z * normals[2];
 
-						GLfloat Iambient = calculateAmbient(mat);
-						GLfloat Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
-						GLfloat Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
+						vec3 Iambient = calculateAmbient(mat);
+						vec3 Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
+						vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
 
-						Color = mat.color * (Iambient + Idiffuse + 0*Ispecular);
+						vec3 Itot = Iambient + Idiffuse + Ispecular;
+						
+						Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
 
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{

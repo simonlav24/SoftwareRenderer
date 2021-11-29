@@ -56,7 +56,7 @@ void Scene::draw()
 	for (int i = 0; i < lights.size(); i++)
 	{
 		vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
-		m_renderer->drawLightIndicator(lightPos, vec3(1.0, 1.0, 1.0));
+		m_renderer->drawLightIndicator(lightPos, lights[i]->color);
 	}
 	
 	drawOriginPoint();
@@ -443,4 +443,18 @@ void Scene::switchActiveLight()
 		return;
 	}
 	activeLight = (activeLight + 1) % lights.size();
+}
+
+void Scene::changeLightColor(vec3 color)
+{
+	if (activeLight == -1)
+		return;
+	lights[activeLight]->color = color;
+}
+
+void Scene::changeModelColor(vec3 color)
+{
+	if (activeModel == -1)
+		return;
+	static_cast<MeshModel*>(models[activeModel])->mat.color = color;
 }

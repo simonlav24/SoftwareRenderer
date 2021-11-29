@@ -28,6 +28,7 @@
 #define MODEL_CUBE 1
 #define MODEL_SWITCH 2 
 #define MODEL_DELETE 3 
+#define MODEL_CHANGE_COLOR 4
 
 #define FILE_OPEN 1
 #define MAIN_DEMO 1
@@ -61,6 +62,7 @@
 #define LIGHT_ADD 0
 #define LIGHT_DELETE 1
 #define LIGHT_SWITCH 2
+#define LIGHT_CHANGE_COLOR 3
 
 #define SHADING_WIRE 0
 #define SHADING_FLAT 1
@@ -238,12 +240,10 @@ void keyboard(unsigned char key, int x, int y)
 		scene->showBoundingBox = !scene->showBoundingBox;
 		break;
 	case '[':
-		renderer->ambientIntensity -= 0.1;
-		cout << "ambientIntensity " << renderer->ambientIntensity << endl;
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient -= 1;
 		break;
 	case ']':
-		renderer->ambientIntensity += 0.1;
-		cout << "ambientIntensity " << renderer->ambientIntensity << endl;
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient += 1;
 		break;
 	}
 }
@@ -312,6 +312,8 @@ void timer(int id)
 
 void modelMenu(int id)
 {
+	CCmdXyzDialog dlg;
+	CFileDialog dlgFile(TRUE, _T(".obj"), NULL, NULL, _T("*.obj|*.*"));
 	switch (id)
 	{
 	case MODEL_CUBE:
@@ -324,11 +326,16 @@ void modelMenu(int id)
 		scene->deleteActiveModel();
 		break;
 	case MODEL_OPEN:
-		CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("*.obj|*.*"));
-		if (dlg.DoModal() == IDOK)
+		if (dlgFile.DoModal() == IDOK)
 		{
-			std::string s((LPCTSTR)dlg.GetPathName());
-			scene->loadOBJModel((LPCTSTR)dlg.GetPathName());
+			std::string s((LPCTSTR)dlgFile.GetPathName());
+			scene->loadOBJModel((LPCTSTR)dlgFile.GetPathName());
+		}
+		break;
+	case MODEL_CHANGE_COLOR:
+		if (dlg.DoModal() == IDOK) {
+			vec3 v = dlg.GetXYZ();
+			scene->changeModelColor(v);
 		}
 		break;
 	}
@@ -343,7 +350,7 @@ void mainMenu(int id)
 		scene->drawDemo();
 		break;
 	case MAIN_ABOUT:
-		AfxMessageBox(_T("Computer Graphics"));
+		AfxMessageBox(_T("Simon's 3D Software Renderer"));
 		break;
 	case MAIN_CAMERA_SWITCH:
 		scene->switchActiveCamera();
@@ -430,6 +437,7 @@ void showMenu(int id)
 
 void lightMenu(int id)
 {
+	CCmdXyzDialog dlg;
 	switch (id)
 	{
 	case LIGHT_ADD:
@@ -440,6 +448,16 @@ void lightMenu(int id)
 		break;
 	case LIGHT_SWITCH:
 		scene->switchActiveLight();
+		break;
+	case LIGHT_CHANGE_COLOR:
+		
+		if (dlg.DoModal() == IDOK) {
+			string command = dlg.GetCmd();
+			vec3 v = dlg.GetXYZ();
+			scene->changeLightColor(v);
+		}
+		
+		break;
 	}
 }
 
@@ -501,6 +519,7 @@ void initMenu()
 	glutAddMenuEntry("Open obj file", MODEL_OPEN);
 	glutAddMenuEntry("Load Primitive Cube", MODEL_CUBE);
 	glutAddMenuEntry("Switch Model", MODEL_SWITCH);
+	glutAddMenuEntry("Change Color", MODEL_CHANGE_COLOR);
 	glutAddMenuEntry("Delete Model", MODEL_DELETE);
 
 	int menuFrame = glutCreateMenu(frameStateMenu);
@@ -532,6 +551,7 @@ void initMenu()
 
 	int menuLight = glutCreateMenu(lightMenu);
 	glutAddMenuEntry("Add Light", LIGHT_ADD);
+	glutAddMenuEntry("Change Color", LIGHT_CHANGE_COLOR);
 	glutAddMenuEntry("Switch Light", LIGHT_SWITCH);
 	glutAddMenuEntry("Delete Light", LIGHT_DELETE);
 
