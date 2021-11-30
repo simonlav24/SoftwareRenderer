@@ -14,6 +14,7 @@ class Renderer
 {
 	float *m_outBuffer; // 3*width*height
 	float *m_zbuffer; // width*height
+	float *m_blurBuffer;
 	int m_width, m_height;
 
 	void CreateBuffers(int width, int height);
@@ -34,6 +35,9 @@ public:
 	void Init();
 	
 	mat4 ProjCam;
+
+	vec3 get_at(int buffer, int x, int y);
+	void set_at(int buffer, int x, int y, vec3 color, bool relative=false);
 
 	void SetCameraTransform(const mat4& cTransform);
 	void SetProjection(const mat4& projection);
@@ -77,4 +81,6 @@ public:
 
 	vec2 getDims();
 	LightSetup shadingSetup;
+
+	void postProccess();
 };

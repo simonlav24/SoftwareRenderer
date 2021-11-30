@@ -13,6 +13,10 @@
 
 #define viewPort(a) vec3((m_width / 2.0) * (a.x + 1), (m_height / 2.0) * (a.y + 1), a.z)
 
+#define OUT_BUFFER 0 
+#define Z_BUFFER 1 
+#define BLUR_BUFFER 2
+
 Renderer::Renderer() :m_width(DEFAULT_DIMS), m_height(DEFAULT_DIMS)
 {
 	InitOpenGLRendering();
@@ -45,6 +49,7 @@ void Renderer::CreateBuffers(int width, int height)
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
 	m_zbuffer = new float[m_width * m_height];
+	m_blurBuffer = new float[3 * m_width * m_height];
 }
 
 void Renderer::clearBuffer()
@@ -238,7 +243,9 @@ vec3 Renderer::calculateAmbient(Material& mat)
 	vec3 Iambient(0.0, 0.0, 0.0);
 	for (int l = 0; l < sceneLights->size(); l++)
 	{
-		Iambient += sceneLights->at(l)->color * max(0.0, mat.ambientCoeficient * sceneLights->at(l)->ambientIntensity);
+		Iambient.x += sceneLights->at(l)->color.x * max(0.0, mat.ambientColor.x * sceneLights->at(l)->ambientIntensity);
+		Iambient.y += sceneLights->at(l)->color.y * max(0.0, mat.ambientColor.y * sceneLights->at(l)->ambientIntensity);
+		Iambient.z += sceneLights->at(l)->color.z * max(0.0, mat.ambientColor.z * sceneLights->at(l)->ambientIntensity);
 	}
 	return Iambient;
 }
@@ -251,7 +258,9 @@ vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Mater
 	{
 		dirToLight = sceneLights->at(l)->position - pointInWorld;
 		GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
-		Idiffuse += sceneLights->at(l)->color * max(0.0, mat.diffuseCoeficient * dotProd * sceneLights->at(l)->diffuseIntensity);
+		Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
+		Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
+		Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, mat.diffuseColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
 	}
 	return Idiffuse;
 }
@@ -270,7 +279,9 @@ vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Materi
 		if (dotProd <= 0)
 			continue;
 		dotProd = pow(dotProd, mat.shininessCoeficient);
-		Ispecular += sceneLights->at(l)->color * max(0.0, mat.specularCoeficient * dotProd * sceneLights->at(l)->specularIntensity);
+		Ispecular.x += sceneLights->at(l)->color.x * max(0.0, mat.specularColor.x * dotProd * sceneLights->at(l)->specularIntensity);
+		Ispecular.y += sceneLights->at(l)->color.y * max(0.0, mat.specularColor.y * dotProd * sceneLights->at(l)->specularIntensity);
+		Ispecular.z += sceneLights->at(l)->color.z * max(0.0, mat.specularColor.z * dotProd * sceneLights->at(l)->specularIntensity);
 	}
 	return Ispecular;
 }
@@ -754,4 +765,109 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 	glutSwapBuffers();
 	a = glGetError();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+vec3 Renderer::get_at(int buffer, int x, int y)
+{
+	float* readBuffer;
+	switch (buffer)
+	{
+	case OUT_BUFFER:
+		readBuffer = m_outBuffer;
+		break;
+	case BLUR_BUFFER:
+		readBuffer = m_blurBuffer;
+		break;
+	}
+	vec3 color;
+	color.x = readBuffer[INDEX(m_width, x, y, 0)];
+	color.y = readBuffer[INDEX(m_width, x, y, 1)];
+	color.z = readBuffer[INDEX(m_width, x, y, 2)];
+	return color;
+}
+
+void Renderer::set_at(int buffer, int x, int y, vec3 color, bool relative)
+{
+	float* writeBuffer;
+	switch (buffer)
+	{
+	case OUT_BUFFER:
+		writeBuffer = m_outBuffer;
+		break;
+	case BLUR_BUFFER:
+		writeBuffer = m_blurBuffer;
+		break;
+	}
+	if (relative)
+	{
+		writeBuffer[INDEX(m_width, x, y, 0)] = min(writeBuffer[INDEX(m_width, x, y, 0)] + color.x, 1.0);
+		writeBuffer[INDEX(m_width, x, y, 1)] = min(writeBuffer[INDEX(m_width, x, y, 1)] + color.y, 1.0);
+		writeBuffer[INDEX(m_width, x, y, 2)] = min(writeBuffer[INDEX(m_width, x, y, 2)] + color.z, 1.0);
+	}
+	else
+	{
+		writeBuffer[INDEX(m_width, x, y, 0)] = color.x;
+		writeBuffer[INDEX(m_width, x, y, 1)] = color.y;
+		writeBuffer[INDEX(m_width, x, y, 2)] = color.z;
+	}
+}
+
+void Renderer::postProccess()
+{
+	return;
+	GLfloat threshhold = 0.5;
+	vec3 black(0.0, 0.0, 0.0);
+	// get brightest pixels
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			// brightness formula (ITU BT.709)
+			vec3 color = get_at(OUT_BUFFER, x, y);
+			GLfloat brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+			if (brightness >= threshhold)
+			{
+				set_at(BLUR_BUFFER, x, y, color);
+			}
+			else
+			{
+				set_at(BLUR_BUFFER, x, y, black);
+			}
+		}
+	}
+	
+	// gaussian blur them
+
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			// if on corners
+			if (x == 0 || y == 0 || x == m_width - 1 || y == m_height - 1)
+			{
+				// skip for now
+				continue;
+			}
+			vec3 value = get_at(BLUR_BUFFER, x - 1, y) + get_at(BLUR_BUFFER, x - 1, y - 1) + get_at(BLUR_BUFFER, x, y - 1);
+			value += get_at(BLUR_BUFFER, x + 1, y - 1) + get_at(BLUR_BUFFER, x + 1, y) + get_at(BLUR_BUFFER, x + 1, y + 1);
+			value += get_at(BLUR_BUFFER, x, y + 1) + get_at(BLUR_BUFFER, x - 1, y + 1) + get_at(BLUR_BUFFER, x, y);
+			value *= 1.0 / 9.0;
+
+			set_at(OUT_BUFFER, x, y, value, true);
+		}
+	}
+
+	// add them on top of m_outBuffer
+
+
+	if (true)
+	{
+		float* temp = m_outBuffer;
+		m_outBuffer = m_blurBuffer;
+		m_blurBuffer = temp;
+	}
+	
+
 }

@@ -10,6 +10,7 @@ using namespace std;
 
 enum transformFrame { world, model, camera, light };
 enum transformMode { position, scale, rotation };
+enum materialPropertie {color, ambient, diffuse, specular, shine};
 
 class Model {
 protected:
@@ -83,7 +84,8 @@ public:
 	// models
 	void transformActiveModel(const mat4& transform, bool scalling = false);
 	void loadOBJModel(string fileName);
-	void changeModelColor(vec3 color);
+	void changeMaterial(materialPropertie prop, vec3 values);
+	vec3 getMaterial(materialPropertie prop);
 
 	// cameras
 	void addCamera();

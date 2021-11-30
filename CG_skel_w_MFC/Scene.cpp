@@ -61,6 +61,8 @@ void Scene::draw()
 	
 	drawOriginPoint();
 
+	// post proccessing
+	m_renderer->postProccess();
 	m_renderer->SwapBuffers();
 }
 
@@ -452,9 +454,52 @@ void Scene::changeLightColor(vec3 color)
 	lights[activeLight]->color = color;
 }
 
-void Scene::changeModelColor(vec3 color)
+void Scene::changeMaterial(materialPropertie prop, vec3 values)
 {
 	if (activeModel == -1)
 		return;
-	static_cast<MeshModel*>(models[activeModel])->mat.color = color;
+	switch (prop)
+	{
+	case materialPropertie::color:
+		static_cast<MeshModel*>(models[activeModel])->mat.color = values;
+		break;
+	case materialPropertie::ambient:
+		static_cast<MeshModel*>(models[activeModel])->mat.ambientColor = values;
+		break;
+	case materialPropertie::diffuse:
+		static_cast<MeshModel*>(models[activeModel])->mat.diffuseColor = values;
+		break;
+	case materialPropertie::specular:
+		static_cast<MeshModel*>(models[activeModel])->mat.specularColor = values;
+		break;
+	case materialPropertie::shine:
+		static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient = values.x;
+		break;
+	}
+}
+
+vec3 Scene::getMaterial(materialPropertie prop)
+{
+	if (activeModel == -1)
+		return vec3(-1, -1, -1);
+	vec3 result;
+	switch (prop)
+	{
+	case materialPropertie::color:
+		result = static_cast<MeshModel*>(models[activeModel])->mat.color;
+		break;
+	case materialPropertie::ambient:
+		result = static_cast<MeshModel*>(models[activeModel])->mat.ambientColor;
+		break;
+	case materialPropertie::diffuse:
+		result = static_cast<MeshModel*>(models[activeModel])->mat.diffuseColor;
+		break;
+	case materialPropertie::specular:
+		result = static_cast<MeshModel*>(models[activeModel])->mat.specularColor;
+		break;
+	case materialPropertie::shine:
+		result.x = static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient;
+		break;
+	}
+	return result;
 }

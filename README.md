@@ -40,11 +40,16 @@
     - [x] color of light
     - [ ] parallel
     - [x] point
+    - [ ] ambient light source
 - [ ] Renderer
+  - [ ] different color for ambient, diffuse, specular (???)
   - [x] z-buffer
   - [x] flat, gouraud, phong shading user switchable
     - [x] flat
     - [x] gouraud
     - [x] phong
     - [x] wireframe
-- [ ] fix vertex normals like in face normals
+- [ ] fix vertex normals like in face normal
+- [ ] gaussian blur light bloom
+- [ ] fog
+- [ ] super sampling anti aliasing

@@ -22,11 +22,13 @@ public:
 
     enum { IDD = IDD_INPUTDIALOG };
 
+    CString mTitle;
+
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);
 
-private:
-    CString mTitle;
+
+    
 };
 
 // ----------------------
@@ -53,6 +55,30 @@ protected:
 };
 
 // ----------------------
+//    Class CFloatDialog
+// ----------------------
+
+class CFloatDialog : public CInputDialog
+{
+public:
+    CFloatDialog(CString title = "Input Dialog");
+    virtual ~CFloatDialog();
+
+    float Getfloat();
+    void insertData(float data);
+
+protected:
+    float mfloat;
+    CEdit mfloatEdit;
+
+    virtual void DoDataExchange(CDataExchange* pDX);
+
+    afx_msg int OnCreate(LPCREATESTRUCT lpcs);
+    afx_msg void OnPaint();
+    DECLARE_MESSAGE_MAP()
+};
+
+// ----------------------
 //    Class CXyzDialog
 // ----------------------
 
@@ -61,7 +87,36 @@ class CXyzDialog : public CInputDialog
 public:
     CXyzDialog(CString title = "Input Dialog");
     virtual ~CXyzDialog();
+    void insertData(vec3 data);
+    vec3 GetXYZ();
 
+protected:
+    float mX;
+    float mY;
+    float mZ;
+    CEdit mXEdit;
+    CEdit mYEdit;
+    CEdit mZEdit;
+    
+    
+    virtual void DoDataExchange(CDataExchange* pDX);
+
+    afx_msg int OnCreate (LPCREATESTRUCT lpcs);
+    afx_msg void OnPaint();
+    DECLARE_MESSAGE_MAP()
+};
+
+
+// ----------------------
+//    Class CRGBDialog
+// ----------------------
+
+class CRGBDialog : public CInputDialog
+{
+public:
+    CRGBDialog(CString title = "Input Dialog");
+    virtual ~CRGBDialog();
+    void insertData(vec3 data);
     vec3 GetXYZ();
 
 protected:
@@ -74,7 +129,7 @@ protected:
 
     virtual void DoDataExchange(CDataExchange* pDX);
 
-    afx_msg int OnCreate (LPCREATESTRUCT lpcs);
+    afx_msg int OnCreate(LPCREATESTRUCT lpcs);
     afx_msg void OnPaint();
     DECLARE_MESSAGE_MAP()
 };

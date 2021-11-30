@@ -80,6 +80,9 @@
     <ClInclude Include="InputDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="menus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CG_skel_w_MFC.rc">

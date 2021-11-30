@@ -6,12 +6,15 @@
 struct Material
 {
 	vec3 color;
-	GLfloat ambientCoeficient;
-	GLfloat diffuseCoeficient;
-	GLfloat specularCoeficient;
+	//GLfloat ambientCoeficient;
+	//GLfloat diffuseCoeficient;
+	//GLfloat specularCoeficient;
 	GLfloat shininessCoeficient;
-	Material() :ambientCoeficient(0.1), diffuseCoeficient(0.5), specularCoeficient(0.5),
-		color(0.8, 0.8, 0.8), shininessCoeficient(6.0){}
+	vec3 ambientColor;
+	vec3 diffuseColor;
+	vec3 specularColor;
+	Material() :/*ambientCoeficient(0.1), diffuseCoeficient(0.5), specularCoeficient(0.5),*/
+		color(0.8, 0.8, 0.8), ambientColor(0.1, 0.1, 0.1), diffuseColor(0.5, 0.5, 0.5), specularColor(0.8, 0.8, 0.8), shininessCoeficient(6.0){}
 };
 
 class Light {
