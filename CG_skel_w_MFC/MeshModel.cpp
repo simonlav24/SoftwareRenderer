@@ -226,9 +226,9 @@ vec3 transformPoint(vec4 point, mat4 m, vec2 rendererDims)
 	return viewPort(rendererDims, homo2noHomo(m * point));
 }
 
-void MeshModel::drawWorldAxis(Renderer* r, mat4& projCam)
+void MeshModel::drawWorldAxis(Renderer* r)
 {
-	mat4 Mw = projCam * _world_transform;
+	mat4 Mw = r->ProjCam * _world_transform;
 	vec2 rendererDims = r->getDims();
 
 	vec4 zero = vec4(0, 0, 0, 1);
@@ -255,12 +255,7 @@ void MeshModel::drawWorldAxis(Renderer* r, mat4& projCam)
 	r->drawLine((int)zeroS.x, (int)zeroS.y, (int)zS.x, (int)zS.y, vec3(0, 0, 1));
 }
 
-void MeshModel::drawWorldAxis(Renderer* r, mat4& cTransform, mat4& projection)
-{
-	drawWorldAxis(r, projection * cTransform);
-}
-
-void MeshModel::draw(Renderer* r, mat4& ProjCam)
+void MeshModel::draw(Renderer* r)
 {
 	mat4 normalTransform = _normal_world_transform * _normal_transform;
 	mat4 worldModel = _world_transform * _model_transform;
@@ -293,8 +288,6 @@ void MeshModel::draw(Renderer* r, mat4& ProjCam)
 
 		modelVertexNormals.push_back((vnormal4));
 
-		//fNormals.push_back(normal);
-
 		// transformations pipeline
 		vec3 point = vertex_positions[i];
 
@@ -304,70 +297,12 @@ void MeshModel::draw(Renderer* r, mat4& ProjCam)
 		// multiply by model transformations
 		point4 = worldModel * point4;
 
+		// send to renderer
 		modelVertices.push_back(point4);
-		// convert to non-homogeneous
-		//vec4 nonHomogene = homo2noHomo(point4);
-
-		// view port transform
-		//vec3 screenPoint = viewPort(rendererDims, nonHomogene);
-
-		//triangles.push_back(screenPoint);
 	}
-	r->drawModel(modelVertices, modelFaceNormals, modelVertexNormals, ProjCam, mat);
-	drawWorldAxis(r, ProjCam);
-}
-
-void MeshModel::draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color)
-{
-	vec2 rendererDims = r->getDims();
-	//mat4 M = projection * transpose(cTransform) * _world_t ransform * _model_transform;
-	mat4 M = projection * cTransform * _world_transform * _model_transform;
-
-	mat4 normalTransform = _normal_world_transform * _normal_transform;
-	mat4 centerTransform = _world_transform * _model_transform;
-
-	mat4 camproj = projection * cTransform;
-	mat4 projWorld = projection * cTransform * _world_transform;
-
-	vector<vec3> triangles;
-	vector<vec4> fNormals;
-	for (int i = 0; i < vertexCount; i++)
-	{
-		// backface culling
-		vec4 normal = faceNormals[i / 3];
-		normal.w = 0;
-		normal = normalTransform * normal;
-		vec4 center = centerPoints[i / 3];
-		center = centerTransform * center;
-		vec4 eye = r->viewerPos;
-
-		if (dot(center - eye, normal) > 0.0)
-			continue;
-
-		fNormals.push_back(normal);
-
-		// transformations pipeline
-		vec3 point = vertex_positions[i];
-
-		// convert point to homogeneous
-		vec4 point4(point.x, point.y, point.z, 1);
-
-		// multiply by model transformations
-		point4 = M * point4;
-		
-		// convert to non-homogeneous
-		vec4 nonHomogene = homo2noHomo(point4);
-
-		// view port transform
-		vec3 screenPoint = viewPort(rendererDims, nonHomogene);
-
-		triangles.push_back(screenPoint);
-	}
-
-	r->DrawTriangles(triangles, mat, fNormals);
-
-	// origin point for debugging
-	drawWorldAxis(r, cTransform, projection);
+	r->drawModel(modelVertices, modelFaceNormals, modelVertexNormals, mat);
+	if(showIndicators)
+		drawWorldAxis(r);
 }
 
 vec3 MeshModel::getPosition()

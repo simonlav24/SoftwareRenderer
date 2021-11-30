@@ -279,6 +279,7 @@ void initMenu()
 	glutAddMenuEntry("Toggle Face Normals", SHOW_TOGGLE_FACE_NORMALS);
 	glutAddMenuEntry("Toggle Vertex Normals", SHOW_TOGGLE_VERTEX_NORMALS);
 	glutAddMenuEntry("Toggle Grid", SHOW_TOGGLE_GRID);
+	glutAddMenuEntry("Toggle Indicators", SHOW_TOGGLE_INDICATORS);
 
 	int menuMode = glutCreateMenu(modeStateMenu);
 	glutAddMenuEntry("Position", MODE_POSITION);
@@ -314,6 +315,10 @@ void initMenu()
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
 
+	int menuPost = glutCreateMenu(postProccessMenu);
+	glutAddMenuEntry("Toggle Fog", POST_FOG_TOGGLE);
+	glutAddMenuEntry("Change Fog Color", POST_FOG_COLOR);
+
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
 	glutAddSubMenu("Material", menuMaterial);
@@ -323,6 +328,7 @@ void initMenu()
 	glutAddSubMenu("Light", menuLight);
 	glutAddSubMenu("Shading mode", menuLightSetup);
 	glutAddSubMenu("Show", menuShow);
+	glutAddSubMenu("Post Proccessing", menuPost);
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }

@@ -50,6 +50,7 @@
     - [x] phong
     - [x] wireframe
 - [ ] fix vertex normals like in face normal
+- [ ] fix orthogonal camera backface culling
 - [ ] gaussian blur light bloom
 - [ ] fog
 - [ ] super sampling anti aliasing

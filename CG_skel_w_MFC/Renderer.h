@@ -20,6 +20,11 @@ class Renderer
 	void CreateBuffers(int width, int height);
 	void CreateLocalBuffer();
 
+
+	////// fog
+	bool fogMode;
+	vec3 calculateFog(vec3 color, GLfloat zValue);
+
 	//////////////////////////////
 	// openGL stuff. Don't touch.
 	int border = 200;
@@ -35,6 +40,10 @@ public:
 	void Init();
 	
 	mat4 ProjCam;
+
+	float fogMaxdist = 1.0;
+	float fogMindist = -3.0;
+	vec3  fogColor = vec3(0.3, 0.3, 0.6);
 
 	vec3 get_at(int buffer, int x, int y);
 	void set_at(int buffer, int x, int y, vec3 color, bool relative=false);
@@ -68,7 +77,7 @@ public:
 	void drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color);
 	void drawLine(vec3 a, vec3 b, const vec3& color);
 
-	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, mat4& ProjCam, Material& mat);
+	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, Material& mat);
 
 	void drawPlusSign(vec4 pos, vec3 color);
 	void drawLightIndicator(vec4 pos, vec3 color);
@@ -83,4 +92,5 @@ public:
 	LightSetup shadingSetup;
 
 	void postProccess();
+	void toggleFog();
 };

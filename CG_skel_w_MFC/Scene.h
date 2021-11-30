@@ -10,14 +10,15 @@ using namespace std;
 
 enum transformFrame { world, model, camera, light };
 enum transformMode { position, scale, rotation };
-enum materialPropertie {color, ambient, diffuse, specular, shine};
+enum materialPropertie {color, ambient, diffuse, specular, shine };
 
 class Model {
 protected:
 	virtual ~Model() {}
+	
 public:
-	void virtual draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color)=0;
-	void virtual draw(Renderer* r, mat4& ProjCam)=0;
+	bool showIndicators;
+	void virtual draw(Renderer* r)=0;
 	// multiply by modelTransform matrix
 	//void virtual transformModel(const mat4& trans, bool scalling=false)=0;
 	//void virtual transformWorld(const mat4& trans)=0;
@@ -62,26 +63,23 @@ public:
 
 	vector<vec4> grid;
 
-public:
 	transformFrame tState;
 	transformMode tMode;
-	
+
 	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(model), tMode(position),
-		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false)
+		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false), showIndicators(true)
 		{};
 
 	void draw();
 	void drawOriginPoint();
 	void drawGrid();
 	void drawDemo();
-	
-	void createPrimitive();
+	void toggleIndicators();
 
+	// models
+	void createPrimitive();
 	void switchActiveModel();
 	void deleteActiveModel();
-	void switchActiveCamera();
-	
-	// models
 	void transformActiveModel(const mat4& transform, bool scalling = false);
 	void loadOBJModel(string fileName);
 	void changeMaterial(materialPropertie prop, vec3 values);
@@ -92,9 +90,11 @@ public:
 	void rotateZoomCamera(int dx, int dy, int scroll);
 	void translateCamera(int dx, int dy);
 	void lookAtModel();
+	void switchActiveCamera();
 	void resetCameraPosition();
 	void reshapeCamera(int width, int height);
 	Camera& currentCamera();
+	void setProjCam();
 
 	// lights
 	void addLight();
@@ -110,5 +110,6 @@ public:
 	bool showBoundingBox;
 	bool showFaceNormals;
 	bool showVertexNormals;
+	bool showIndicators;
 	bool showGrid;
 };

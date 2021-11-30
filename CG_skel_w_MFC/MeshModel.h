@@ -39,11 +39,9 @@ public:
 	~MeshModel(void);
 	void loadFile(string fileName);
 	//draw funcs
-	void draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color);
-	void draw(Renderer* r, mat4& ProjCam);
+	void draw(Renderer* r);
 	void drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection);
-	void drawWorldAxis(Renderer* r, mat4& cTransform, mat4& projection);
-	void drawWorldAxis(Renderer* r, mat4& projCam);
+	void drawWorldAxis(Renderer* r);
 	void drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection);
 	void drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projection);
 	// calculate bounding box

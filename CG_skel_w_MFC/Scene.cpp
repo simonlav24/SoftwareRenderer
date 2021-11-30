@@ -19,8 +19,6 @@ void Scene::draw()
 	// clear buffer
 	m_renderer->clearBuffer();
 	m_renderer->sceneLights = &(this->lights);
-	mat4 ProjCam = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
-	m_renderer->ProjCam = ProjCam;
 
 	if(showGrid)
 		drawGrid();
@@ -30,7 +28,7 @@ void Scene::draw()
 	{
 		vec3 color = i == activeModel ? vec3(1.0, 1.0, 1.0) : vec3(0.5, 0.5, 0.5);
 		//models[i]->draw(m_renderer, cameras[activeCamera]->cTransform, cameras[activeCamera]->projection, color);
-		models[i]->draw(m_renderer, ProjCam);
+		models[i]->draw(m_renderer);
 		if (i == activeModel)
 		{
 			if(showBoundingBox)
@@ -43,27 +41,45 @@ void Scene::draw()
 	}
 
 	// for all camreras: draw indicators
-	mat4 m = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
-	for (int i = 0; i < cameras.size(); i++)
-	{
-		if (i == activeCamera)
-			continue;
-		vec4 camPos = viewPort(m_renderer->getDims(), homo2noHomo(m * cameras[i]->Eye));
-		m_renderer->drawPlusSign(camPos, vec3(1.0, 0.0, 0.0));
-	}
+	if (showIndicators) {
+		mat4 m = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
+		for (int i = 0; i < cameras.size(); i++)
+		{
+			if (i == activeCamera)
+				continue;
+			vec4 camPos = viewPort(m_renderer->getDims(), homo2noHomo(m * cameras[i]->Eye));
+			m_renderer->drawPlusSign(camPos, vec3(1.0, 0.0, 0.0));
+		}
 
-	// for all lights: draw indicator
-	for (int i = 0; i < lights.size(); i++)
-	{
-		vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
-		m_renderer->drawLightIndicator(lightPos, lights[i]->color);
+		// for all lights: draw indicator
+		for (int i = 0; i < lights.size(); i++)
+		{
+			vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
+			m_renderer->drawLightIndicator(lightPos, lights[i]->color);
+		}
+
+		drawOriginPoint();
 	}
-	
-	drawOriginPoint();
 
 	// post proccessing
 	m_renderer->postProccess();
 	m_renderer->SwapBuffers();
+}
+
+void Scene::toggleIndicators()
+{
+	showIndicators = !showIndicators;
+	for (int i = 0; i < models.size(); i++)
+	{
+		models[i]->showIndicators = showIndicators;
+	}
+}
+
+void Scene::setProjCam()
+{
+	mat4 ProjCam = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
+	m_renderer->ProjCam = ProjCam;
+	m_renderer->viewerPos = cameras[activeCamera]->Eye;
 }
 
 void Scene::drawOriginPoint()
@@ -157,6 +173,7 @@ void Scene::deleteActiveModel()
 void Scene::switchActiveCamera()
 {
 	activeCamera = (activeCamera + 1) % cameras.size();
+	setProjCam();
 }
 
 void Scene::transformActiveModel(const mat4& transform, bool scalling)
@@ -175,7 +192,7 @@ void Scene::transformActiveModel(const mat4& transform, bool scalling)
 		if (activeCamera == -1) return;
 		cameras[activeCamera]->At = transform * cameras[activeCamera]->At;
 		cameras[activeCamera]->LookAt(cameras[activeCamera]->Eye, cameras[activeCamera]->At, cameras[activeCamera]->Up);
-		m_renderer->viewerPos = cameras[activeCamera]->Eye;
+		setProjCam();
 		break;
 	case light:
 		if (activeLight == -1) return;
@@ -200,10 +217,9 @@ void Scene::addCamera()
 {
 	// add a default cam
 	Camera *camera = new Camera();
-	
 	cameras.push_back(camera);
-
 	activeCamera = cameras.size() - 1;
+	setProjCam();
 }
 
 void Scene::translateCamera(int dx, int dy)
@@ -222,9 +238,8 @@ void Scene::translateCamera(int dx, int dy)
 	eye = Translate(moveDy * 0.1 * -dy) * eye;
 	at = Translate(moveDy * 0.1 * -dy) * at;
 
-	
 	cameras[activeCamera]->LookAt(homo2noHomo(eye), homo2noHomo(at), up);
-	m_renderer->viewerPos = eye;
+	setProjCam();
 }
 
 void Scene::rotateZoomCamera(int dx, int dy, int scroll)
@@ -289,7 +304,7 @@ void Scene::rotateZoomCamera(int dx, int dy, int scroll)
 	}
 
 	cameras[activeCamera]->LookAt(eye, at, up);
-	m_renderer->viewerPos = eye;
+	setProjCam();
 }
 
 void Scene::lookAtModel()
@@ -297,13 +312,13 @@ void Scene::lookAtModel()
 	vec4 at = cameras[activeCamera]->At;
 	vec3 pos = models[activeModel]->getPosition();
 	cameras[activeCamera]->LookAt(cameras[activeCamera]->Eye, pos, cameras[activeCamera]->Up);
-	m_renderer->viewerPos = cameras[activeCamera]->Eye;
+	setProjCam();
 }
 
 void Scene::resetCameraPosition()
 {
 	cameras[activeCamera]->LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	m_renderer->viewerPos = cameras[activeCamera]->Eye;
+	setProjCam();
 }
 
 void Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
@@ -410,6 +425,7 @@ void Scene::reshapeCamera(int width, int height)
 		cameras[activeCamera]->Ortho(left, right, bottom, top, znear, zfar);
 	else
 		cameras[activeCamera]->Frustum(left, right, bottom, top, znear, zfar);
+	setProjCam();
 }
 
 void Scene::addLight()

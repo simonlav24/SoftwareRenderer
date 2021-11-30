@@ -15,6 +15,7 @@
 #define SHOW_TOGGLE_FACE_NORMALS 1
 #define SHOW_TOGGLE_VERTEX_NORMALS 2
 #define SHOW_TOGGLE_GRID 3 
+#define SHOW_TOGGLE_INDICATORS 4
 
 #define TRANSFORM_MODEL 0
 #define TRANSFORM_WORLD 1
@@ -50,6 +51,8 @@
 #define MATERIAL_CHANGE_SPECULAR 3
 #define MATERIAL_CHANGE_SHININESS 4
 
+#define POST_FOG_TOGGLE 0
+#define POST_FOG_COLOR 1
 
 // global variables from main
 extern Scene* scene;
@@ -177,6 +180,9 @@ void showMenu(int id)
 	case SHOW_TOGGLE_GRID:
 		scene->showGrid = !scene->showGrid;
 		break;
+	case SHOW_TOGGLE_INDICATORS:
+		scene->showIndicators = !scene->showIndicators;
+		break;
 	}
 }
 
@@ -213,14 +219,14 @@ void cameraMenu(int id)
 	case CAMERA_ADD_ORTHO:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(0.0, 0.0, 10.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-		renderer->viewerPos = scene->currentCamera().Eye;
 		scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+		scene->setProjCam();
 		break;
 	case CAMERA_ADD_PERSP:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-		renderer->viewerPos = scene->currentCamera().Eye;
 		scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+		scene->setProjCam();
 		break;
 	case CAMERA_SWITCH:
 		scene->switchActiveCamera();
@@ -277,6 +283,51 @@ void materialMenu(int id)
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
 			scene->changeMaterial(ambient, v);
+		}
+		break;
+	case MATERIAL_CHANGE_DIFFUSE:
+		dlg.mTitle = "Pick Color RGB";
+		dlg.insertData(scene->getMaterial(diffuse));
+		if (dlg.DoModal() == IDOK) {
+			vec3 v = dlg.GetXYZ();
+			scene->changeMaterial(ambient, v);
+		}
+		break;
+	case MATERIAL_CHANGE_SPECULAR:
+		dlg.mTitle = "Pick Color RGB";
+		dlg.insertData(scene->getMaterial(specular));
+		if (dlg.DoModal() == IDOK) {
+			vec3 v = dlg.GetXYZ();
+			scene->changeMaterial(specular, v);
+		}
+		break;
+	case MATERIAL_CHANGE_SHININESS:
+		fdlg.mTitle = "Pick Value";
+		fdlg.insertData(scene->getMaterial(shine).x);
+		if (fdlg.DoModal() == IDOK) {
+			float v = fdlg.Getfloat();
+			scene->changeMaterial(shine, v);
+		}
+		break;
+	}
+}
+
+void postProccessMenu(int id)
+{
+	CRGBDialog dlg;
+	CFloatDialog fdlg;
+
+	switch (id)
+	{
+	case POST_FOG_TOGGLE:
+		renderer->toggleFog();
+		break;
+	case POST_FOG_COLOR:
+		dlg.mTitle = "Pick Color RGB";
+		dlg.insertData(scene->getMaterial(ambient));
+		if (dlg.DoModal() == IDOK) {
+			vec3 v = dlg.GetXYZ();
+			renderer->fogColor = v;
 		}
 		break;
 	case MATERIAL_CHANGE_DIFFUSE:

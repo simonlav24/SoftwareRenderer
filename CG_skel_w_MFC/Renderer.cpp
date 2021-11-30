@@ -33,6 +33,7 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 void Renderer::Init()
 {
 	shadingSetup = Phong;
+	fogMode = false;
 }
 
 Renderer::~Renderer(void)
@@ -40,7 +41,13 @@ Renderer::~Renderer(void)
 	DestroyBuffers();
 }
 
+void Renderer::toggleFog() { fogMode = !fogMode; }
 
+vec3 Renderer::calculateFog(vec3 color, GLfloat zValue)
+{
+	GLfloat fogFactor = max(0.0, (fogMaxdist - zValue) / (fogMaxdist - fogMindist));
+	return color * fogFactor + fogColor * (1.0 - fogFactor);
+}
 
 void Renderer::CreateBuffers(int width, int height)
 {
@@ -52,25 +59,32 @@ void Renderer::CreateBuffers(int width, int height)
 	m_blurBuffer = new float[3 * m_width * m_height];
 }
 
-void Renderer::clearBuffer()
-{
-	GLfloat bgColor[2] = { 0.050 , 0.215 };
-	GLfloat color;
-	for (int y = 0; y < m_height; y++)
-	{
-		for (int x = 0; x < m_width; x++)
-		{
-			color = (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
-			m_outBuffer[INDEX(m_width, x, y, 0)] = color; m_outBuffer[INDEX(m_width, x, y, 1)] = color; m_outBuffer[INDEX(m_width, x, y, 2)] = color;
-			m_zbuffer[INDEX_ZB(m_width, x, y)] = 101;
-		}
-	}
-}
-
 void Renderer::DestroyBuffers()
 {
 	delete[] m_outBuffer;
 	delete[] m_zbuffer;
+	delete[] m_blurBuffer;
+}
+
+void Renderer::clearBuffer()
+{
+	GLfloat bgColor[2] = { 0.050 , 0.215 };
+	vec3 color;
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			if (fogMode)
+				color =  fogColor;
+			
+			else
+				color = vec3(1.0, 1.0, 1.0) * (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
+			
+			set_at(OUT_BUFFER, x, y, color);
+			//m_outBuffer[INDEX(m_width, x, y, 0)] = color.x; m_outBuffer[INDEX(m_width, x, y, 1)] = color; m_outBuffer[INDEX(m_width, x, y, 2)] = color;
+			m_zbuffer[INDEX_ZB(m_width, x, y)] = 101;
+		}
+	}
 }
 
 void Renderer::SetDemoBuffer()
@@ -87,14 +101,6 @@ void Renderer::SetDemoBuffer()
 		m_outBuffer[INDEX(m_width,i,256,0)]=1;	m_outBuffer[INDEX(m_width,i,256,1)]=0;	m_outBuffer[INDEX(m_width,i,256,2)]=1;
 
 	}
-}
-
-// method for changing the color of a single pixel
-void Renderer::drawPixel(int x, int y, const vec3& color)
-{
-	if (x < 0 || x > m_width - 1 || y < 0 || y > m_height - 1)
-		return;
-	m_outBuffer[INDEX(m_width, x, y, 0)] = color.x; m_outBuffer[INDEX(m_width, x, y, 1)] = color.y; m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
 }
 
 void Renderer::drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color)
@@ -159,7 +165,7 @@ void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 			{
 				d += 2 * dx;
 			}
-			drawPixel(x, y, color);
+			set_at(OUT_BUFFER, x, y, color);
 		}
 	}
 	else
@@ -183,7 +189,7 @@ void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 			{
 				d += 2 * dy;
 			}
-			drawPixel(x, y, color);
+			set_at(OUT_BUFFER, x, y, color);
 		}
 	}
 }
@@ -286,49 +292,7 @@ vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Materi
 	return Ispecular;
 }
 
-void Renderer::drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat)
-{
-	int yMax = max(p0.y, max(p1.y, p2.y));
-	int yMin = min(p0.y, min(p1.y, p2.y));
-
-	int xMax = max(p0.x, max(p1.x, p2.x));
-	int xMin = min(p0.x, min(p1.x, p2.x));
-	
-	if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
-		return;
-
-	vec3 c1(1.0, 0, 0);
-	vec3 c2(0, 1.0, 0);
-	vec3 c3(0, 0, 1.0);
-
-	vec3 alpha;
-	vec3 Color;
-
-	GLfloat zValue;
-
-	for (int y = yMin; y <= yMax; y++)
-	{
-		for (int x = xMin; x <= xMax; x++)
-		{
-			if (isInside(vec3(x, y, 0), p0, p1, p2))
-			{
-				alpha = findCoeficients(vec3(x, y, 0), p0, p1, p2);
-				zValue = alpha.x * p0.z + alpha.y * p1.z + alpha.z * p2.z;
-				//if(rand() > RAND_MAX - 100)
-				//	cout << zValue << " " << m_zbuffer[INDEX_ZB(m_width, x, y)] << endl;
-				vec3 Color = alpha.x * c1 + alpha.y * c2 + alpha.z * c3;
-				if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
-				{
-					m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-					drawPixel(x, y, Color);
-				}
-
-			}
-		}
-	}
-}
-
-void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, mat4& ProjCam, Material& mat)
+void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, Material& mat)
 {
 	if (shadingSetup == WireFrame)
 	{
@@ -395,7 +359,8 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{
 							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							drawPixel(x, y, Color);
+							if (fogMode) Color = calculateFog(Color, zValue);
+							set_at(OUT_BUFFER, x, y, Color);
 						}
 
 					}
@@ -474,7 +439,8 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{
 							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							drawPixel(x, y, Color);
+							if (fogMode) Color = calculateFog(Color, zValue);
+							set_at(OUT_BUFFER, x, y, Color);
 						}
 
 					}
@@ -551,7 +517,8 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{
 							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							drawPixel(x, y, Color);
+							if (fogMode) Color = calculateFog(Color, zValue);
+							set_at(OUT_BUFFER, x, y, Color);
 						}
 
 					}
@@ -562,88 +529,6 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 	}
 }
 
-void Renderer::DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4& faceNormal)
-{
-	int yMax = max(p0.y, max(p1.y, p2.y));
-	int yMin = min(p0.y, min(p1.y, p2.y));
-
-	int xMax = max(p0.x, max(p1.x, p2.x));
-	int xMin = min(p0.x, min(p1.x, p2.x));
-
-	if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
-		return;
-
-	vec3 c1(1.0, 0, 0);
-	vec3 c2(0, 1.0, 0);
-	vec3 c3(0, 0, 1.0);
-
-	vec3 alpha;
-	vec3 Color;
-
-	GLfloat zValue;
-
-	for (int y = yMin; y <= yMax; y++)
-	{
-		for (int x = xMin; x <= xMax; x++)
-		{
-			if (isInside(vec3(x, y, 0), p0, p1, p2))
-			{
-				alpha = findCoeficients(vec3(x, y, 0), p0, p1, p2);
-				zValue = alpha.x * p0.z + alpha.y * p1.z + alpha.z * p2.z;
-				
-				if (zValue > m_zbuffer[INDEX_ZB(m_width, x, y)])
-					continue;
-				/*vec4 point = vec4(x, y, zValue, 0);
-				viewerPos.w = 0;
-				vec4 dirToViewer = viewerPos - point;
-				
-				// ambient
-				GLfloat Ia = mat.ambientCoeficient * ambientIntensity; //--------------> L_a (ambient light intensity) needs a place to be
-
-				// diffuse
-				GLfloat Id = 0.0;
-				for (int i = 0; i < sceneLights->size(); i++)
-				{
-					vec4 lightPos = vec4(sceneLights->at(i)->position); // multiply by camera and projection and screen view port
-					lightPos = camProj * lightPos;
-					lightPos = homo2noHomo(lightPos);
-					lightPos = viewPort(lightPos);
-					lightPos.w = 0;
-					// light pos is correct on screen
-
-					vec3 light = vec3(lightPos.x, lightPos.y, lightPos.z);
-					vec3 point3 = vec3(point.x, point.y, point.z);
-					vec3 n = normalize(cross(p2 - p0, p1 - p0));
-					//drawPixel(point3.x, point3.y, vec3(1.0, 0.0, 0.0));
-					//drawLine(point3, point3 + n, vec3(1.0, 0.0, 0.0));
-					//SwapBuffers();
-					vec3 dirToLight3 = light - point3;
-					vec4 dirToLight = lightPos - point;
-					faceNormal.w = 0;
-
-					
-					vec4 ngot = normalize(faceNormal);
-
-					GLfloat dotProd = max(dot(normalize(dirToLight3), n), 0.0);
-					//cout << dotProd << endl;
-					Id += mat.diffuseCoeficient * dotProd * 100.0;
-				}
-				
-
-
-
-
-
-				Color = mat.color * Id;*/
-				
-				m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-				drawPixel(x, y, Color);
-				
-
-			}
-		}
-	}
-}
 void Renderer::drawTrianglesWire(const std::vector<vec3>& vertices, Material& mat)
 {
 	for (int i = 0; i < vertices.size(); i += 3)
@@ -651,6 +536,7 @@ void Renderer::drawTrianglesWire(const std::vector<vec3>& vertices, Material& ma
 		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat.color);
 	}
 }
+
 void Renderer::drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
 {
 	drawLine(p0, p1, color);
@@ -780,6 +666,9 @@ vec3 Renderer::get_at(int buffer, int x, int y)
 	case BLUR_BUFFER:
 		readBuffer = m_blurBuffer;
 		break;
+	case Z_BUFFER:
+		readBuffer = m_zbuffer;
+		break;
 	}
 	vec3 color;
 	color.x = readBuffer[INDEX(m_width, x, y, 0)];
@@ -790,6 +679,8 @@ vec3 Renderer::get_at(int buffer, int x, int y)
 
 void Renderer::set_at(int buffer, int x, int y, vec3 color, bool relative)
 {
+	if (x < 0 || x > m_width - 1 || y < 0 || y > m_height - 1)
+		return;
 	float* writeBuffer;
 	switch (buffer)
 	{
@@ -799,6 +690,8 @@ void Renderer::set_at(int buffer, int x, int y, vec3 color, bool relative)
 	case BLUR_BUFFER:
 		writeBuffer = m_blurBuffer;
 		break;
+	case Z_BUFFER:
+		writeBuffer = m_zbuffer;
 	}
 	if (relative)
 	{
