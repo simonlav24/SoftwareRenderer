@@ -21,9 +21,10 @@ class Renderer
 	void CreateLocalBuffer();
 
 
-	////// fog
+	////// post
 	bool fogMode;
 	vec3 calculateFog(vec3 color, GLfloat zValue);
+	bool lightBloom;
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
@@ -38,12 +39,14 @@ public:
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
-	
+
 	mat4 ProjCam;
 
-	float fogMaxdist = 1.0;
-	float fogMindist = -3.0;
-	vec3  fogColor = vec3(0.3, 0.3, 0.6);
+	bool SSAA;
+
+	float fogMaxdist;
+	float fogMindist;
+	vec3  fogColor;
 
 	vec3 get_at(int buffer, int x, int y);
 	void set_at(int buffer, int x, int y, vec3 color, bool relative=false);
@@ -80,7 +83,7 @@ public:
 	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, Material& mat);
 
 	void drawPlusSign(vec4 pos, vec3 color);
-	void drawLightIndicator(vec4 pos, vec3 color);
+	void drawLightIndicator(vec4 pos, vec3 color, vec4 direction);
 
 	vec3 calculateAmbient(Material& mat);
 	vec3 calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat);

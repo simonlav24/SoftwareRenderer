@@ -3,6 +3,8 @@
 #include "MeshModel.h"
 #include <string>
 
+#include <chrono>
+
 #define viewPort(dims, a) vec3((dims.x / 2.0) * (a.x + 1), (dims.y / 2.0) * (a.y + 1), a.z)
 
 using namespace std;
@@ -16,18 +18,23 @@ void Scene::loadOBJModel(string fileName)
 
 void Scene::draw()
 {
+	using std::chrono::high_resolution_clock;
+	using std::chrono::duration_cast;
+	using std::chrono::duration;
+	using std::chrono::milliseconds;
+	
+	static int timeCount = 0;
+	timeCount += 1;
 	// clear buffer
+	auto t1 = high_resolution_clock::now();
 	m_renderer->clearBuffer();
-	m_renderer->sceneLights = &(this->lights);
-
+	
 	if(showGrid)
 		drawGrid();
 
 	// for all models: draw yourself
 	for (int i = 0; i < models.size(); i++)
 	{
-		vec3 color = i == activeModel ? vec3(1.0, 1.0, 1.0) : vec3(0.5, 0.5, 0.5);
-		//models[i]->draw(m_renderer, cameras[activeCamera]->cTransform, cameras[activeCamera]->projection, color);
 		models[i]->draw(m_renderer);
 		if (i == activeModel)
 		{
@@ -39,8 +46,10 @@ void Scene::draw()
 				static_cast<MeshModel*>(models[i])->drawVertexNormals(m_renderer, cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 		}
 	}
+	
 
 	// for all camreras: draw indicators
+	
 	if (showIndicators) {
 		mat4 m = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
 		for (int i = 0; i < cameras.size(); i++)
@@ -55,15 +64,24 @@ void Scene::draw()
 		for (int i = 0; i < lights.size(); i++)
 		{
 			vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
-			m_renderer->drawLightIndicator(lightPos, lights[i]->color);
+			vec4 lightDir = viewPort(m_renderer->getDims(), homo2noHomo(m * (lights[i]->position + 2.0 * lights[i]->direction)));
+			if(lights[i]->lightType == point)
+				m_renderer->drawLightIndicator(lightPos, lights[i]->color, vec3(0.0, 0.0, 0.0));
+			else if (lights[i]->lightType == parallel)
+				m_renderer->drawLightIndicator(lightPos, lights[i]->color, lightDir);
 		}
 
 		drawOriginPoint();
 	}
-
 	// post proccessing
+	
 	m_renderer->postProccess();
+	
 	m_renderer->SwapBuffers();
+	
+	auto t2 = high_resolution_clock::now();
+	duration<double, std::milli> ms_double = t2 - t1;
+	cout << ms_double.count() << " " << timeCount << endl;
 }
 
 void Scene::toggleIndicators()
@@ -428,10 +446,10 @@ void Scene::reshapeCamera(int width, int height)
 	setProjCam();
 }
 
-void Scene::addLight()
+void Scene::addLight(LightType type)
 {
-	// add a default cam
-	Light* light = new Light();
+	// add a default light
+	Light* light = new Light(type);
 
 	lights.push_back(light);
 	activeLight = lights.size() - 1;
@@ -470,50 +488,64 @@ void Scene::changeLightColor(vec3 color)
 	lights[activeLight]->color = color;
 }
 
-void Scene::changeMaterial(materialPropertie prop, vec3 values)
+void Scene::changeLightPosition(vec3 pos)
+{
+	if (activeLight == -1)
+		return;
+	lights[activeLight]->position = pos;
+}
+
+void Scene::changeLightDirection(vec3 dir)
+{
+	if (activeLight == -1)
+		return;
+	lights[activeLight]->direction = dir;
+}
+
+void Scene::changeMaterial(materialProperty prop, vec3 values)
 {
 	if (activeModel == -1)
 		return;
 	switch (prop)
 	{
-	case materialPropertie::color:
+	case materialProperty::color:
 		static_cast<MeshModel*>(models[activeModel])->mat.color = values;
 		break;
-	case materialPropertie::ambient:
+	case materialProperty::ambient:
 		static_cast<MeshModel*>(models[activeModel])->mat.ambientColor = values;
 		break;
-	case materialPropertie::diffuse:
+	case materialProperty::diffuse:
 		static_cast<MeshModel*>(models[activeModel])->mat.diffuseColor = values;
 		break;
-	case materialPropertie::specular:
+	case materialProperty::specular:
 		static_cast<MeshModel*>(models[activeModel])->mat.specularColor = values;
 		break;
-	case materialPropertie::shine:
+	case materialProperty::shine:
 		static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient = values.x;
 		break;
 	}
 }
 
-vec3 Scene::getMaterial(materialPropertie prop)
+vec3 Scene::getMaterial(materialProperty prop)
 {
 	if (activeModel == -1)
 		return vec3(-1, -1, -1);
 	vec3 result;
 	switch (prop)
 	{
-	case materialPropertie::color:
+	case materialProperty::color:
 		result = static_cast<MeshModel*>(models[activeModel])->mat.color;
 		break;
-	case materialPropertie::ambient:
+	case materialProperty::ambient:
 		result = static_cast<MeshModel*>(models[activeModel])->mat.ambientColor;
 		break;
-	case materialPropertie::diffuse:
+	case materialProperty::diffuse:
 		result = static_cast<MeshModel*>(models[activeModel])->mat.diffuseColor;
 		break;
-	case materialPropertie::specular:
+	case materialProperty::specular:
 		result = static_cast<MeshModel*>(models[activeModel])->mat.specularColor;
 		break;
-	case materialPropertie::shine:
+	case materialProperty::shine:
 		result.x = static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient;
 		break;
 	}

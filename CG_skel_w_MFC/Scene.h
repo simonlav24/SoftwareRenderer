@@ -10,11 +10,12 @@ using namespace std;
 
 enum transformFrame { world, model, camera, light };
 enum transformMode { position, scale, rotation };
-enum materialPropertie {color, ambient, diffuse, specular, shine };
+enum materialProperty {color, ambient, diffuse, specular, shine };
 
 class Model {
 protected:
 	virtual ~Model() {}
+	
 	
 public:
 	bool showIndicators;
@@ -68,7 +69,9 @@ public:
 
 	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(model), tMode(position),
 		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false), showIndicators(true)
-		{};
+		{
+		m_renderer->sceneLights = &(this->lights);
+	};
 
 	void draw();
 	void drawOriginPoint();
@@ -82,8 +85,8 @@ public:
 	void deleteActiveModel();
 	void transformActiveModel(const mat4& transform, bool scalling = false);
 	void loadOBJModel(string fileName);
-	void changeMaterial(materialPropertie prop, vec3 values);
-	vec3 getMaterial(materialPropertie prop);
+	void changeMaterial(materialProperty prop, vec3 values);
+	vec3 getMaterial(materialProperty prop);
 
 	// cameras
 	void addCamera();
@@ -97,11 +100,13 @@ public:
 	void setProjCam();
 
 	// lights
-	void addLight();
+	void addLight(LightType type=point);
 	void moveLight(vec3 pos);
 	void deleteActiveLight();
 	void switchActiveLight();
 	void changeLightColor(vec3 color);
+	void changeLightPosition(vec3 pos);
+	void changeLightDirection(vec3 dir);
 
 	int activeModel;
 	int activeLight;

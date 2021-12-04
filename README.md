@@ -38,11 +38,11 @@
   - [ ] light source
     - [x] light class
     - [x] color of light
-    - [ ] parallel
+    - [x] parallel
     - [x] point
     - [ ] ambient light source
 - [ ] Renderer
-  - [ ] different color for ambient, diffuse, specular (???)
+  - [x] different color for ambient, diffuse, specular
   - [x] z-buffer
   - [x] flat, gouraud, phong shading user switchable
     - [x] flat
@@ -52,5 +52,6 @@
 - [ ] fix vertex normals like in face normal
 - [ ] fix orthogonal camera backface culling
 - [ ] gaussian blur light bloom
-- [ ] fog
-- [ ] super sampling anti aliasing
+- [ ] fog (menu and controling far, near)
+- [ ] super sampling anti aliasing (menu) :point_right: check if a better way exists :point_right:why picture brighter ?
+

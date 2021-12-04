@@ -3,25 +3,26 @@
 #include "mat.h"
 //#include "Renderer.h"
 
+enum LightType {point, parallel, ambience};
+
 struct Material
 {
 	vec3 color;
-	//GLfloat ambientCoeficient;
-	//GLfloat diffuseCoeficient;
-	//GLfloat specularCoeficient;
 	GLfloat shininessCoeficient;
 	vec3 ambientColor;
 	vec3 diffuseColor;
 	vec3 specularColor;
-	Material() :/*ambientCoeficient(0.1), diffuseCoeficient(0.5), specularCoeficient(0.5),*/
+	Material() :
 		color(0.8, 0.8, 0.8), ambientColor(0.1, 0.1, 0.1), diffuseColor(0.5, 0.5, 0.5), specularColor(0.8, 0.8, 0.8), shininessCoeficient(6.0){}
 };
 
 class Light {
 public:
-	Light();
+	Light(LightType type=point);
 	vec3 position;
+	vec3 direction;
 	vec3 color;
+	LightType lightType;
 	GLfloat ambientIntensity;
 	GLfloat diffuseIntensity;
 	GLfloat specularIntensity;

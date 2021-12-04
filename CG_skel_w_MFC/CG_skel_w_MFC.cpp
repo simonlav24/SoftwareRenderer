@@ -37,7 +37,7 @@ GLfloat step{ 0.5 };
 
 //----------------------------------------------------------------------------
 // Callbacks
-static GLfloat t = 0;
+static int t = 0;
 void display(void)
 {
 	if (scene->activeModel != -1)
@@ -48,13 +48,25 @@ void display(void)
 	if (scene->activeCamera != -1)
 	{
 	}
-	t += 0.25;
+	if (t == 20)
+	{
+		//cout << "reshape" << endl;
+		//renderer->reshape(512 * 2, 512 * 2);
+		//scene->reshapeCamera(512 * 2, 512 * 2);
+	}
+	t += 1;
 	// Call the scene and ask it to draw itself
 	scene->draw();
 }
 
 void reshape(int width, int height)
 {
+	if (renderer->SSAA)
+	{
+		width *= 2;
+		height *= 2;
+	}
+		
 	renderer->reshape(width, height);
 	scene->reshapeCamera(width, height);
 }
@@ -201,6 +213,20 @@ void keyboard(unsigned char key, int x, int y)
 	case ']':
 		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient += 1;
 		break;
+	case 'l':
+		renderer->SSAA = !renderer->SSAA;
+		if (renderer->SSAA)
+		{
+			renderer->reshape(renderer->getDims().x * 2, renderer->getDims().y * 2);
+			scene->reshapeCamera(renderer->getDims().x * 2, renderer->getDims().y * 2);
+		}
+		else
+		{
+			renderer->reshape(renderer->getDims().x / 2, renderer->getDims().y / 2);
+			scene->reshapeCamera(renderer->getDims().x / 2, renderer->getDims().y / 2);
+		}
+		
+		break;
 	}
 }
 
@@ -297,7 +323,10 @@ void initMenu()
 	glutAddMenuEntry("Reset Camera Position", CAMERA_RESET);
 
 	int menuLight = glutCreateMenu(lightMenu);
-	glutAddMenuEntry("Add Light", LIGHT_ADD);
+	glutAddMenuEntry("Add Point Light", LIGHT_ADD_POINT);
+	glutAddMenuEntry("Add Parallel Light", LIGHT_ADD_PARALLEL);
+	glutAddMenuEntry("change Position", LIGHT_CHANGE_POSITION);
+	glutAddMenuEntry("Change Direction", LIGHT_CHANGE_DIRECTION);
 	glutAddMenuEntry("Change Color", LIGHT_CHANGE_COLOR);
 	glutAddMenuEntry("Switch Light", LIGHT_SWITCH);
 	glutAddMenuEntry("Delete Light", LIGHT_DELETE);
@@ -357,9 +386,6 @@ int my_main(int argc, char** argv)
 
 	renderer = new Renderer(512, 512);
 	scene = new Scene(renderer);
-	//scene->addCamera();
-	//scene->currentCamera().LookAt(vec4(0.0, 0.0, 10.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	//scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));

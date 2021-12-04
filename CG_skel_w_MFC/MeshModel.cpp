@@ -85,10 +85,7 @@ MeshModel::MeshModel(string fileName)
 
 	loadFile(fileName);
 	mat.color = vec3(0.7, 0.8, 0.7);
-	//mat.specularColor = vec3(0.0, 0.0, 1.0);
-	//mat.ambientColor = vec3(0.1, 0.4, 0.1);
-	//mat.diffuseColor = vec3(0.8, 0.1, 0.1);
-	cout << "color: " << mat.color << endl;
+	showIndicators = true;
 }
 
 MeshModel::~MeshModel(void)

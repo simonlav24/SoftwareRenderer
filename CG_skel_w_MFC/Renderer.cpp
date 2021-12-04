@@ -32,8 +32,16 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 
 void Renderer::Init()
 {
-	shadingSetup = Phong;
+	orthogonal = false;
 	fogMode = false;
+	SSAA = false;
+	lightBloom = false;
+
+	fogMaxdist = 1.0;
+	fogMindist = -3.0;
+	fogColor = vec3(0.1, 0.1, 0.3);
+
+	shadingSetup = Phong;
 }
 
 Renderer::~Renderer(void)
@@ -52,7 +60,7 @@ vec3 Renderer::calculateFog(vec3 color, GLfloat zValue)
 void Renderer::CreateBuffers(int width, int height)
 {
 	m_width=width;
-	m_height=height;	
+	m_height=height;
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
 	m_zbuffer = new float[m_width * m_height];
@@ -68,23 +76,21 @@ void Renderer::DestroyBuffers()
 
 void Renderer::clearBuffer()
 {
-	GLfloat bgColor[2] = { 0.050 , 0.215 };
-	vec3 color;
+	vec3 color = fogMode ? fogColor : vec3(1.0, 1.0, 1.0) * 0.1;
 	for (int y = 0; y < m_height; y++)
 	{
 		for (int x = 0; x < m_width; x++)
 		{
-			if (fogMode)
-				color =  fogColor;
-			
-			else
-				color = vec3(1.0, 1.0, 1.0) * (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
-			
-			set_at(OUT_BUFFER, x, y, color);
-			//m_outBuffer[INDEX(m_width, x, y, 0)] = color.x; m_outBuffer[INDEX(m_width, x, y, 1)] = color; m_outBuffer[INDEX(m_width, x, y, 2)] = color;
+			m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
+			m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
+			m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
 			m_zbuffer[INDEX_ZB(m_width, x, y)] = 101;
 		}
 	}
+
+	// fancy background: (takes lot of time)
+	//GLfloat bgColor[2] = { 0.050 , 0.215 };
+	//color = vec3(1.0, 1.0, 1.0) * (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
 }
 
 void Renderer::SetDemoBuffer()
@@ -217,8 +223,6 @@ vec3 findCoeficients(vec3 point, vec3 p0, vec3 p1, vec3 p2)
 	GLfloat A0 = area(point, p1, p2);
 	GLfloat A1 = area(point, p0, p2);
 	GLfloat A2 = area(point, p0, p1);
-	//GLfloat A2 = 1 - A0 - A1;
-	//cout << A0 + A1 + A2 << " " << A << endl;
 
 	return vec3(A0 / A, A1 / A, A2 / A);
 
@@ -262,7 +266,10 @@ vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Mater
 	vec3 dirToLight;
 	for (int l = 0; l < sceneLights->size(); l++)
 	{
-		dirToLight = sceneLights->at(l)->position - pointInWorld;
+		if(sceneLights->at(l)->lightType == point)
+			dirToLight = sceneLights->at(l)->position - pointInWorld;
+		else if(sceneLights->at(l)->lightType == parallel)
+			dirToLight = -sceneLights->at(l)->direction;
 		GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
 		Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
 		Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
@@ -278,7 +285,11 @@ vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Materi
 	for (int l = 0; l < sceneLights->size(); l++)
 	{
 		normalInWorld = normalize(normalInWorld);
-		dirFromLight = pointInWorld - sceneLights->at(l)->position;
+		if (sceneLights->at(l)->lightType == point)
+			dirFromLight = pointInWorld - sceneLights->at(l)->position;
+		else if (sceneLights->at(l)->lightType == parallel)
+			dirFromLight = sceneLights->at(l)->direction;
+
 		reflected = dirFromLight - 2.0 * dot(dirFromLight, normalInWorld) * normalInWorld;
 		vec3 dirToViewer = vec3(viewerPos.x, viewerPos.y, viewerPos.z) - pointInWorld;
 		GLfloat dotProd = dot(normalize(reflected), normalize(dirToViewer));
@@ -559,15 +570,27 @@ void Renderer::drawPlusSign(vec4 pos, vec3 color)
 	drawLine((int)pos.x - 2, (int)pos.y + 1, (int)pos.x + 4, (int)pos.y + 1, color);
 }
 
-void Renderer::drawLightIndicator(vec4 pos, vec3 color)
+void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 {
-	GLfloat size = 15.0;
-	GLfloat size2 = 10.6;
-	vec3 Pos(pos.x, pos.y, pos.z);
+	vec3 Pos(pos.x, pos.y, 0.0);
+	vec3 Dir(direction.x, direction.y, 0.0);
+	bool directional = !(direction.x == 0.0 && direction.y == 0.0 && direction.z == 0.0);
+	GLfloat size = directional ? 7.5 : 15.0;
+	GLfloat size2 = directional ? 5.3 : 10.6;
 	drawLine(Pos + vec3(-size, 0.0, 0.0), Pos + vec3(size, 0.0, 0.0), color);
 	drawLine(Pos + vec3(0.0, -size, 0.0), Pos + vec3(0.0, size, 0.0), color);
 	drawLine(Pos + vec3(-size2, -size2, 0.0), Pos + vec3(size2, size2, 0.0), color);
 	drawLine(Pos + vec3(-size2, size2, 0.0), Pos + vec3(size2, -size2, 0.0), color);
+	if (!(direction.x == 0.0 && direction.y == 0.0 && direction.z == 0.0))
+	{
+		drawLine(Pos , Dir, color);
+		vec3 direction = normalize(Dir - Pos);
+		drawLine(Dir, Dir - 7.5 * direction + 7.5 * vec3(-direction.y, direction.x, 0.0), color);
+		drawLine(Dir, Dir - 7.5 * direction - 7.5 * vec3(-direction.y, direction.x, 0.0), color);
+
+		//drawLine(Pos + 50.0 * direction, Pos + 50.0 * direction - 10.0 * direction + 10.0 * vec3(-direction.y, direction.x), color);
+		//drawLine(Pos + 50.0 * direction, Pos + 50.0 * direction - 10.0 * direction - 10.0 * vec3(-direction.y, direction.x), color);
+	}
 }
 
 void Renderer::reshape(int width, int height)
@@ -629,7 +652,7 @@ void Renderer::CreateOpenGLBuffer()
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height , 0, GL_RGB, GL_FLOAT, NULL);
 	glViewport(0, 0, m_width, m_height);
 }
 
@@ -709,58 +732,94 @@ void Renderer::set_at(int buffer, int x, int y, vec3 color, bool relative)
 
 void Renderer::postProccess()
 {
-	return;
-	GLfloat threshhold = 0.5;
-	vec3 black(0.0, 0.0, 0.0);
-	// get brightest pixels
-	for (int y = 0; y < m_height; y++)
+	if (lightBloom)
 	{
-		for (int x = 0; x < m_width; x++)
+		GLfloat threshhold = 0.5;
+		vec3 black(0.0, 0.0, 0.0);
+		// get brightest pixels
+		for (int y = 0; y < m_height; y++)
 		{
-			// brightness formula (ITU BT.709)
-			vec3 color = get_at(OUT_BUFFER, x, y);
-			GLfloat brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
-			if (brightness >= threshhold)
+			for (int x = 0; x < m_width; x++)
 			{
-				set_at(BLUR_BUFFER, x, y, color);
-			}
-			else
-			{
-				set_at(BLUR_BUFFER, x, y, black);
+				// brightness formula (ITU BT.709)
+				vec3 color = get_at(OUT_BUFFER, x, y);
+				GLfloat brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+				if (brightness >= threshhold)
+				{
+					set_at(BLUR_BUFFER, x, y, color);
+				}
+				else
+				{
+					set_at(BLUR_BUFFER, x, y, black);
+				}
 			}
 		}
-	}
-	
-	// gaussian blur them
 
-	for (int y = 0; y < m_height; y++)
-	{
-		for (int x = 0; x < m_width; x++)
+		// gaussian blur them
+
+		for (int y = 0; y < m_height; y++)
 		{
-			// if on corners
-			if (x == 0 || y == 0 || x == m_width - 1 || y == m_height - 1)
+			for (int x = 0; x < m_width; x++)
 			{
-				// skip for now
-				continue;
-			}
-			vec3 value = get_at(BLUR_BUFFER, x - 1, y) + get_at(BLUR_BUFFER, x - 1, y - 1) + get_at(BLUR_BUFFER, x, y - 1);
-			value += get_at(BLUR_BUFFER, x + 1, y - 1) + get_at(BLUR_BUFFER, x + 1, y) + get_at(BLUR_BUFFER, x + 1, y + 1);
-			value += get_at(BLUR_BUFFER, x, y + 1) + get_at(BLUR_BUFFER, x - 1, y + 1) + get_at(BLUR_BUFFER, x, y);
-			value *= 1.0 / 9.0;
+				// if on corners
+				if (x == 0 || y == 0 || x == m_width - 1 || y == m_height - 1)
+				{
+					// skip for now
+					continue;
+				}
+				vec3 value = get_at(BLUR_BUFFER, x - 1, y) + get_at(BLUR_BUFFER, x - 1, y - 1) + get_at(BLUR_BUFFER, x, y - 1);
+				value += get_at(BLUR_BUFFER, x + 1, y - 1) + get_at(BLUR_BUFFER, x + 1, y) + get_at(BLUR_BUFFER, x + 1, y + 1);
+				value += get_at(BLUR_BUFFER, x, y + 1) + get_at(BLUR_BUFFER, x - 1, y + 1) + get_at(BLUR_BUFFER, x, y);
+				value *= 1.0 / 9.0;
 
-			set_at(OUT_BUFFER, x, y, value, true);
+				set_at(OUT_BUFFER, x, y, value, true);
+			}
+		}
+
+		// add them on top of m_outBuffer
+
+
+		if (true)
+		{
+			float* temp = m_outBuffer;
+			m_outBuffer = m_blurBuffer;
+			m_blurBuffer = temp;
 		}
 	}
-
-	// add them on top of m_outBuffer
-
-
-	if (true)
+	if (SSAA)
 	{
-		float* temp = m_outBuffer;
-		m_outBuffer = m_blurBuffer;
-		m_blurBuffer = temp;
+		vec3 color(0.0, 0.0, 0.0);
+		float* smallerBuffer = new float[(m_width / 2) * (m_height / 2) * 3];
+		for (int y = 0; y < m_height/2; y++)
+		{
+			for (int x = 0; x < m_width/2; x++)
+			{
+				color += get_at(OUT_BUFFER, x * 2, y * 2);
+				color += get_at(OUT_BUFFER, x * 2 + 1, y * 2);
+				color += get_at(OUT_BUFFER, x * 2 + 1, y * 2 + 1);
+				color += get_at(OUT_BUFFER, x * 2, y * 2 + 1);
+
+				color *= 0.25;
+
+				smallerBuffer[INDEX(m_width / 2, x, y, 0)] = color.x;
+				smallerBuffer[INDEX(m_width / 2, x, y, 1)] = color.y;
+				smallerBuffer[INDEX(m_width / 2, x, y, 2)] = color.z;
+			}
+		}
+
+		for (int y = 0; y < m_height / 2; y++)
+		{
+			for (int x = 0; x < m_width / 2; x++)
+			{
+				color.x = smallerBuffer[INDEX(m_width / 2, x, y, 0)];
+				color.y = smallerBuffer[INDEX(m_width / 2, x, y, 1)];
+				color.z = smallerBuffer[INDEX(m_width / 2, x, y, 2)];
+
+				set_at(OUT_BUFFER, x, y, color);
+			}
+		}
+		delete[] smallerBuffer;
+
 	}
-	
 
 }

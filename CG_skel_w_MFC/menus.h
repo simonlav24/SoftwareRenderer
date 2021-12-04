@@ -35,10 +35,14 @@
 #define CAMERA_EDIT_FOVY 6
 #define CAMERA_LOOK_MODEL 7
 
-#define LIGHT_ADD 0
-#define LIGHT_DELETE 1
-#define LIGHT_SWITCH 2
+#define LIGHT_ADD_POINT 0
+#define LIGHT_ADD_PARALLEL 1
+#define LIGHT_ADD_AMBIENT 2
 #define LIGHT_CHANGE_COLOR 3
+#define LIGHT_CHANGE_DIRECTION 4
+#define LIGHT_CHANGE_POSITION 5
+#define LIGHT_DELETE 6
+#define LIGHT_SWITCH 7
 
 #define SHADING_WIRE 0
 #define SHADING_FLAT 1
@@ -181,7 +185,7 @@ void showMenu(int id)
 		scene->showGrid = !scene->showGrid;
 		break;
 	case SHOW_TOGGLE_INDICATORS:
-		scene->showIndicators = !scene->showIndicators;
+		scene->toggleIndicators();
 		break;
 	}
 }
@@ -189,10 +193,29 @@ void showMenu(int id)
 void lightMenu(int id)
 {
 	CRGBDialog dlg;
+	CXyzDialog dlgxyz;
 	switch (id)
 	{
-	case LIGHT_ADD:
-		scene->addLight();
+	case LIGHT_ADD_POINT:
+		scene->addLight(point);
+		break;
+	case LIGHT_ADD_PARALLEL:
+		scene->addLight(parallel);
+		break;
+	case LIGHT_CHANGE_POSITION:
+		if (dlgxyz.DoModal() == IDOK) {
+			vec3 v = dlgxyz.GetXYZ();
+			scene->changeLightPosition(v);
+		}
+		break;
+	case LIGHT_CHANGE_DIRECTION:
+		if (scene->lights[scene->activeLight]->lightType == parallel)
+		{
+			if (dlgxyz.DoModal() == IDOK) {
+				vec3 v = dlgxyz.GetXYZ();
+				scene->changeLightDirection(normalize(v));
+			}
+		}
 		break;
 	case LIGHT_DELETE:
 		scene->deleteActiveLight();
@@ -201,12 +224,10 @@ void lightMenu(int id)
 		scene->switchActiveLight();
 		break;
 	case LIGHT_CHANGE_COLOR:
-		
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
 			scene->changeLightColor(v);
 		}
-
 		break;
 	}
 }
@@ -240,6 +261,7 @@ void cameraMenu(int id)
 		for (int i = 0; i < 6; i++)
 			multiInput[i] = userInput();
 		scene->currentCamera().Ortho(multiInput[0], multiInput[1], multiInput[2], multiInput[3], multiInput[4], multiInput[5]);
+		scene->setProjCam();
 		break;
 	case CAMERA_EDIT_FRUS:
 		AfxMessageBox(_T("Insert values in the console"));
@@ -247,6 +269,7 @@ void cameraMenu(int id)
 		for (int i = 0; i < 6; i++)
 			multiInput[i] = userInput();
 		scene->currentCamera().Frustum(multiInput[0], multiInput[1], multiInput[2], multiInput[3], multiInput[4], multiInput[5]);
+		scene->setProjCam();
 		break;
 	case CAMERA_EDIT_FOVY:
 		AfxMessageBox(_T("Insert values in the console"));
@@ -254,7 +277,7 @@ void cameraMenu(int id)
 		for (int i = 0; i < 4; i++)
 			multiInput[i] = userInput();
 		scene->currentCamera().Perspective(multiInput[0], multiInput[1], multiInput[2], multiInput[3]);
-		break;
+		scene->setProjCam();
 		break;
 	case CAMERA_RESET:
 		scene->resetCameraPosition();
@@ -290,7 +313,7 @@ void materialMenu(int id)
 		dlg.insertData(scene->getMaterial(diffuse));
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
-			scene->changeMaterial(ambient, v);
+			scene->changeMaterial(diffuse, v);
 		}
 		break;
 	case MATERIAL_CHANGE_SPECULAR:
@@ -328,30 +351,6 @@ void postProccessMenu(int id)
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
 			renderer->fogColor = v;
-		}
-		break;
-	case MATERIAL_CHANGE_DIFFUSE:
-		dlg.mTitle = "Pick Color RGB";
-		dlg.insertData(scene->getMaterial(diffuse));
-		if (dlg.DoModal() == IDOK) {
-			vec3 v = dlg.GetXYZ();
-			scene->changeMaterial(ambient, v);
-		}
-		break;
-	case MATERIAL_CHANGE_SPECULAR:
-		dlg.mTitle = "Pick Color RGB";
-		dlg.insertData(scene->getMaterial(specular));
-		if (dlg.DoModal() == IDOK) {
-			vec3 v = dlg.GetXYZ();
-			scene->changeMaterial(specular, v);
-		}
-		break;
-	case MATERIAL_CHANGE_SHININESS:
-		fdlg.mTitle = "Pick Value";
-		fdlg.insertData(scene->getMaterial(shine).x);
-		if (fdlg.DoModal() == IDOK) {
-			float v = fdlg.Getfloat();
-			scene->changeMaterial(shine, v);
 		}
 		break;
 	}
