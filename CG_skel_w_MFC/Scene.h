@@ -10,7 +10,7 @@ using namespace std;
 
 enum transformFrame { world, model, camera, light };
 enum transformMode { position, scale, rotation };
-enum materialProperty {color, ambient, diffuse, specular, shine };
+enum materialProperty {color, ambient, diffuse, specular, shine, special};
 
 class Model {
 protected:
@@ -83,14 +83,14 @@ public:
 	void createPrimitive();
 	void switchActiveModel();
 	void deleteActiveModel();
-	void transformActiveModel(const mat4& transform, bool scalling = false);
+	void transformActiveModel(const mat4& transform, bool scalling = false, bool rotation = false);
 	void loadOBJModel(string fileName);
 	void changeMaterial(materialProperty prop, vec3 values);
 	vec3 getMaterial(materialProperty prop);
 
 	// cameras
 	void addCamera();
-	void rotateZoomCamera(int dx, int dy, int scroll);
+	void rotateZoomCamera(int dx, int dy, int scroll, GLfloat step);
 	void translateCamera(int dx, int dy);
 	void lookAtModel();
 	void switchActiveCamera();

@@ -171,7 +171,12 @@ void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 			{
 				d += 2 * dx;
 			}
-			set_at(OUT_BUFFER, x, y, color);
+			if (!(x < 0 || x >= m_width || y < 0 || y >= m_height))
+			{
+				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
+				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
+				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
+			}
 		}
 	}
 	else
@@ -195,7 +200,12 @@ void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 			{
 				d += 2 * dy;
 			}
-			set_at(OUT_BUFFER, x, y, color);
+			if (!(x < 0 || x >= m_width || y < 0 || y >= m_height))
+			{
+				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
+				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
+				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
+			}
 		}
 	}
 }
@@ -248,6 +258,42 @@ bool isInside(vec3 pt, vec3 v1, vec3 v2, vec3 v3)
 	return !(has_neg && has_pos);
 }
 
+// hsv, h:0->360, s:0->1, v:0->1 to rgb: 0->1 
+vec3 hsav2rgb(vec3 hsv)
+{
+	static GLfloat max = 0;
+	static GLfloat min = 360;
+
+	float s = hsv.y;
+	float v = hsv.z;
+	float C = s * v;
+	float X = C * (1 - abs(fmod(hsv.x / 60.0, 2.0) - 1.0));
+	float m = v - C;
+	float r, g, b;
+	if (hsv.x >= 0 && hsv.x < 60) {
+		r = C, g = X, b = 0;
+	}
+	else if (hsv.x >= 60 && hsv.x < 120) {
+		r = X, g = C, b = 0;
+	}
+	else if (hsv.x >= 120 && hsv.x < 180) {
+		r = 0, g = C, b = X;
+	}
+	else if (hsv.x >= 180 && hsv.x < 240) {
+		r = 0, g = X, b = C;
+	}
+	else if (hsv.x >= 240 && hsv.x < 300) {
+		r = X, g = 0, b = C;
+	}
+	else {
+		r = C, g = 0, b = X;
+	}
+	int R = (r + m);
+	int G = (g + m);
+	int B = (b + m);
+	return vec3(r, g, b);
+}
+
 vec3 Renderer::calculateAmbient(Material& mat)
 {
 	vec3 Iambient(0.0, 0.0, 0.0);
@@ -264,16 +310,38 @@ vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Mater
 {
 	vec3 Idiffuse(0.0, 0.0, 0.0);
 	vec3 dirToLight;
-	for (int l = 0; l < sceneLights->size(); l++)
+	if (!mat.special)
 	{
-		if(sceneLights->at(l)->lightType == point)
-			dirToLight = sceneLights->at(l)->position - pointInWorld;
-		else if(sceneLights->at(l)->lightType == parallel)
-			dirToLight = -sceneLights->at(l)->direction;
-		GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
-		Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
-		Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
-		Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, mat.diffuseColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
+		for (int l = 0; l < sceneLights->size(); l++)
+		{
+			if (sceneLights->at(l)->lightType == point)
+				dirToLight = sceneLights->at(l)->position - pointInWorld;
+			else if (sceneLights->at(l)->lightType == parallel)
+				dirToLight = -sceneLights->at(l)->direction;
+			GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
+			Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, mat.diffuseColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
+		}
+	}
+	else
+	{
+		for (int l = 0; l < sceneLights->size(); l++)
+		{
+			if (sceneLights->at(l)->lightType == point)
+				dirToLight = sceneLights->at(l)->position - pointInWorld;
+			else if (sceneLights->at(l)->lightType == parallel)
+				dirToLight = -sceneLights->at(l)->direction;
+			GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
+			vec3 dirToViewer = vec3(viewerPos[0].x, viewerPos[0].y, viewerPos[0].z) - pointInWorld;
+			GLfloat dotProd2 = dot(normalize(dirToLight), normalize(dirToViewer));
+
+			vec3 difColor = vec3(0.5*sin(0.5*pointInWorld.x + 5*dotProd2)+0.5, 0.5*sin(0.5*pointInWorld.y + 5*dotProd2)+0.5, 0.5*sin(0.5*pointInWorld.z + 5*dotProd2)+0.5);
+
+			Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, difColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, difColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, difColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
+		}
 	}
 	return Idiffuse;
 }
@@ -291,15 +359,19 @@ vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Materi
 			dirFromLight = sceneLights->at(l)->direction;
 
 		reflected = dirFromLight - 2.0 * dot(dirFromLight, normalInWorld) * normalInWorld;
-		vec3 dirToViewer = vec3(viewerPos.x, viewerPos.y, viewerPos.z) - pointInWorld;
+		vec3 dirToViewer = vec3(viewerPos[0].x, viewerPos[0].y, viewerPos[0].z) - pointInWorld;
 		GLfloat dotProd = dot(normalize(reflected), normalize(dirToViewer));
+		//dotProd = sin(4.0 * 3.1415326 * dotProd);
+
 		if (dotProd <= 0)
 			continue;
 		dotProd = pow(dotProd, mat.shininessCoeficient);
+		
 		Ispecular.x += sceneLights->at(l)->color.x * max(0.0, mat.specularColor.x * dotProd * sceneLights->at(l)->specularIntensity);
 		Ispecular.y += sceneLights->at(l)->color.y * max(0.0, mat.specularColor.y * dotProd * sceneLights->at(l)->specularIntensity);
 		Ispecular.z += sceneLights->at(l)->color.z * max(0.0, mat.specularColor.z * dotProd * sceneLights->at(l)->specularIntensity);
 	}
+
 	return Ispecular;
 }
 
@@ -340,7 +412,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			int xMax = max(sp0.x, max(sp1.x, sp2.x));
 			int xMin = min(sp0.x, min(sp1.x, sp2.x));
 
-			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+			if (yMax >= m_height + border || yMin < 0 - border || xMax >= m_width + border || xMin < 0 - border)
 			{
 				i += 2;
 				continue;
@@ -363,6 +435,8 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			{
 				for (int x = xMin; x <= xMax; x++)
 				{
+					if (x < 0 || x >= m_width || y < 0 || y >= m_height)
+						continue;
 					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
 					{
 						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
@@ -371,7 +445,11 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						{
 							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
 							if (fogMode) Color = calculateFog(Color, zValue);
-							set_at(OUT_BUFFER, x, y, Color);
+
+							m_outBuffer[INDEX(m_width, x, y, 0)] = Color.x;
+							m_outBuffer[INDEX(m_width, x, y, 1)] = Color.y;
+							m_outBuffer[INDEX(m_width, x, y, 2)] = Color.z;
+							
 						}
 
 					}
@@ -383,7 +461,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 
 	else if (shadingSetup == Gouraud)
 	{
-		vec3 eyeInWorld = homo2noHomo(viewerPos);
+		vec3 eyeInWorld = homo2noHomo(viewerPos[0]);
 		GLfloat Iambient = 0.0;
 		GLfloat Idiffuse = 0.0;
 		GLfloat Ispeculat = 0.0;
@@ -410,7 +488,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			int xMax = max(sp0.x, max(sp1.x, sp2.x));
 			int xMin = min(sp0.x, min(sp1.x, sp2.x));
 
-			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+			if (yMax >= m_height + border || yMin < 0 - border || xMax >= m_width + border || xMin < 0 - border)
 			{
 				i += 2;
 				continue;
@@ -440,6 +518,8 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			{
 				for (int x = xMin; x <= xMax; x++)
 				{
+					if (x < 0 || x >= m_width || y < 0 || y >= m_height)
+						continue;
 					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
 					{
 						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
@@ -451,7 +531,9 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						{
 							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
 							if (fogMode) Color = calculateFog(Color, zValue);
-							set_at(OUT_BUFFER, x, y, Color);
+							m_outBuffer[INDEX(m_width, x, y, 0)] = Color.x;
+							m_outBuffer[INDEX(m_width, x, y, 1)] = Color.y;
+							m_outBuffer[INDEX(m_width, x, y, 2)] = Color.z;
 						}
 
 					}
@@ -463,7 +545,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 
 	else if (shadingSetup == Phong)
 	{
-		vec3 eyeInWorld = homo2noHomo(viewerPos);
+		vec3 eyeInWorld = homo2noHomo(viewerPos[0]);
 		GLfloat Itot = 0.0;
 
 		for (int i = 0; i < modelVertices.size(); i++)
@@ -487,7 +569,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			int xMax = max(sp0.x, max(sp1.x, sp2.x));
 			int xMin = min(sp0.x, min(sp1.x, sp2.x));
 
-			if (yMax >= m_height || yMin < 0 || xMax >= m_width || xMin < 0)
+			if (yMax >= m_height + border || yMin < 0 - border || xMax >= m_width + border || xMin < 0 - border)
 			{
 				i += 2;
 				continue;
@@ -509,6 +591,8 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			{
 				for (int x = xMin; x <= xMax; x++)
 				{
+					if (x < 0 || x >= m_width || y < 0 || y >= m_height)
+						continue;
 					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
 					{
 						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
@@ -529,7 +613,9 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						{
 							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
 							if (fogMode) Color = calculateFog(Color, zValue);
-							set_at(OUT_BUFFER, x, y, Color);
+							m_outBuffer[INDEX(m_width, x, y, 0)] = Color.x;
+							m_outBuffer[INDEX(m_width, x, y, 1)] = Color.y;
+							m_outBuffer[INDEX(m_width, x, y, 2)] = Color.z;
 						}
 
 					}
@@ -587,9 +673,6 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 		vec3 direction = normalize(Dir - Pos);
 		drawLine(Dir, Dir - 7.5 * direction + 7.5 * vec3(-direction.y, direction.x, 0.0), color);
 		drawLine(Dir, Dir - 7.5 * direction - 7.5 * vec3(-direction.y, direction.x, 0.0), color);
-
-		//drawLine(Pos + 50.0 * direction, Pos + 50.0 * direction - 10.0 * direction + 10.0 * vec3(-direction.y, direction.x), color);
-		//drawLine(Pos + 50.0 * direction, Pos + 50.0 * direction - 10.0 * direction - 10.0 * vec3(-direction.y, direction.x), color);
 	}
 }
 
@@ -678,61 +761,9 @@ void Renderer::SwapBuffers()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-vec3 Renderer::get_at(int buffer, int x, int y)
-{
-	float* readBuffer;
-	switch (buffer)
-	{
-	case OUT_BUFFER:
-		readBuffer = m_outBuffer;
-		break;
-	case BLUR_BUFFER:
-		readBuffer = m_blurBuffer;
-		break;
-	case Z_BUFFER:
-		readBuffer = m_zbuffer;
-		break;
-	}
-	vec3 color;
-	color.x = readBuffer[INDEX(m_width, x, y, 0)];
-	color.y = readBuffer[INDEX(m_width, x, y, 1)];
-	color.z = readBuffer[INDEX(m_width, x, y, 2)];
-	return color;
-}
-
-void Renderer::set_at(int buffer, int x, int y, vec3 color, bool relative)
-{
-	if (x < 0 || x > m_width - 1 || y < 0 || y > m_height - 1)
-		return;
-	float* writeBuffer;
-	switch (buffer)
-	{
-	case OUT_BUFFER:
-		writeBuffer = m_outBuffer;
-		break;
-	case BLUR_BUFFER:
-		writeBuffer = m_blurBuffer;
-		break;
-	case Z_BUFFER:
-		writeBuffer = m_zbuffer;
-	}
-	if (relative)
-	{
-		writeBuffer[INDEX(m_width, x, y, 0)] = min(writeBuffer[INDEX(m_width, x, y, 0)] + color.x, 1.0);
-		writeBuffer[INDEX(m_width, x, y, 1)] = min(writeBuffer[INDEX(m_width, x, y, 1)] + color.y, 1.0);
-		writeBuffer[INDEX(m_width, x, y, 2)] = min(writeBuffer[INDEX(m_width, x, y, 2)] + color.z, 1.0);
-	}
-	else
-	{
-		writeBuffer[INDEX(m_width, x, y, 0)] = color.x;
-		writeBuffer[INDEX(m_width, x, y, 1)] = color.y;
-		writeBuffer[INDEX(m_width, x, y, 2)] = color.z;
-	}
-}
-
 void Renderer::postProccess()
 {
-	if (lightBloom)
+	/*if (lightBloom)
 	{
 		GLfloat threshhold = 0.5;
 		vec3 black(0.0, 0.0, 0.0);
@@ -785,7 +816,7 @@ void Renderer::postProccess()
 			m_outBuffer = m_blurBuffer;
 			m_blurBuffer = temp;
 		}
-	}
+	}*/
 	if (SSAA)
 	{
 		vec3 color(0.0, 0.0, 0.0);
@@ -794,10 +825,23 @@ void Renderer::postProccess()
 		{
 			for (int x = 0; x < m_width/2; x++)
 			{
-				color += get_at(OUT_BUFFER, x * 2, y * 2);
-				color += get_at(OUT_BUFFER, x * 2 + 1, y * 2);
-				color += get_at(OUT_BUFFER, x * 2 + 1, y * 2 + 1);
-				color += get_at(OUT_BUFFER, x * 2, y * 2 + 1);
+				color = vec3();
+
+				color.x += m_outBuffer[INDEX(m_width, x * 2, y * 2, 0)];
+				color.y += m_outBuffer[INDEX(m_width, x * 2, y * 2, 1)];
+				color.z += m_outBuffer[INDEX(m_width, x * 2, y * 2, 2)];
+				
+				color.x += m_outBuffer[INDEX(m_width, x * 2 + 1, y * 2, 0)];
+				color.y += m_outBuffer[INDEX(m_width, x * 2 + 1, y * 2, 1)];
+				color.z += m_outBuffer[INDEX(m_width, x * 2 + 1, y * 2, 2)];
+				
+				color.x += m_outBuffer[INDEX(m_width, x * 2 + 1, y * 2 + 1, 0)];
+				color.y += m_outBuffer[INDEX(m_width, x * 2 + 1, y * 2 + 1, 1)];
+				color.z += m_outBuffer[INDEX(m_width, x * 2 + 1, y * 2 + 1, 2)];
+				
+				color.x += m_outBuffer[INDEX(m_width, x * 2, y * 2 + 1, 0)];
+				color.y += m_outBuffer[INDEX(m_width, x * 2, y * 2 + 1, 1)];
+				color.z += m_outBuffer[INDEX(m_width, x * 2, y * 2 + 1, 2)];
 
 				color *= 0.25;
 
@@ -815,7 +859,9 @@ void Renderer::postProccess()
 				color.y = smallerBuffer[INDEX(m_width / 2, x, y, 1)];
 				color.z = smallerBuffer[INDEX(m_width / 2, x, y, 2)];
 
-				set_at(OUT_BUFFER, x, y, color);
+				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
+				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
+				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
 			}
 		}
 		delete[] smallerBuffer;

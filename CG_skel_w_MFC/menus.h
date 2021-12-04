@@ -54,9 +54,11 @@
 #define MATERIAL_CHANGE_DIFFUSE 2
 #define MATERIAL_CHANGE_SPECULAR 3
 #define MATERIAL_CHANGE_SHININESS 4
+#define MATERIAL_SPECIAL 5
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
+#define POST_SSAA_TOGGLE 2
 
 // global variables from main
 extern Scene* scene;
@@ -268,6 +270,7 @@ void cameraMenu(int id)
 		cout << "-- Enter values: left, right, bottom, top, near, far --" << endl;
 		for (int i = 0; i < 6; i++)
 			multiInput[i] = userInput();
+		cout << multiInput[0] << " " << multiInput[1] << " " << multiInput[2] << " " << multiInput[3] << " " << multiInput[4] << " " << multiInput[5] << endl;
 		scene->currentCamera().Frustum(multiInput[0], multiInput[1], multiInput[2], multiInput[3], multiInput[4], multiInput[5]);
 		scene->setProjCam();
 		break;
@@ -332,6 +335,9 @@ void materialMenu(int id)
 			scene->changeMaterial(shine, v);
 		}
 		break;
+	case MATERIAL_SPECIAL:
+		scene->changeMaterial(materialProperty::special, vec3());
+		break;
 	}
 }
 
@@ -351,6 +357,19 @@ void postProccessMenu(int id)
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
 			renderer->fogColor = v;
+		}
+		break;
+	case POST_SSAA_TOGGLE:
+		renderer->SSAA = !renderer->SSAA;
+		if (renderer->SSAA)
+		{
+			renderer->reshape(renderer->getDims().x * 2, renderer->getDims().y * 2);
+			scene->reshapeCamera(renderer->getDims().x * 2, renderer->getDims().y * 2);
+		}
+		else
+		{
+			renderer->reshape(renderer->getDims().x / 2, renderer->getDims().y / 2);
+			scene->reshapeCamera(renderer->getDims().x / 2, renderer->getDims().y / 2);
 		}
 		break;
 	}

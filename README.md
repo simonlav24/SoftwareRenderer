@@ -26,6 +26,8 @@
 * **B** - toggle show bounding box
 * **V** - toggle show vertex normals
 * **G** - toggle show grid
+* **7-8** - control far point of fog
+* **9-0** - control near point of fog
 
 ### tasks:
 
@@ -52,6 +54,6 @@
 - [ ] fix vertex normals like in face normal
 - [ ] fix orthogonal camera backface culling
 - [ ] gaussian blur light bloom
-- [ ] fog (menu and controling far, near)
-- [ ] super sampling anti aliasing (menu) :point_right: check if a better way exists :point_right:why picture brighter ?
+- [x] fog (menu and controling far, near)
+- [x] super sampling anti aliasing (menu)
 

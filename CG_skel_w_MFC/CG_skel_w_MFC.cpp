@@ -32,7 +32,7 @@ int last_x, last_y;
 bool lb_down, rb_down, mb_down;
 
 // more stuff
-int framesPerSecond{ 10 };
+int framesPerSecond{ 60 };
 GLfloat step{ 0.5 };
 
 //----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene->transformActiveModel(Scale(vec3(scaleUpStep, 1.0, 1.0)), true);
 			break;
 		case rotation:
-			scene->transformActiveModel(RotateX(-rotStep));
+			scene->transformActiveModel(RotateX(-rotStep), false, true);
 			break;
 		}
 
@@ -107,7 +107,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene->transformActiveModel(Scale(vec3(scaleDownStep, 1.0, 1.0)), true);
 			break;
 		case rotation:
-			scene->transformActiveModel(RotateX(rotStep));
+			scene->transformActiveModel(RotateX(rotStep), false, true);
 			break;
 		}
 		break;
@@ -122,7 +122,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene->transformActiveModel(Scale(vec3(1.0, 1.0, scaleDownStep)), true);
 			break;
 		case rotation:
-			scene->transformActiveModel(RotateZ(rotStep));
+			scene->transformActiveModel(RotateZ(rotStep), false, true);
 			break;
 		}
 		break;
@@ -137,7 +137,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene->transformActiveModel(Scale(vec3(1.0, 1.0, scaleUpStep)), true);
 			break;
 		case rotation:
-			scene->transformActiveModel(RotateZ(-rotStep));
+			scene->transformActiveModel(RotateZ(-rotStep), false, true);
 			break;
 		}
 		break;
@@ -152,7 +152,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene->transformActiveModel(Scale(vec3(1.0, scaleUpStep, 1.0)), true);
 			break;
 		case rotation:
-			scene->transformActiveModel(RotateY(rotStep));
+			scene->transformActiveModel(RotateY(rotStep), false, true);
 			break;
 		}
 		break;
@@ -168,7 +168,7 @@ void keyboard(unsigned char key, int x, int y)
 			scene->transformActiveModel(Scale(vec3(1.0, scaleDownStep, 1.0)), true);
 			break;
 		case rotation:
-			scene->transformActiveModel(RotateY(-rotStep));
+			scene->transformActiveModel(RotateY(-rotStep), false, true);
 			break;
 		}
 		break;
@@ -192,6 +192,23 @@ void keyboard(unsigned char key, int x, int y)
 		scene->tMode = rotation;
 		break;
 	
+	case '7':
+		renderer->fogMaxdist += step;
+		cout << "fog far point = " << renderer->fogMaxdist << endl;
+		break;
+	case '8':
+		renderer->fogMaxdist -= step;
+		cout << "fog far point = " << renderer->fogMaxdist << endl;
+		break;
+	case '9':
+		renderer->fogMindist += step;
+		cout << "fog near point = " << renderer->fogMindist << endl;
+		break;
+	case '0':
+		renderer->fogMindist -= step;
+		cout << "fog near point = " << renderer->fogMindist << endl;
+		break;
+
 	case 'm':
 		scene->switchActiveModel();
 		break;
@@ -232,12 +249,10 @@ void keyboard(unsigned char key, int x, int y)
 
 void mouse(int button, int state, int x, int y)
 {
-	//button = {GLUT_LEFT_BUTTON, GLUT_MIDDLE_BUTTON, GLUT_RIGHT_BUTTON}
-	//state = {GLUT_DOWN,GLUT_UP}
 	if (button == 3)
-		scene->rotateZoomCamera(0, 0, 1);
+		scene->rotateZoomCamera(0, 0, 1, step);
 	if (button == 4)
-		scene->rotateZoomCamera(0, 0, -1);
+		scene->rotateZoomCamera(0, 0, -1, step);
 	//set down flags
 	switch (button) {
 	case GLUT_LEFT_BUTTON:
@@ -266,7 +281,7 @@ void motion(int x, int y)
 	{
 		if (lb_down)
 		{
-			scene->rotateZoomCamera(dx, dy, 0);
+			scene->rotateZoomCamera(dx, dy, 0, step);
 			last_x = last_y = dx = dy = 0;
 		}
 		else if (mb_down)
@@ -343,10 +358,12 @@ void initMenu()
 	glutAddMenuEntry("Edit Diffuse Color", MATERIAL_CHANGE_DIFFUSE);
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
+	glutAddMenuEntry("Toggle Special Material", MATERIAL_SPECIAL);
 
 	int menuPost = glutCreateMenu(postProccessMenu);
 	glutAddMenuEntry("Toggle Fog", POST_FOG_TOGGLE);
 	glutAddMenuEntry("Change Fog Color", POST_FOG_COLOR);
+	glutAddMenuEntry("Toggle SSAA", POST_SSAA_TOGGLE);
 
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
@@ -389,7 +406,6 @@ int my_main(int argc, char** argv)
 
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	renderer->viewerPos = scene->currentCamera().Eye;
 	scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 
 	scene->addLight();
@@ -404,6 +420,7 @@ int my_main(int argc, char** argv)
 	glutMotionFunc(motion);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(0, timer, 0);
+	//glutSpecialFunc(special);
 	initMenu();
 
 	glutMainLoop();

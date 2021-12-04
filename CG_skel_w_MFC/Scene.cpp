@@ -81,7 +81,7 @@ void Scene::draw()
 	
 	auto t2 = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = t2 - t1;
-	cout << ms_double.count() << " " << timeCount << endl;
+	//cout << ms_double.count() << " " << timeCount << endl;
 }
 
 void Scene::toggleIndicators()
@@ -97,7 +97,9 @@ void Scene::setProjCam()
 {
 	mat4 ProjCam = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
 	m_renderer->ProjCam = ProjCam;
-	m_renderer->viewerPos = cameras[activeCamera]->Eye;
+	m_renderer->viewerPos[0] = cameras[activeCamera]->Eye;
+	m_renderer->viewerPos[1] = cameras[activeCamera]->At;
+	m_renderer->orthogonal = cameras[activeCamera]->orthogonal;
 }
 
 void Scene::drawOriginPoint()
@@ -194,7 +196,7 @@ void Scene::switchActiveCamera()
 	setProjCam();
 }
 
-void Scene::transformActiveModel(const mat4& transform, bool scalling)
+void Scene::transformActiveModel(const mat4& transform, bool scalling, bool rotation)
 {
 	switch (tState)
 	{
@@ -214,7 +216,7 @@ void Scene::transformActiveModel(const mat4& transform, bool scalling)
 		break;
 	case light:
 		if (activeLight == -1) return;
-		lights[activeLight]->transformWorld(transform);
+		lights[activeLight]->transformWorld(transform, rotation);
 	}
 }
 
@@ -251,7 +253,7 @@ void Scene::translateCamera(int dx, int dy)
 	eye = Translate(moveDx * 0.1 * -dx) * eye;
 	at = Translate(moveDx * 0.1 * -dx) * at;
 
-	vec4 moveDy = normalize(cross(moveDx, up));
+	vec4 moveDy = normalize(cross(moveDx, eye - at));
 
 	eye = Translate(moveDy * 0.1 * -dy) * eye;
 	at = Translate(moveDy * 0.1 * -dy) * at;
@@ -260,7 +262,7 @@ void Scene::translateCamera(int dx, int dy)
 	setProjCam();
 }
 
-void Scene::rotateZoomCamera(int dx, int dy, int scroll)
+void Scene::rotateZoomCamera(int dx, int dy, int scroll, GLfloat step)
 {
 	// move eye negative at
 	vec4 eye = cameras[activeCamera]->Eye;
@@ -275,7 +277,6 @@ void Scene::rotateZoomCamera(int dx, int dy, int scroll)
 	eye = homo2noHomo(eye);
 
 	eye = Translate(-at) * eye;
-	//cout << up << endl;
 	eye = RotateAroundAxis(-dx, up) * eye;
 	eye = Translate(at) * eye;
 
@@ -297,7 +298,7 @@ void Scene::rotateZoomCamera(int dx, int dy, int scroll)
 		else
 		{
 			vec4 direction = normalize(eye);
-			eye = Translate(-direction) * eye;
+			eye = Translate(-direction * step) * eye;
 		}
 		
 	}
@@ -522,6 +523,9 @@ void Scene::changeMaterial(materialProperty prop, vec3 values)
 		break;
 	case materialProperty::shine:
 		static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient = values.x;
+		break;
+	case materialProperty::special:
+		static_cast<MeshModel*>(models[activeModel])->mat.special = !static_cast<MeshModel*>(models[activeModel])->mat.special;
 		break;
 	}
 }

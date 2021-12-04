@@ -7,6 +7,7 @@ enum LightType {point, parallel, ambience};
 
 struct Material
 {
+	bool special;
 	vec3 color;
 	GLfloat shininessCoeficient;
 	vec3 ambientColor;
@@ -26,7 +27,7 @@ public:
 	GLfloat ambientIntensity;
 	GLfloat diffuseIntensity;
 	GLfloat specularIntensity;
-	void transformWorld(const mat4& transform);
+	void transformWorld(const mat4& transform, bool rotation=false);
 };
 
 class AmbientLight : public Light

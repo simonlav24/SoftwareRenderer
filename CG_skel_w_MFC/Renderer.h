@@ -20,7 +20,6 @@ class Renderer
 	void CreateBuffers(int width, int height);
 	void CreateLocalBuffer();
 
-
 	////// post
 	bool fogMode;
 	vec3 calculateFog(vec3 color, GLfloat zValue);
@@ -28,7 +27,7 @@ class Renderer
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
-	int border = 200;
+	int border = 100;
 	GLuint gScreenTex;
 	GLuint gScreenVtc;
 	void CreateOpenGLBuffer();
@@ -41,15 +40,13 @@ public:
 	void Init();
 
 	mat4 ProjCam;
+	bool orthogonal;
 
 	bool SSAA;
 
 	float fogMaxdist;
 	float fogMindist;
 	vec3  fogColor;
-
-	vec3 get_at(int buffer, int x, int y);
-	void set_at(int buffer, int x, int y, vec3 color, bool relative=false);
 
 	void SetCameraTransform(const mat4& cTransform);
 	void SetProjection(const mat4& projection);
@@ -60,8 +57,8 @@ public:
 	void SetDemoBuffer();
 	void DestroyBuffers();
 	
-	// viewer direction vec:
-	vec4 viewerPos;
+	// viewer eye, at vec:
+	vec4 viewerPos[2];
 	vector<Light*> *sceneLights;
 
 	// draw single pixel (0 < RGB < 1)

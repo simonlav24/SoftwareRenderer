@@ -12,8 +12,11 @@ Light::Light(LightType type)
 	lightType = type;
 }
 
-void Light::transformWorld(const mat4& transform)
+void Light::transformWorld(const mat4& transform, bool rotation)
 {
-	position = homo2noHomo(transform * vec4(position));
+	if (lightType == parallel && rotation)
+		direction = homo2noHomo(transform * vec4(direction));
+	else
+		position = homo2noHomo(transform * vec4(position));
 }
 

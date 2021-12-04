@@ -85,6 +85,7 @@ MeshModel::MeshModel(string fileName)
 
 	loadFile(fileName);
 	mat.color = vec3(0.7, 0.8, 0.7);
+	mat.special = false;
 	showIndicators = true;
 }
 
@@ -264,18 +265,36 @@ void MeshModel::draw(Renderer* r)
 	for (int i = 0; i < vertexCount; i++)
 	{
 		// backface culling
-		vec4 normal = faceNormals[i / 3];
-		normal.w = 0;
-		normal = normalTransform * normal;
-		vec4 center = centerPoints[i / 3];
-		center = worldModel * center;
-		vec4 eye = r->viewerPos;
-		eye.w = 0;
+		if (!r->orthogonal)
+		{
+			vec4 normal = faceNormals[i / 3];
+			normal.w = 0;
+			normal = normalTransform * normal;
+			vec4 center = centerPoints[i / 3];
+			center = worldModel * center;
+			vec4 eye = r->viewerPos[0];
+			eye.w = 0;
 
-		if (dot(center - eye, normal) > 0.0)
-			continue;
+			if (dot(center - eye, normal) > 0.0)
+				continue;
 
-		modelFaceNormals.push_back(normal);
+			modelFaceNormals.push_back(normal);
+		}
+		else
+		{
+			vec4 normal = faceNormals[i / 3];
+			normal.w = 0;
+			normal = normalTransform * normal;
+			vec4 center = centerPoints[i / 3];
+			center = worldModel * center;
+			vec4 camDir = r->viewerPos[1] - r->viewerPos[0]; // at - eye
+			camDir.w = 0;
+
+			if (dot(camDir, normal) > 0.0)
+				continue;
+
+			modelFaceNormals.push_back(normal);
+		}
 
 		// vertex normals
 		vec3 vnormal = normal_positions[i];
