@@ -155,6 +155,7 @@ void MeshModel::loadFile(string fileName)
 		}
 	}
 
+
 	// calculate bounding box yet again
 	calculateBoundingBox(vertices);
 
@@ -323,11 +324,14 @@ void MeshModel::draw(Renderer* r)
 
 vec3 MeshModel::getPosition()
 {
-	vec3 pos;
-	pos.x = _model_transform[0][3];
-	pos.y = _model_transform[1][3];
-	pos.z = _model_transform[2][3];
-	return pos; // might need to homogene with [3][3]
+	vec4 pos(0.0, 0.0, 0.0, 1.0);
+	return homo2noHomo(_world_transform * _model_transform * pos);
+}
+
+void MeshModel::setPosition(vec3 pos)
+{
+	_world_transform = Translate(-getPosition()) * _world_transform;
+	_world_transform = Translate(pos) * _world_transform;
 }
 
 void MeshModel::calculateBoundingBox(vector<vec3>& vertices)

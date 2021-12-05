@@ -334,13 +334,13 @@ vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Mater
 				dirToLight = -sceneLights->at(l)->direction;
 			GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
 			vec3 dirToViewer = vec3(viewerPos[0].x, viewerPos[0].y, viewerPos[0].z) - pointInWorld;
-			GLfloat dotProd2 = dot(normalize(dirToLight), normalize(dirToViewer));
+			GLfloat dotProd2 = dot(normalize(normalInWorld), normalize(dirToViewer));
+			dotProd2 += dotProd;
+			vec3 difColor = vec3(0.5*sin(0.5*pointInWorld.x + 5* dotProd)+0.5, 0.5*sin(0.5*pointInWorld.y + 5* dotProd)+0.5, 0.5*sin(0.5*pointInWorld.z + 5* dotProd)+0.5);
 
-			vec3 difColor = vec3(0.5*sin(0.5*pointInWorld.x + 5*dotProd2)+0.5, 0.5*sin(0.5*pointInWorld.y + 5*dotProd2)+0.5, 0.5*sin(0.5*pointInWorld.z + 5*dotProd2)+0.5);
-
-			Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, difColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
-			Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, difColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
-			Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, difColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * difColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * difColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
+			Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, mat.diffuseColor.z * difColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
 		}
 	}
 	return Idiffuse;

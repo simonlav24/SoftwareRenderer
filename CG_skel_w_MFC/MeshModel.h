@@ -48,8 +48,8 @@ public:
 	void transform(const mat4& transform, bool world, bool scalling = false);
 	//void transformModel(const mat4& transform, bool scalling=false);
 	//void transformWorld(const mat4& transform);
-	
 	vec3 getPosition() override;
+	void setPosition(vec3 pos) override;
 };
 
 class PrimMeshModel : public MeshModel

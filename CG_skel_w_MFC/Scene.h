@@ -24,7 +24,8 @@ public:
 	//void virtual transformModel(const mat4& trans, bool scalling=false)=0;
 	//void virtual transformWorld(const mat4& trans)=0;
 	void virtual transform(const mat4& transform, bool world, bool scalling = false)=0;
-	vec3 virtual getPosition()=0;
+	vec3 virtual getPosition() = 0;
+	void virtual setPosition(vec3 pos) = 0;
 };
 
 class Camera {
@@ -67,7 +68,7 @@ public:
 	transformFrame tState;
 	transformMode tMode;
 
-	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(model), tMode(position),
+	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(world), tMode(position),
 		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false), showIndicators(true)
 		{
 		m_renderer->sceneLights = &(this->lights);

@@ -307,6 +307,7 @@ void initMenu()
 	glutAddMenuEntry("Open obj file", MODEL_OPEN);
 	glutAddMenuEntry("Load Primitive Cube", MODEL_CUBE);
 	glutAddMenuEntry("Switch Model", MODEL_SWITCH);
+	glutAddMenuEntry("Move Model", MODEL_MOVE);
 	glutAddMenuEntry("Delete Model", MODEL_DELETE);
 
 	int menuFrame = glutCreateMenu(frameStateMenu);

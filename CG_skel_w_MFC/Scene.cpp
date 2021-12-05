@@ -105,6 +105,7 @@ void Scene::setProjCam()
 void Scene::drawOriginPoint()
 {
 	// draw origin
+	GLfloat axisSize = 2.0;
 	mat4 Mw = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
 	vec2 rendererDims = m_renderer->getDims();
 
@@ -113,19 +114,19 @@ void Scene::drawOriginPoint()
 	zero = homo2noHomo(zero);
 	vec3 zeroS = viewPort(rendererDims, zero);
 
-	vec4 xAxis = vec4(1, 0, 0, 1);
+	vec4 xAxis = vec4(axisSize, 0, 0, 1);
 	xAxis = Mw * xAxis;
 	xAxis = homo2noHomo(xAxis);
 	vec3 xS = viewPort(rendererDims, xAxis);
 	m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)xS.x, (int)xS.y, vec3(1, 0, 0));
 
-	vec4 yAxis = vec4(0, 1, 0, 1);
+	vec4 yAxis = vec4(0, axisSize, 0, 1);
 	yAxis = Mw * yAxis;
 	yAxis = homo2noHomo(yAxis);
 	vec3 yS = viewPort(rendererDims, yAxis);
 	m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)yS.x, (int)yS.y, vec3(0, 1, 0));
 
-	vec4 zAxis = vec4(0, 0, 1, 1);
+	vec4 zAxis = vec4(0, 0, axisSize, 1);
 	zAxis = Mw * zAxis;
 	zAxis = homo2noHomo(zAxis);
 	vec3 zS = viewPort(rendererDims, zAxis);

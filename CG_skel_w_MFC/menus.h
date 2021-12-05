@@ -4,6 +4,7 @@
 #define MODEL_CUBE 1
 #define MODEL_SWITCH 2 
 #define MODEL_DELETE 3 
+#define MODEL_MOVE 4
 
 #define FILE_OPEN 1
 #define MAIN_DEMO 1
@@ -74,10 +75,12 @@ float userInput()
 void modelMenu(int id)
 {
 	CFileDialog dlgFile(TRUE, _T(".obj"), NULL, NULL, _T("*.obj|*.*"));
+	CXyzDialog dlgxyz;
 	switch (id)
 	{
 	case MODEL_CUBE:
 		scene->createPrimitive();
+		scene->tState = world;
 		break;
 	case MODEL_SWITCH:
 		scene->switchActiveModel();
@@ -91,6 +94,14 @@ void modelMenu(int id)
 			std::string s((LPCTSTR)dlgFile.GetPathName());
 			scene->loadOBJModel((LPCTSTR)dlgFile.GetPathName());
 		}
+		scene->tState = world;
+		break;
+	case MODEL_MOVE:
+		if (dlgxyz.DoModal() == IDOK) {
+			vec3 v = dlgxyz.GetXYZ();
+			scene->models[scene->activeModel]->setPosition(v);
+		}
+		
 		break;
 	}
 }
@@ -200,9 +211,11 @@ void lightMenu(int id)
 	{
 	case LIGHT_ADD_POINT:
 		scene->addLight(point);
+		scene->tState = light;
 		break;
 	case LIGHT_ADD_PARALLEL:
 		scene->addLight(parallel);
+		scene->tState = light;
 		break;
 	case LIGHT_CHANGE_POSITION:
 		if (dlgxyz.DoModal() == IDOK) {
@@ -244,12 +257,14 @@ void cameraMenu(int id)
 		scene->currentCamera().LookAt(vec4(0.0, 0.0, 10.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
 		scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 		scene->setProjCam();
+		scene->tState = camera;
 		break;
 	case CAMERA_ADD_PERSP:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
 		scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 		scene->setProjCam();
+		scene->tState = camera;
 		break;
 	case CAMERA_SWITCH:
 		scene->switchActiveCamera();
