@@ -417,7 +417,6 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 {
 	vec2 rendererDims = r->getDims();
-	//mat4 projWorld = projection * cTransform * _world_transform;
 	mat4 projWorld = projection * cTransform;
 	mat4 normalWorld = _normal_world_transform * _normal_transform;
 	mat4 modelWorld = _world_transform * _model_transform;
@@ -447,17 +446,16 @@ void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projection)
 {
 	vec2 rendererDims = r->getDims();
-	mat4 projWorld = projection * cTransform * _world_transform;
+	mat4 projWorld = projection * cTransform;
+	mat4 normalWorld = _normal_world_transform * _normal_transform;
+	mat4 modelWorld = _world_transform * _model_transform;
 
 	for (int i = 0; i < vertexNormalsCount; i++)
 	{
 		vec4 origin = vertices[i];
 		vec4 normal = vertexNormals[i];
-
-		normal.w = 0;
-
-		origin = _model_transform * origin;
-		normal = _normal_transform * normal;
+		origin = modelWorld * origin;
+		normal = normalWorld * normal;
 		normal.w = 0;
 		normal = normalize(normal);
 
@@ -468,7 +466,7 @@ void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projectio
 
 		vec3 point1 = viewPort(rendererDims, origin);
 		vec3 point2 = viewPort(rendererDims, point);
-		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 1.0, 0.0));
+		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 0.0, 1.0));
 	}
 }
 

@@ -193,19 +193,19 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	
 	case '7':
-		renderer->fogMaxdist += step;
+		renderer->fogMaxdist += step * 0.25;
 		cout << "fog far point = " << renderer->fogMaxdist << endl;
 		break;
 	case '8':
-		renderer->fogMaxdist -= step;
+		renderer->fogMaxdist -= step * 0.25;
 		cout << "fog far point = " << renderer->fogMaxdist << endl;
 		break;
 	case '9':
-		renderer->fogMindist += step;
+		renderer->fogMindist += step * 0.25;
 		cout << "fog near point = " << renderer->fogMindist << endl;
 		break;
 	case '0':
-		renderer->fogMindist -= step;
+		renderer->fogMindist -= step * 0.25;
 		cout << "fog near point = " << renderer->fogMindist << endl;
 		break;
 
@@ -341,7 +341,8 @@ void initMenu()
 	int menuLight = glutCreateMenu(lightMenu);
 	glutAddMenuEntry("Add Point Light", LIGHT_ADD_POINT);
 	glutAddMenuEntry("Add Parallel Light", LIGHT_ADD_PARALLEL);
-	glutAddMenuEntry("change Position", LIGHT_CHANGE_POSITION);
+	glutAddMenuEntry("Add ambient Light", LIGHT_ADD_AMBIENT);
+	glutAddMenuEntry("Change Position", LIGHT_CHANGE_POSITION);
 	glutAddMenuEntry("Change Direction", LIGHT_CHANGE_DIRECTION);
 	glutAddMenuEntry("Change Color", LIGHT_CHANGE_COLOR);
 	glutAddMenuEntry("Switch Light", LIGHT_SWITCH);

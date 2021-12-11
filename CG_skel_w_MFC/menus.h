@@ -81,6 +81,7 @@ void modelMenu(int id)
 	case MODEL_CUBE:
 		scene->createPrimitive();
 		scene->tState = world;
+		scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
 		break;
 	case MODEL_SWITCH:
 		scene->switchActiveModel();
@@ -95,13 +96,13 @@ void modelMenu(int id)
 			scene->loadOBJModel((LPCTSTR)dlgFile.GetPathName());
 		}
 		scene->tState = world;
+		scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
 		break;
 	case MODEL_MOVE:
 		if (dlgxyz.DoModal() == IDOK) {
 			vec3 v = dlgxyz.GetXYZ();
 			scene->models[scene->activeModel]->setPosition(v);
 		}
-		
 		break;
 	}
 }
@@ -217,6 +218,10 @@ void lightMenu(int id)
 		scene->addLight(parallel);
 		scene->tState = light;
 		break;
+	case LIGHT_ADD_AMBIENT:
+		scene->addLight(ambience);
+		scene->tState = light;
+		break;
 	case LIGHT_CHANGE_POSITION:
 		if (dlgxyz.DoModal() == IDOK) {
 			vec3 v = dlgxyz.GetXYZ();
@@ -239,6 +244,7 @@ void lightMenu(int id)
 		scene->switchActiveLight();
 		break;
 	case LIGHT_CHANGE_COLOR:
+		dlg.insertData(scene->lights[scene->activeLight]->color);
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
 			scene->changeLightColor(v);

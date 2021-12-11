@@ -42,7 +42,8 @@
     - [x] color of light
     - [x] parallel
     - [x] point
-    - [ ] ambient light source
+    - [x] ambient light source
+    - [ ] control different light intensity (via material)
 - [x] Renderer
   - [x] different color for ambient, diffuse, specular
   - [x] z-buffer
@@ -51,7 +52,7 @@
     - [x] gouraud
     - [x] phong
     - [x] wireframe
-- [ ] fix vertex normals like in face normal
+- [x] fix vertex normals like in face normal
 - [x] fix orthogonal camera backface culling
 - [ ] gaussian blur light bloom
 - [x] fog (menu and controling far, near)

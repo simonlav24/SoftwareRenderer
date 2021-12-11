@@ -314,7 +314,9 @@ vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Mater
 	{
 		for (int l = 0; l < sceneLights->size(); l++)
 		{
-			if (sceneLights->at(l)->lightType == point)
+			if (sceneLights->at(l)->lightType == ambience)
+				continue;
+			else if (sceneLights->at(l)->lightType == point)
 				dirToLight = sceneLights->at(l)->position - pointInWorld;
 			else if (sceneLights->at(l)->lightType == parallel)
 				dirToLight = -sceneLights->at(l)->direction;
@@ -328,7 +330,9 @@ vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Mater
 	{
 		for (int l = 0; l < sceneLights->size(); l++)
 		{
-			if (sceneLights->at(l)->lightType == point)
+			if (sceneLights->at(l)->lightType == ambience)
+				continue;
+			else if (sceneLights->at(l)->lightType == point)
 				dirToLight = sceneLights->at(l)->position - pointInWorld;
 			else if (sceneLights->at(l)->lightType == parallel)
 				dirToLight = -sceneLights->at(l)->direction;

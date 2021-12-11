@@ -69,6 +69,8 @@ void Scene::draw()
 				m_renderer->drawLightIndicator(lightPos, lights[i]->color, vec3(0.0, 0.0, 0.0));
 			else if (lights[i]->lightType == parallel)
 				m_renderer->drawLightIndicator(lightPos, lights[i]->color, lightDir);
+			else if (lights[i]->lightType == ambience)
+				m_renderer->drawPlusSign(lightPos, lights[i]->color);
 		}
 
 		drawOriginPoint();
@@ -450,7 +452,6 @@ void Scene::reshapeCamera(int width, int height)
 
 void Scene::addLight(LightType type)
 {
-	// add a default light
 	Light* light = new Light(type);
 
 	lights.push_back(light);
