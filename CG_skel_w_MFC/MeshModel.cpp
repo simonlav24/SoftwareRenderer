@@ -103,7 +103,6 @@ void MeshModel::loadFile(string fileName)
 	//loading file buffer
 	ifstream ifile(fileName.c_str());
 	//saving info about v, vn and f
-	//vector<vec3> vertices;
 	vector<vec3> vertices_normals;
 	vector<FaceIdcs> faces;
 	// while not end of file
@@ -136,7 +135,7 @@ void MeshModel::loadFile(string fileName)
 		}
 		else
 		{
-			cout << "Found unknown line Type \"" << lineType << "\"";
+			cout << "Found unknown line Type \"" << lineType << "\"" << endl;
 		}
 	}
 
@@ -286,8 +285,6 @@ void MeshModel::draw(Renderer* r)
 			vec4 normal = faceNormals[i / 3];
 			normal.w = 0;
 			normal = normalTransform * normal;
-			vec4 center = centerPoints[i / 3];
-			center = worldModel * center;
 			vec4 camDir = r->viewerPos[1] - r->viewerPos[0]; // at - eye
 			camDir.w = 0;
 

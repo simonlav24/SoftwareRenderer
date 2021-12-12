@@ -60,6 +60,7 @@
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
 #define POST_SSAA_TOGGLE 2
+#define POST_LIGHT_BLOOM 3
 
 // global variables from main
 extern Scene* scene;
@@ -392,6 +393,9 @@ void postProccessMenu(int id)
 			renderer->reshape(renderer->getDims().x / 2, renderer->getDims().y / 2);
 			scene->reshapeCamera(renderer->getDims().x / 2, renderer->getDims().y / 2);
 		}
+		break;
+	case POST_LIGHT_BLOOM:
+		renderer->lightBloom = !renderer->lightBloom;
 		break;
 	}
 }

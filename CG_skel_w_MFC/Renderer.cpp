@@ -5,6 +5,7 @@
 #include "GL\freeglut.h"
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
+#define MAT_INDEX(x,y,width) ((x)+(y)*(width))
 #define INDEX_ZB(width,x,y) ((x)+(y)*(width))
 #define DEFAULT_DIMS 512
 
@@ -42,11 +43,26 @@ void Renderer::Init()
 	fogColor = vec3(0.1, 0.1, 0.3);
 
 	shadingSetup = Phong;
+
+	// calculate kernel based on fixed sigma and size
+	int size = 15;
+	float sigma = 10;
+	gaussianKernel = new float[size];
+	
+	float mult = 1 / sqrtf(2 * 3.1415326 * sigma * sigma);
+	for (int i = 0; i < size; i++)
+	{
+		float x = (float)(i - size / 2);
+		gaussianKernel[i] = mult * expf((-(x * x)) / (2 * sigma * sigma));
+	}
+		
 }
 
 Renderer::~Renderer(void)
 {
+	delete[] gaussianKernel;
 	DestroyBuffers();
+	
 }
 
 void Renderer::toggleFog() { fogMode = !fogMode; }
@@ -62,7 +78,7 @@ void Renderer::CreateBuffers(int width, int height)
 	m_width=width;
 	m_height=height;
 	CreateOpenGLBuffer(); //Do not remove this line.
-	m_outBuffer = new float[3*m_width*m_height];
+	m_outBuffer = new float[3 * m_width * m_height];
 	m_zbuffer = new float[m_width * m_height];
 	m_blurBuffer = new float[3 * m_width * m_height];
 }
@@ -85,6 +101,18 @@ void Renderer::clearBuffer()
 			m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
 			m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
 			m_zbuffer[INDEX_ZB(m_width, x, y)] = 101;
+		}
+	}
+	if (lightBloom)
+	{
+		for (int y = 0; y < m_height; y++)
+		{
+			for (int x = 0; x < m_width; x++)
+			{
+				m_blurBuffer[INDEX(m_width, x, y, 0)] = 0.0;
+				m_blurBuffer[INDEX(m_width, x, y, 1)] = 0.0;
+				m_blurBuffer[INDEX(m_width, x, y, 2)] = 0.0;
+			}
 		}
 	}
 
@@ -433,7 +461,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
 			
 			vec3 Itot = Idiffuse + Idiffuse + Ispecular;
-			Color = (mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
+			Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
 
 			for (int y = yMin; y <= yMax; y++)
 			{
@@ -765,62 +793,118 @@ void Renderer::SwapBuffers()
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void Renderer::convolute(float* buffer, float* kernel, int kernelWidth, int kernelHeight)
+{
+	float* bufferResult = new float[m_width * m_height * 3];
+
+	// gather kernel sum (may be faster if i have sum already)
+	float kernelSum = 0.0;
+	for (int i = 0; i < kernelHeight * kernelWidth; i++)
+		kernelSum += kernel[i];
+
+	vec3 totalPixel, color;
+	int xval, yval, xToCheck, yToCheck;
+	float kernelVal;
+
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			totalPixel = vec3(0.0, 0.0, 0.0);
+			for (int kx = 0; kx < kernelWidth; kx++)
+			{
+				for (int ky = 0; ky < kernelHeight; ky++)
+				{
+					xval = kx - kernelWidth / 2;
+					yval = ky - kernelHeight / 2;
+
+					kernelVal = kernel[kx + ky * kernelWidth];
+
+					xToCheck = x + xval; yToCheck = y + yval;
+					if (xToCheck < 0 || xToCheck > m_width - 1 || yToCheck < 0 || yToCheck > m_height - 1)
+					{
+						color = vec3(0.0, 0.0, 0.0);
+					}
+					else
+					{
+						color.x = buffer[INDEX(m_width, xToCheck, yToCheck, 0)] * kernelVal;
+						color.y = buffer[INDEX(m_width, xToCheck, yToCheck, 1)] * kernelVal;
+						color.z = buffer[INDEX(m_width, xToCheck, yToCheck, 2)] * kernelVal;
+					}
+					totalPixel += color;
+				}
+			}
+			totalPixel /= kernelSum;
+			bufferResult[INDEX(m_width, x, y, 0)] = totalPixel.x;
+			bufferResult[INDEX(m_width, x, y, 1)] = totalPixel.y;
+			bufferResult[INDEX(m_width, x, y, 2)] = totalPixel.z;
+		}
+	}
+
+	// swap buffer
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			buffer[INDEX(m_width, x, y, 0)] = bufferResult[INDEX(m_width, x, y, 0)];
+			buffer[INDEX(m_width, x, y, 1)] = bufferResult[INDEX(m_width, x, y, 1)];
+			buffer[INDEX(m_width, x, y, 2)] = bufferResult[INDEX(m_width, x, y, 2)];
+		}
+	}
+
+	delete[] bufferResult;
+}
+
 void Renderer::postProccess()
 {
-	/*if (lightBloom)
+	if (lightBloom)
 	{
-		GLfloat threshhold = 0.5;
-		vec3 black(0.0, 0.0, 0.0);
-		// get brightest pixels
+		// get the brightest colors
+		float brightness;
 		for (int y = 0; y < m_height; y++)
 		{
 			for (int x = 0; x < m_width; x++)
 			{
-				// brightness formula (ITU BT.709)
-				vec3 color = get_at(OUT_BUFFER, x, y);
-				GLfloat brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
-				if (brightness >= threshhold)
+				// calc brightness for pixel
+				brightness = m_outBuffer[INDEX(m_width, x, y, 0)] * 0.2126;
+				brightness += m_outBuffer[INDEX(m_width, x, y, 1)] * 0.7152;
+				brightness += m_outBuffer[INDEX(m_width, x, y, 2)] * 0.0722;
+
+				if (brightness > 0.7)
 				{
-					set_at(BLUR_BUFFER, x, y, color);
-				}
-				else
-				{
-					set_at(BLUR_BUFFER, x, y, black);
+					m_blurBuffer[INDEX(m_width, x, y, 0)] = m_outBuffer[INDEX(m_width, x, y, 0)];
+					m_blurBuffer[INDEX(m_width, x, y, 1)] = m_outBuffer[INDEX(m_width, x, y, 1)];
+					m_blurBuffer[INDEX(m_width, x, y, 2)] = m_outBuffer[INDEX(m_width, x, y, 2)];
 				}
 			}
 		}
 
-		// gaussian blur them
+		// double pass gaussian blur
+		convolute(m_blurBuffer, gaussianKernel, 15, 1);
+		convolute(m_blurBuffer, gaussianKernel, 1, 15);
 
+		// add to out buffer
+		vec3 colorBlurred, color;
 		for (int y = 0; y < m_height; y++)
 		{
 			for (int x = 0; x < m_width; x++)
 			{
-				// if on corners
-				if (x == 0 || y == 0 || x == m_width - 1 || y == m_height - 1)
-				{
-					// skip for now
-					continue;
-				}
-				vec3 value = get_at(BLUR_BUFFER, x - 1, y) + get_at(BLUR_BUFFER, x - 1, y - 1) + get_at(BLUR_BUFFER, x, y - 1);
-				value += get_at(BLUR_BUFFER, x + 1, y - 1) + get_at(BLUR_BUFFER, x + 1, y) + get_at(BLUR_BUFFER, x + 1, y + 1);
-				value += get_at(BLUR_BUFFER, x, y + 1) + get_at(BLUR_BUFFER, x - 1, y + 1) + get_at(BLUR_BUFFER, x, y);
-				value *= 1.0 / 9.0;
+				colorBlurred.x = m_blurBuffer[INDEX(m_width, x, y, 0)];
+				colorBlurred.y = m_blurBuffer[INDEX(m_width, x, y, 1)];
+				colorBlurred.z = m_blurBuffer[INDEX(m_width, x, y, 2)];
 
-				set_at(OUT_BUFFER, x, y, value, true);
+				color.x = m_outBuffer[INDEX(m_width, x, y, 0)];
+				color.y = m_outBuffer[INDEX(m_width, x, y, 1)];
+				color.z = m_outBuffer[INDEX(m_width, x, y, 2)];
+
+				m_outBuffer[INDEX(m_width, x, y, 0)] = min(1.0, color.x + colorBlurred.x);
+				m_outBuffer[INDEX(m_width, x, y, 1)] = min(1.0, color.y + colorBlurred.y);
+				m_outBuffer[INDEX(m_width, x, y, 2)] = min(1.0, color.z + colorBlurred.z);
 			}
 		}
+	}
 
-		// add them on top of m_outBuffer
 
-
-		if (true)
-		{
-			float* temp = m_outBuffer;
-			m_outBuffer = m_blurBuffer;
-			m_blurBuffer = temp;
-		}
-	}*/
 	if (SSAA)
 	{
 		vec3 color(0.0, 0.0, 0.0);

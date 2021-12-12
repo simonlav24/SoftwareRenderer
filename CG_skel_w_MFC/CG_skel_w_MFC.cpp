@@ -244,7 +244,11 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		
 		break;
+	case 'k':
+		renderer->lightBloom = !renderer->lightBloom;
+		break;
 	}
+	
 }
 
 void mouse(int button, int state, int x, int y)
@@ -341,7 +345,7 @@ void initMenu()
 	int menuLight = glutCreateMenu(lightMenu);
 	glutAddMenuEntry("Add Point Light", LIGHT_ADD_POINT);
 	glutAddMenuEntry("Add Parallel Light", LIGHT_ADD_PARALLEL);
-	glutAddMenuEntry("Add ambient Light", LIGHT_ADD_AMBIENT);
+	glutAddMenuEntry("Add Ambient Light", LIGHT_ADD_AMBIENT);
 	glutAddMenuEntry("Change Position", LIGHT_CHANGE_POSITION);
 	glutAddMenuEntry("Change Direction", LIGHT_CHANGE_DIRECTION);
 	glutAddMenuEntry("Change Color", LIGHT_CHANGE_COLOR);
@@ -366,6 +370,7 @@ void initMenu()
 	glutAddMenuEntry("Toggle Fog", POST_FOG_TOGGLE);
 	glutAddMenuEntry("Change Fog Color", POST_FOG_COLOR);
 	glutAddMenuEntry("Toggle SSAA", POST_SSAA_TOGGLE);
+	glutAddMenuEntry("Toggle Light Bloom", POST_LIGHT_BLOOM);
 
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);

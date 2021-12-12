@@ -49,7 +49,6 @@ void Scene::draw()
 	
 
 	// for all camreras: draw indicators
-	
 	if (showIndicators) {
 		mat4 m = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
 		for (int i = 0; i < cameras.size(); i++)

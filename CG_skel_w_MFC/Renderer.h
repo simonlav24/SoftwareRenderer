@@ -23,7 +23,9 @@ class Renderer
 	////// post
 	bool fogMode;
 	vec3 calculateFog(vec3 color, GLfloat zValue);
-	bool lightBloom;
+
+	float* gaussianKernel;
+	void convolute(float* buffer, float* kernel, int kernelWidth, int kernelHeight);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
@@ -43,6 +45,7 @@ public:
 	bool orthogonal;
 
 	bool SSAA;
+	bool lightBloom;
 
 	float fogMaxdist;
 	float fogMindist;
