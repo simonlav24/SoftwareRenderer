@@ -56,6 +56,7 @@
 #define MATERIAL_CHANGE_SPECULAR 3
 #define MATERIAL_CHANGE_SHININESS 4
 #define MATERIAL_SPECIAL 5
+#define MATERIAL_CHANGE_EMISSION 6
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -355,6 +356,14 @@ void materialMenu(int id)
 		if (fdlg.DoModal() == IDOK) {
 			float v = fdlg.Getfloat();
 			scene->changeMaterial(shine, v);
+		}
+		break;
+	case MATERIAL_CHANGE_EMISSION:
+		dlg.mTitle = "Pick Color RGB";
+		dlg.insertData(scene->getMaterial(emission));
+		if (dlg.DoModal() == IDOK) {
+			vec3 v = dlg.GetXYZ();
+			scene->changeMaterial(emission, v);
 		}
 		break;
 	case MATERIAL_SPECIAL:

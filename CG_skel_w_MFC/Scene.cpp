@@ -439,8 +439,8 @@ void Scene::reshapeCamera(int width, int height)
 
 	float horizon = newRatio * vertical;
 	
-	left = -horizon / 2.0;
-	right = horizon / 2.0;
+	left = -horizon / 2.0f;
+	right = horizon / 2.0f;
 
 	if (cameras[activeCamera]->orthogonal)
 		cameras[activeCamera]->Ortho(left, right, bottom, top, znear, zfar);
@@ -528,6 +528,9 @@ void Scene::changeMaterial(materialProperty prop, vec3 values)
 	case materialProperty::special:
 		static_cast<MeshModel*>(models[activeModel])->mat.special = !static_cast<MeshModel*>(models[activeModel])->mat.special;
 		break;
+	case materialProperty::emission:
+		static_cast<MeshModel*>(models[activeModel])->mat.emissiveColor = values;
+		break;
 	}
 }
 
@@ -552,6 +555,9 @@ vec3 Scene::getMaterial(materialProperty prop)
 		break;
 	case materialProperty::shine:
 		result.x = static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient;
+		break;
+	case materialProperty::emission:
+		result = static_cast<MeshModel*>(models[activeModel])->mat.emissiveColor;
 		break;
 	}
 	return result;

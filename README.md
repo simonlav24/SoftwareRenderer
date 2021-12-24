@@ -28,6 +28,8 @@
 * **G** - toggle show grid
 * **7-8** - control far point of fog
 * **9-0** - control near point of fog
+* **L** - toggle super sampling anti aliasing
+* **K** - toggle light bloom
 
 ### tasks:
 
@@ -54,7 +56,8 @@
     - [x] wireframe
 - [x] fix vertex normals like in face normal
 - [x] fix orthogonal camera backface culling
-- [ ] gaussian blur light bloom
-- [x] fog (menu and controling far, near)
+- [x] gaussian blur light bloom (can be optimized)
+- [ ] fog (menu and controling far, near)
+  - [ ] problem: fog is calculated per object
 - [x] super sampling anti aliasing (menu)
 

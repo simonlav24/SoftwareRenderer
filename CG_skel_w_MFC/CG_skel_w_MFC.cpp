@@ -363,6 +363,7 @@ void initMenu()
 	glutAddMenuEntry("Edit Ambient Color", MATERIAL_CHANGE_AMBIENT);
 	glutAddMenuEntry("Edit Diffuse Color", MATERIAL_CHANGE_DIFFUSE);
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);
+	glutAddMenuEntry("Edit Emissive Color", MATERIAL_CHANGE_EMISSION);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
 	glutAddMenuEntry("Toggle Special Material", MATERIAL_SPECIAL);
 

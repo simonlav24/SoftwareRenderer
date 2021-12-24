@@ -65,7 +65,8 @@ Renderer::~Renderer(void)
 	
 }
 
-void Renderer::toggleFog() { fogMode = !fogMode; }
+void Renderer::toggleFog() 
+{ fogMode = !fogMode; }
 
 vec3 Renderer::calculateFog(vec3 color, GLfloat zValue)
 {
@@ -92,7 +93,10 @@ void Renderer::DestroyBuffers()
 
 void Renderer::clearBuffer()
 {
-	vec3 color = fogMode ? fogColor : vec3(1.0, 1.0, 1.0) * 0.1;
+	
+	float bgColor = 0.05f;
+	vec3 color = fogMode ? fogColor : vec3(1.0f, 1.0f, 1.0f) * bgColor;
+	vec3 additive(0.0003f, 0.0003f, 0.0003f);
 	for (int y = 0; y < m_height; y++)
 	{
 		for (int x = 0; x < m_width; x++)
@@ -102,6 +106,7 @@ void Renderer::clearBuffer()
 			m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
 			m_zbuffer[INDEX_ZB(m_width, x, y)] = 101;
 		}
+		color += additive;
 	}
 	if (lightBloom)
 	{
@@ -461,7 +466,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 			vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
 			
 			vec3 Itot = Idiffuse + Idiffuse + Ispecular;
-			Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
+			Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z) + mat.emissiveColor;
 
 			for (int y = yMin; y <= yMax; y++)
 			{
@@ -557,7 +562,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
 						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
 
-						Color = alpha.x * Colors[0] + alpha.y * Colors[1] + alpha.z * Colors[2];
+						Color = alpha.x * Colors[0] + alpha.y * Colors[1] + alpha.z * Colors[2] + mat.emissiveColor;
 
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{
@@ -639,7 +644,7 @@ void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNor
 
 						vec3 Itot = Iambient + Idiffuse + Ispecular;
 						
-						Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
+						Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z) + mat.emissiveColor;
 
 						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
 						{

@@ -10,7 +10,7 @@ using namespace std;
 
 enum transformFrame { world, model, camera, light };
 enum transformMode { position, scale, rotation };
-enum materialProperty {color, ambient, diffuse, specular, shine, special};
+enum materialProperty {color, ambient, diffuse, specular, shine, special, emission};
 
 class Model {
 protected:

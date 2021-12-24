@@ -13,8 +13,10 @@ struct Material
 	vec3 ambientColor;
 	vec3 diffuseColor;
 	vec3 specularColor;
+	vec3 emissiveColor;
 	Material() :
-		color(0.8, 0.8, 0.8), ambientColor(0.1, 0.1, 0.1), diffuseColor(0.5, 0.5, 0.5), specularColor(0.8, 0.8, 0.8), shininessCoeficient(6.0){}
+		color(0.8f, 0.8f, 0.8f), ambientColor(0.1f, 0.1f, 0.1f), diffuseColor(0.5f, 0.5f, 0.5f), specularColor(0.8f, 0.8f, 0.8f),
+		emissiveColor(0.0f, 0.0f, 0.0f), shininessCoeficient(6.0f){}
 };
 
 class Light {

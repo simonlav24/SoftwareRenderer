@@ -118,9 +118,9 @@ GLfloat q_sqrt2(GLfloat number)
 {
     long i;
     GLfloat x2, y;
-    const GLfloat threehalfs = 1.5;
+    const GLfloat threehalfs = 1.5f;
 
-    x2 = number * 0.5;
+    x2 = number * 0.5f;
     y = number;
     i = *(long*)&y;
     i = 0x5f3759df - (i >> 1);
