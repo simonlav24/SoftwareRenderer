@@ -96,7 +96,7 @@ void Renderer::clearBuffer()
 	
 	float bgColor = 0.05f;
 	vec3 color = fogMode ? fogColor : vec3(1.0f, 1.0f, 1.0f) * bgColor;
-	vec3 additive(0.0003f, 0.0003f, 0.0003f);
+	vec3 additive = SSAA ? vec3(0.0003f, 0.0003f, 0.0003f) * 0.5f : vec3(0.0003f, 0.0003f, 0.0003f);
 	for (int y = 0; y < m_height; y++)
 	{
 		for (int x = 0; x < m_width; x++)
