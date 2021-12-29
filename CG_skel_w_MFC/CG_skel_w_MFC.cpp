@@ -247,6 +247,9 @@ void keyboard(unsigned char key, int x, int y)
 	case 'k':
 		renderer->lightBloom = !renderer->lightBloom;
 		break;
+	case 'i':
+		scene->toggleIndicators();
+		break;
 	}
 	
 }

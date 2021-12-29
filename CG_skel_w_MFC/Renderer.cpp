@@ -70,7 +70,7 @@ void Renderer::toggleFog()
 
 vec3 Renderer::calculateFog(vec3 color, GLfloat zValue)
 {
-	GLfloat fogFactor = max(0.0, (fogMaxdist - zValue) / (fogMaxdist - fogMindist));
+	GLfloat fogFactor = max(0.0f, min(1.0f, (fogMaxdist - zValue) / (fogMaxdist - fogMindist)));
 	return color * fogFactor + fogColor * (1.0 - fogFactor);
 }
 
@@ -97,6 +97,8 @@ void Renderer::clearBuffer()
 	float bgColor = 0.05f;
 	vec3 color = fogMode ? fogColor : vec3(1.0f, 1.0f, 1.0f) * bgColor;
 	vec3 additive = SSAA ? vec3(0.0003f, 0.0003f, 0.0003f) * 0.5f : vec3(0.0003f, 0.0003f, 0.0003f);
+	if (fogMode)
+		additive *= 0;
 	for (int y = 0; y < m_height; y++)
 	{
 		for (int x = 0; x < m_width; x++)
