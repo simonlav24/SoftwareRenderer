@@ -2,7 +2,8 @@
 #include "Scene.h"
 #include "MeshModel.h"
 #include <string>
-
+#include "GL\freeglut.h" // might not need (?)
+#include "InitShader.h"
 #include <chrono>
 
 #define viewPort(dims, a) vec3((dims.x / 2.0) * (a.x + 1), (dims.y / 2.0) * (a.y + 1), a.z)
@@ -18,19 +19,71 @@ void Scene::loadOBJModel(string fileName)
 
 void Scene::draw()
 {
-	using std::chrono::high_resolution_clock;
-	using std::chrono::duration_cast;
-	using std::chrono::duration;
-	using std::chrono::milliseconds;
-	
-	static int timeCount = 0;
-	timeCount += 1;
+	//============Demo
+	/*const int pnum = 3;
+	static const GLfloat points[pnum][4] = {
+		{-0.1, -0.1f, 0.0f,1.0f},
+		{0.1f, -0.1f, 0.0f,1.0f},
+		{0.0f,  0.1f, 0.0f,1.0f}
+	};
+
+	GLuint program = InitShader("minimal_vshader.glsl",
+		"minimal_fshader.glsl");
+
+	glUseProgram(program);
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+
+	GLuint buffer;
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points),
+		points, GL_STATIC_DRAW);
+
+
+
+
+	GLuint loc = glGetAttribLocation(program, "vPosition");
+	glEnableVertexAttribArray(loc);
+	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glDrawArrays(GL_LINE_LOOP, 0, pnum);
+	glFlush();
+	glutSwapBuffers();
+	return;*/
+
+	//===============Demo2
+	/*glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glBegin(GL_POLYGON);
+	glColor3f(1, 0, 0); glVertex3f(-0.6, -0.75, 0.5);
+	glColor3f(0, 1, 0); glVertex3f(0.6, -0.75, 0);
+	glColor3f(0, 0, 1); glVertex3f(0, 0.75, 0);
+	glEnd();
+
+	glFlush();
+	glutSwapBuffers();
+	return;*/
+
+	//===============Start
 	// clear buffer
-	auto t1 = high_resolution_clock::now();
 	m_renderer->clearBuffer();
 	
-	if(showGrid)
-		drawGrid();
+	// try line
+	//m_renderer->glDrawLine(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+	
+	m_renderer->drawOriginAxis(); // can hardcode the verties to save memory
+
+
+
+	/*if(showGrid)
+		drawGrid();*/
 
 	// for all models: draw yourself
 	for (int i = 0; i < models.size(); i++)
@@ -59,6 +112,7 @@ void Scene::draw()
 			m_renderer->drawPlusSign(camPos, vec3(1.0, 0.0, 0.0));
 		}
 
+
 		// for all lights: draw indicator
 		for (int i = 0; i < lights.size(); i++)
 		{
@@ -72,17 +126,14 @@ void Scene::draw()
 				m_renderer->drawPlusSign(lightPos, lights[i]->color);
 		}
 
-		drawOriginPoint();
+		
+		//drawOriginPoint();
 	}
 	// post proccessing
 	
-	m_renderer->postProccess();
+	//m_renderer->postProccess();
 	
 	m_renderer->SwapBuffers();
-	
-	auto t2 = high_resolution_clock::now();
-	duration<double, std::milli> ms_double = t2 - t1;
-	//cout << ms_double.count() << " " << timeCount << endl;
 }
 
 void Scene::toggleIndicators()
@@ -97,6 +148,8 @@ void Scene::toggleIndicators()
 void Scene::setProjCam()
 {
 	mat4 ProjCam = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
+	m_renderer->lookAt = cameras[activeCamera]->cTransform;
+	m_renderer->Proj = cameras[activeCamera]->projection;
 	m_renderer->ProjCam = ProjCam;
 	m_renderer->viewerPos[0] = cameras[activeCamera]->Eye;
 	m_renderer->viewerPos[1] = cameras[activeCamera]->At;

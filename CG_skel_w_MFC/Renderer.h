@@ -10,6 +10,16 @@ using namespace std;
 
 enum LightSetup { WireFrame, Flat, Phong, Gouraud };
 
+struct GLProgramsArray {
+	GLuint line;
+	GLuint more;
+};
+
+struct GLUniformLocArray {
+	GLuint lookAt;
+	GLuint projection;
+};
+
 class Renderer
 {
 	float *m_outBuffer; // 3*width*height
@@ -35,12 +45,21 @@ class Renderer
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
 	//////////////////////////////
+
+	/// hw3 stuff
+	GLProgramsArray glProgramArray;
+	GLUniformLocArray glUniformLocArray;
+	//GLuint glprogramsArray[10];
+	//GLuint glUniformLocArray[10]; 
+
 public:
 	Renderer();
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
 
+	mat4 lookAt;
+	mat4 Proj;
 	mat4 ProjCam;
 	bool orthogonal;
 
@@ -96,4 +115,9 @@ public:
 
 	void postProccess();
 	void toggleFog();
+
+
+	void glDrawLinesColors(vec4* vertices, vec4* colors, int size);
+	void glDrawLines(vec4* vertices, int size, vec4 color);
+	void drawOriginAxis();
 };

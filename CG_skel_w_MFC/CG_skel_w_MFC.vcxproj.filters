@@ -97,5 +97,11 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="ReadMe.txt" />
+    <None Include="Shaders\basic_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\line_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

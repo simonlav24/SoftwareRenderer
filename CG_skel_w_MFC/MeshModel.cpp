@@ -347,11 +347,60 @@ void MeshModel::calculateBoundingBox(vector<vec3>& vertices)
 
 void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 {
+	vec4 vertices[24];
+	vec3 line[2];
+
+	int k = 0;
+	for (int i = 0; i < 2; i++)
+	{
+		line[0] = bounding_box[i];
+		line[1] = bounding_box[i]; line[1].x = bounding_box[1 - i].x;
+		vertices[k++] = vec4(line[0]);
+		vertices[k++] = vec4(line[1]);
+
+		line[0] = bounding_box[i];
+		line[1] = bounding_box[i]; line[1].y = bounding_box[1 - i].y;
+		vertices[k++] = vec4(line[0]);
+		vertices[k++] = vec4(line[1]);
+
+		line[0] = bounding_box[i];
+		line[1] = bounding_box[i]; line[1].z = bounding_box[1 - i].z;
+		vertices[k++] = vec4(line[0]);
+		vertices[k++] = vec4(line[1]);
+	}
+
+	line[0] = bounding_box[0]; line[0].y = bounding_box[1].y;
+	line[1] = bounding_box[1]; line[1].x = bounding_box[0].x;
+	vertices[k++] = vec4(line[0]);
+	vertices[k++] = vec4(line[1]);
+	line[0] = bounding_box[0]; line[0].z = bounding_box[1].z;
+	line[1] = bounding_box[1]; line[1].x = bounding_box[0].x;
+	vertices[k++] = vec4(line[0]);
+	vertices[k++] = vec4(line[1]);
+	line[0] = bounding_box[0]; line[0].y = bounding_box[1].y;
+	line[1] = bounding_box[1]; line[1].z = bounding_box[0].z;
+	vertices[k++] = vec4(line[0]);
+	vertices[k++] = vec4(line[1]);
+	line[0] = bounding_box[0]; line[0].x = bounding_box[1].x;
+	line[1] = bounding_box[1]; line[1].z = bounding_box[0].z;
+	vertices[k++] = vec4(line[0]);
+	vertices[k++] = vec4(line[1]);
+	line[0] = bounding_box[0]; line[0].x = bounding_box[1].x;
+	line[1] = bounding_box[1]; line[1].y = bounding_box[0].y;
+	vertices[k++] = vec4(line[0]);
+	vertices[k++] = vec4(line[1]);
+	line[0] = bounding_box[0]; line[0].z = bounding_box[1].z;
+	line[1] = bounding_box[1]; line[1].y = bounding_box[0].y;
+	vertices[k++] = vec4(line[0]);
+	vertices[k++] = vec4(line[1]);
+	r->glDrawLines(vertices, 24, vec4(1.0, 1.0, 0.0, 1.0));
+	return;
+
 	vec2 rendererDims = r->getDims();
 	//mat4 M = projection * transpose(cTransform) * _world_t ransform * _model_transform;
 	mat4 M = projection * cTransform * _world_transform * _model_transform;
 
-	vec3 line[2];
+	//vec3 line[2];
 
 	for (int i = 0; i < 2; i++)
 	{

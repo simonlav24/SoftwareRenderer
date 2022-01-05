@@ -29,6 +29,9 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 	InitOpenGLRendering();
 	CreateBuffers(width,height);
 	Init();
+
+	// temp:
+	
 }
 
 void Renderer::Init()
@@ -56,6 +59,118 @@ void Renderer::Init()
 		gaussianKernel[i] = mult * expf((-(x * x)) / (2 * sigma * sigma));
 	}
 		
+	glViewport(0, 0, m_width, m_height);
+	// init shaders programs
+	
+	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/basic_fs.glsl");
+	
+}
+
+void Renderer::drawOriginAxis()
+{
+	vec4 vertices[6];
+	vec4 colors[6];
+
+	int i = 0;
+	vertices[i++] = vec4(0.0, 0.0, 0.0, 1.0);
+	vertices[i++] = vec4(1.0, 0.0, 0.0, 1.0);
+	vertices[i++] = vec4(0.0, 0.0, 0.0, 1.0);
+	vertices[i++] = vec4(0.0, 1.0, 0.0, 1.0);
+	vertices[i++] = vec4(0.0, 0.0, 0.0, 1.0);
+	vertices[i++] = vec4(0.0, 0.0, 1.0, 1.0);
+
+	i = 0;
+	colors[i++] = vec4(1.0, 0.0, 0.0, 1.0);
+	colors[i++] = vec4(1.0, 0.0, 0.0, 1.0);
+	colors[i++] = vec4(0.0, 1.0, 0.0, 1.0);
+	colors[i++] = vec4(0.0, 1.0, 0.0, 1.0);
+	colors[i++] = vec4(0.0, 0.0, 1.0, 1.0);
+	colors[i++] = vec4(0.0, 0.0, 1.0, 1.0);
+
+	glDrawLinesColors(vertices, colors, 6);
+	
+}
+
+void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size)
+{
+	glUseProgram(glProgramArray.line);
+	glUniformLocArray.lookAt = glGetUniformLocation(glProgramArray.line, "lookAt");
+	glUniformLocArray.projection = glGetUniformLocation(glProgramArray.line, "proj");
+
+	// set camera
+	glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
+	glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+
+	// draw
+	GLuint buffers[2];
+	GLuint vao;
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(2, buffers);
+
+	GLuint vPositionLoc = glGetAttribLocation(glProgramArray.line, "vPosition");
+	GLuint vColorLoc = glGetAttribLocation(glProgramArray.line, "vColor");
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * size, vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vPositionLoc);
+	glVertexAttribPointer(vPositionLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * size, colors, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vColorLoc);
+	glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glEnable(GL_DEPTH_TEST);
+	glBindVertexArray(vao);
+	glLineWidth(1);
+	glDrawArrays(GL_LINE_STRIP, 0, size);
+	glUseProgram(0);
+	glDeleteVertexArrays(1, &vao);
+
+	//GLenum errCode;
+	//if ((errCode = glGetError()) != GL_NO_ERROR)
+	//	cout << "OpenGl error! - " << gluErrorString(errCode) << endl;;
+}
+
+void Renderer::glDrawLines(vec4* vertices, int size, vec4 color)
+{
+	glUseProgram(glProgramArray.line);
+	glUniformLocArray.lookAt = glGetUniformLocation(glProgramArray.line, "lookAt");
+	glUniformLocArray.projection = glGetUniformLocation(glProgramArray.line, "proj");
+
+	// set camera
+	glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
+	glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+
+	// draw
+	GLuint buffers[2];
+	GLuint vao;
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(2, buffers);
+
+	GLuint vPositionLoc = glGetAttribLocation(glProgramArray.line, "vPosition");
+	GLuint vColorLoc = glGetAttribLocation(glProgramArray.line, "vColor");
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * size, vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vPositionLoc);
+	glVertexAttribPointer(vPositionLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) , color, GL_STATIC_DRAW);
+	glVertexAttrib3fv(vColorLoc, color);
+	//glVertexAttribPointer(vColorLoc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glEnable(GL_DEPTH_TEST);
+	glBindVertexArray(vao);
+	glLineWidth(1);
+	glDrawArrays(GL_LINE_STRIP, 0, size);
+	glUseProgram(0);
+	glDeleteVertexArrays(1, &vao);
 }
 
 Renderer::~Renderer(void)
@@ -93,8 +208,11 @@ void Renderer::DestroyBuffers()
 
 void Renderer::clearBuffer()
 {
-	
-	float bgColor = 0.05f;
+	glClearColor(0.2, 0.2, 0.2, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	/*float bgColor = 0.05f;
 	vec3 color = fogMode ? fogColor : vec3(1.0f, 1.0f, 1.0f) * bgColor;
 	vec3 additive = SSAA ? vec3(0.0003f, 0.0003f, 0.0003f) * 0.5f : vec3(0.0003f, 0.0003f, 0.0003f);
 	if (fogMode)
@@ -126,6 +244,7 @@ void Renderer::clearBuffer()
 	// fancy background: (takes lot of time)
 	//GLfloat bgColor[2] = { 0.050 , 0.215 };
 	//color = vec3(1.0, 1.0, 1.0) * (bgColor[1] - bgColor[0]) * ((GLfloat)y / (GLfloat)m_height) + bgColor[0];
+	*/
 }
 
 void Renderer::SetDemoBuffer()
@@ -151,7 +270,16 @@ void Renderer::drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const ve
 
 void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 {
-	if (a.x > m_width + border || a.x < -border || b.x > m_width + border || b.x < -border || a.y > m_height + border || a.y < -border || b.y > m_height + border || b.y < -border)
+	glColor3f(color.x, color.y, color.z);
+	glBegin(GL_LINES);
+	{
+		glVertex2f(a.x, a.y);
+		glVertex2f(b.x, b.y);
+	}
+	glEnd();
+
+	return;
+	/*if (a.x > m_width + border || a.x < -border || b.x > m_width + border || b.x < -border || a.y > m_height + border || a.y < -border || b.y > m_height + border || b.y < -border)
 		return;
 	vec3 start, end;
 	bool steep;
@@ -242,7 +370,7 @@ void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
 				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
 			}
 		}
-	}
+	}*/
 }
 
 void Renderer::drawLine(int x0, int y0, int x1, int y1, const vec3& color)
@@ -687,12 +815,20 @@ vec2 Renderer::getDims()
 
 void Renderer::drawPlusSign(vec4 pos, vec3 color)
 {
+	static const GLfloat points[3][4] = {
+		{-0.1, -0.1f, 0.0f,1.0f},
+		{0.1f, -0.1f, 0.0f,1.0f},
+		{0.0f,  0.1f, 0.0f,1.0f}
+	};
+
+
+	/*
 	//vec3 color = vec3(1.0, 0.0, 0.0);
 	drawLine((int)pos.x, (int)pos.y - 2, (int)pos.x, (int)pos.y + 4, color);
 	drawLine((int)pos.x + 1, (int)pos.y - 2, (int)pos.x + 1, (int)pos.y + 4, color);
 
 	drawLine((int)pos.x - 2, (int)pos.y, (int)pos.x + 4, (int)pos.y, color);
-	drawLine((int)pos.x - 2, (int)pos.y + 1, (int)pos.x + 4, (int)pos.y + 1, color);
+	drawLine((int)pos.x - 2, (int)pos.y + 1, (int)pos.x + 4, (int)pos.y + 1, color);*/
 }
 
 void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
@@ -780,8 +916,10 @@ void Renderer::CreateOpenGLBuffer()
 
 void Renderer::SwapBuffers()
 {
+	glFlush();
+	glutSwapBuffers();
 
-	int a = glGetError();
+	/*int a = glGetError();
 	glActiveTexture(GL_TEXTURE0);
 	a = glGetError();
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
@@ -795,7 +933,7 @@ void Renderer::SwapBuffers()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	a = glGetError();
 	glutSwapBuffers();
-	a = glGetError();
+	a = glGetError();*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////

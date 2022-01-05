@@ -27,8 +27,9 @@ protected :
 	int vertexCount = 0; //num faces * 3, not actualy count of vertices
 	int vertexNormalsCount = 0;
 	int faceCount = 0;
-	// 2 vertices for bounding box definition
+	// 6 vertices for bounding box definition
 	vec3 bounding_box[2];
+	vec4 bounding_BoxFull[24];
 	
 public:
 	Material mat;

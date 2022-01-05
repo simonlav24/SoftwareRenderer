@@ -129,6 +129,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
+    <None Include="Shaders\basic_fs.glsl" />
+    <None Include="Shaders\line_vs.glsl" />
     <None Include="vshader.glsl" />
     <None Include="ReadMe.txt" />
   </ItemGroup>

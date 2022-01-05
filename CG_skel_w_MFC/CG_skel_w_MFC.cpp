@@ -40,21 +40,6 @@ GLfloat step{ 0.5 };
 static int t = 0;
 void display(void)
 {
-	if (scene->activeModel != -1)
-	{
-		//static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient = 2.5 * sin(0.1 * t) + 2.5;
-		//cout << static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient << endl;
-	}
-	if (scene->activeCamera != -1)
-	{
-	}
-	if (t == 20)
-	{
-		//cout << "reshape" << endl;
-		//renderer->reshape(512 * 2, 512 * 2);
-		//scene->reshapeCamera(512 * 2, 512 * 2);
-	}
-	t += 1;
 	// Call the scene and ask it to draw itself
 	scene->draw();
 }
@@ -417,7 +402,8 @@ int my_main(int argc, char** argv)
 
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+	scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 1.0, 20.0);
+	//scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
 
 	scene->addLight();
 	scene->moveLight(vec3(4.0, 4.0, 8.0));
