@@ -33,31 +33,20 @@
 
 ### tasks:
 
-- [ ] Clipping
-- [x] user input from website
-- [x] Material
-  - [x] uniform material for each model
-  - [x] non-uniform material (iridiscent)
-- [ ] Scene
-  - [ ] light source
-    - [x] light class
-    - [x] color of light
-    - [x] parallel
-    - [x] point
-    - [x] ambient light source
-    - [ ] control different light intensity (via material)
-- [x] Renderer
-  - [x] different color for ambient, diffuse, specular
-  - [x] z-buffer
-  - [x] flat, gouraud, phong shading user switchable
-    - [x] flat
-    - [x] gouraud
-    - [x] phong
-    - [x] wireframe
-- [x] fix vertex normals like in face normal
-- [x] fix orthogonal camera backface culling
-- [x] gaussian blur light bloom (can be optimized)
-- [ ] fog (menu and controling far, near)
-  - [ ] problem: fog is calculated per object
-- [x] super sampling anti aliasing (menu)
+- [x] see some models
+- [ ] light shadings
+  - [ ] flat
+  - [ ] gouraud
+  - [ ] phong
+- [ ] in line shader, can send the multiplied matrix
+
+### for lighting shader I need:
+
+material: emissive, diffuse, ambient, specular, shininess
+
+model (in): vertex_positions, face_normals, vertex_normals
+
+matrices (uniform):  model, world, ctransform, proj
+
+lights: 
 

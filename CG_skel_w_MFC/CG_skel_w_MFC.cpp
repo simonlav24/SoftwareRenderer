@@ -340,7 +340,7 @@ void initMenu()
 	glutAddMenuEntry("Switch Light", LIGHT_SWITCH);
 	glutAddMenuEntry("Delete Light", LIGHT_DELETE);
 
-	int menuLightSetup = glutCreateMenu(shadingSetupMenu);
+	int menuShadingSetup = glutCreateMenu(shadingSetupMenu);
 	glutAddMenuEntry("WireFrame", SHADING_WIRE);
 	glutAddMenuEntry("Flat Shading", SHADING_FLAT);
 	glutAddMenuEntry("Phong Shading", SHADING_PHONG);
@@ -368,7 +368,7 @@ void initMenu()
 	glutAddSubMenu("Transformation Mode", menuMode);
 	glutAddSubMenu("Camera", menuCamera);
 	glutAddSubMenu("Light", menuLight);
-	glutAddSubMenu("Shading mode", menuLightSetup);
+	glutAddSubMenu("Shading mode", menuShadingSetup);
 	glutAddSubMenu("Show", menuShow);
 	glutAddSubMenu("Post Proccessing", menuPost);
 	glutAddMenuEntry("About", MAIN_ABOUT);
@@ -402,11 +402,11 @@ int my_main(int argc, char** argv)
 
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 1.0, 20.0);
-	//scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+	//scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 1.0, 20.0);
+	scene->currentCamera().Frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 20);
 
-	scene->addLight();
-	scene->moveLight(vec3(4.0, 4.0, 8.0));
+	//scene->addLight();
+	//scene->moveLight(vec3(4.0, 4.0, 8.0));
 
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks

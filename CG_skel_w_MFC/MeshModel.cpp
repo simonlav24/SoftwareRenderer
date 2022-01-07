@@ -173,11 +173,13 @@ void MeshModel::loadFile(string fileName)
 
 	//calculate center points & normals
 	faceCount = faces.size();
-	faceNormals = new vec3[faceCount];
-	centerPoints = new vec3[faceCount];
-	for (int i = 0, k = 0; i < vertexCount; i += 3)
+	faceNormals = new vec3[vertexCount];
+	centerPoints = new vec3[vertexCount];
+	int k = 0;
+	for (int i = 0; i < vertexCount; i ++)
 	{
-		vec3 p1 = vertex_positions[i], p2 = vertex_positions[i + 1], p3 = vertex_positions[i + 2];
+		int j = i / 3;
+		vec3 p1 = vertex_positions[j], p2 = vertex_positions[j + 1], p3 = vertex_positions[j + 2];
 		faceNormals[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
 		centerPoints[k] = (p1 + p2 + p3) / 3.0;//center point according to formula
 		k++;
@@ -255,68 +257,9 @@ void MeshModel::drawWorldAxis(Renderer* r)
 
 void MeshModel::draw(Renderer* r)
 {
-	mat4 normalTransform = _normal_world_transform * _normal_transform;
-	mat4 worldModel = _world_transform * _model_transform;
-	
-	vector<vec4> modelVertices;
-	vector<vec4> modelFaceNormals;
-	vector<vec4> modelVertexNormals;
 
-	for (int i = 0; i < vertexCount; i++)
-	{
-		// backface culling
-		if (!r->orthogonal)
-		{
-			vec4 normal = faceNormals[i / 3];
-			normal.w = 0;
-			normal = normalTransform * normal;
-			vec4 center = centerPoints[i / 3];
-			center = worldModel * center;
-			vec4 eye = r->viewerPos[0];
-			eye.w = 0;
+	r->DrawModel(vertex_positions, faceNormals, centerPoints, normal_positions, vertexCount, mat, _model_transform, _world_transform, _normal_transform);
 
-			if (dot(center - eye, normal) > 0.0)
-				continue;
-
-			modelFaceNormals.push_back(normal);
-		}
-		else
-		{
-			vec4 normal = faceNormals[i / 3];
-			normal.w = 0;
-			normal = normalTransform * normal;
-			vec4 camDir = r->viewerPos[1] - r->viewerPos[0]; // at - eye
-			camDir.w = 0;
-
-			if (dot(camDir, normal) > 0.0)
-				continue;
-
-			modelFaceNormals.push_back(normal);
-		}
-
-		// vertex normals
-		vec3 vnormal = normal_positions[i];
-		vec4 vnormal4 = vec4(vnormal);
-		vnormal4.w = 0;
-		vnormal4 = normalTransform * vnormal4;
-
-		modelVertexNormals.push_back((vnormal4));
-
-		// transformations pipeline
-		vec3 point = vertex_positions[i];
-
-		// convert point to homogeneous
-		vec4 point4(point.x, point.y, point.z, 1);
-
-		// multiply by model transformations
-		point4 = worldModel * point4;
-
-		// send to renderer
-		modelVertices.push_back(point4);
-	}
-	r->drawModel(modelVertices, modelFaceNormals, modelVertexNormals, mat);
-	if(showIndicators)
-		drawWorldAxis(r);
 }
 
 vec3 MeshModel::getPosition()
@@ -395,7 +338,7 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 	vertices[k++] = vec4(line[1]);
 	r->glDrawLines(vertices, 24, vec4(1.0, 1.0, 0.0, 1.0));
 	return;
-
+	/*
 	vec2 rendererDims = r->getDims();
 	//mat4 M = projection * transpose(cTransform) * _world_t ransform * _model_transform;
 	mat4 M = projection * cTransform * _world_transform * _model_transform;
@@ -458,6 +401,7 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 	line[0] = transformPoint(line[0], M, rendererDims);
 	line[1] = transformPoint(line[1], M, rendererDims);
 	r->drawLine((int)line[0].x, (int)line[0].y, (int)line[1].x, (int)line[1].y, vec3(0.8, 0.8, 0.2));
+	*/
 }
 
 void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)

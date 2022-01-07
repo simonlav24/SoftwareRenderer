@@ -103,5 +103,11 @@
     <None Include="Shaders\line_vs.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\wireFrame_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\flat_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

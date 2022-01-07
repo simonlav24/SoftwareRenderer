@@ -8,16 +8,26 @@
 
 using namespace std;
 
-enum LightSetup { WireFrame, Flat, Phong, Gouraud };
+enum ShadingSetup { WireFrame, Flat, Phong, Gouraud };
 
 struct GLProgramsArray {
 	GLuint line;
-	GLuint more;
+	GLuint wireFrame;
+	GLuint flat;
 };
 
 struct GLUniformLocArray {
 	GLuint lookAt;
 	GLuint projection;
+	GLuint model;
+	GLuint world;
+	GLuint normals;
+	GLuint ambient;
+	GLuint diffuse;
+	GLuint specular;
+	GLuint emissive;
+	GLuint shininess;
+	
 };
 
 class Renderer
@@ -111,13 +121,14 @@ public:
 	void reshape(int width, int height);
 
 	vec2 getDims();
-	LightSetup shadingSetup;
+	ShadingSetup shadingSetup;
 
 	void postProccess();
 	void toggleFog();
 
 
-	void glDrawLinesColors(vec4* vertices, vec4* colors, int size);
-	void glDrawLines(vec4* vertices, int size, vec4 color);
+	void glDrawLinesColors(vec4* vertices, vec4* colors, int size, GLuint lineMode = GL_LINE_STRIP);
+	void glDrawLines(vec4* vertices, int size, vec4 color, GLuint lineMode = GL_LINE_STRIP);
+	void DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers, vec3* vertexNormals, int size, Material mat, mat4 modelMat, mat4 worldMat, mat4 normalMat);
 	void drawOriginAxis();
 };

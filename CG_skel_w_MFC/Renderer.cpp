@@ -45,7 +45,7 @@ void Renderer::Init()
 	fogMindist = -3.0;
 	fogColor = vec3(0.1, 0.1, 0.3);
 
-	shadingSetup = Phong;
+	shadingSetup = WireFrame;
 
 	// calculate kernel based on fixed sigma and size
 	int size = 15;
@@ -63,11 +63,14 @@ void Renderer::Init()
 	// init shaders programs
 	
 	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/basic_fs.glsl");
+	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/basic_fs.glsl");
+	glProgramArray.flat = InitShader("Shaders/flat_vs.glsl", "Shaders/basic_fs.glsl");
 	
 }
 
 void Renderer::drawOriginAxis()
 {
+	// can refactor this to hardcoded to save memory
 	vec4 vertices[6];
 	vec4 colors[6];
 
@@ -87,11 +90,11 @@ void Renderer::drawOriginAxis()
 	colors[i++] = vec4(0.0, 0.0, 1.0, 1.0);
 	colors[i++] = vec4(0.0, 0.0, 1.0, 1.0);
 
-	glDrawLinesColors(vertices, colors, 6);
+	glDrawLinesColors(vertices, colors, 6, GL_LINES);
 	
 }
 
-void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size)
+void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, GLuint lineMode)
 {
 	glUseProgram(glProgramArray.line);
 	glUniformLocArray.lookAt = glGetUniformLocation(glProgramArray.line, "lookAt");
@@ -125,7 +128,7 @@ void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size)
 	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(vao);
 	glLineWidth(1);
-	glDrawArrays(GL_LINE_STRIP, 0, size);
+	glDrawArrays(lineMode, 0, size);
 	glUseProgram(0);
 	glDeleteVertexArrays(1, &vao);
 
@@ -134,7 +137,7 @@ void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size)
 	//	cout << "OpenGl error! - " << gluErrorString(errCode) << endl;;
 }
 
-void Renderer::glDrawLines(vec4* vertices, int size, vec4 color)
+void Renderer::glDrawLines(vec4* vertices, int size, vec4 color, GLuint lineMode)
 {
 	glUseProgram(glProgramArray.line);
 	glUniformLocArray.lookAt = glGetUniformLocation(glProgramArray.line, "lookAt");
@@ -168,7 +171,7 @@ void Renderer::glDrawLines(vec4* vertices, int size, vec4 color)
 	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(vao);
 	glLineWidth(1);
-	glDrawArrays(GL_LINE_STRIP, 0, size);
+	glDrawArrays(lineMode, 0, size);
 	glUseProgram(0);
 	glDeleteVertexArrays(1, &vao);
 }
@@ -194,16 +197,16 @@ void Renderer::CreateBuffers(int width, int height)
 	m_width=width;
 	m_height=height;
 	CreateOpenGLBuffer(); //Do not remove this line.
-	m_outBuffer = new float[3 * m_width * m_height];
-	m_zbuffer = new float[m_width * m_height];
-	m_blurBuffer = new float[3 * m_width * m_height];
+	//m_outBuffer = new float[3 * m_width * m_height];
+	//m_zbuffer = new float[m_width * m_height];
+	//m_blurBuffer = new float[3 * m_width * m_height];
 }
 
 void Renderer::DestroyBuffers()
 {
-	delete[] m_outBuffer;
-	delete[] m_zbuffer;
-	delete[] m_blurBuffer;
+	//delete[] m_outBuffer;
+	//delete[] m_zbuffer;
+	//delete[] m_blurBuffer;
 }
 
 void Renderer::clearBuffer()
@@ -542,6 +545,147 @@ vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Materi
 	return Ispecular;
 }
 
+void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers, vec3* vertexNormals, int size, Material mat, mat4 modelMat, mat4 worldMat, mat4 normalMat)
+{
+	
+	if (shadingSetup == WireFrame)
+	{
+		GLuint currentShading = glProgramArray.wireFrame;
+		vec3 color = vec3(1.0, 0.5, 0.7);
+
+		// wireframe
+		glUseProgram(currentShading);
+
+		// make uniform: camtransform, projection
+		glUniformLocArray.lookAt = glGetUniformLocation(currentShading, "lookAt");
+		glUniformLocArray.projection = glGetUniformLocation(currentShading, "proj");
+		glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
+		glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+
+		// make uniform: model, world
+		glUniformLocArray.model = glGetUniformLocation(currentShading, "modelMat");
+		glUniformLocArray.world = glGetUniformLocation(currentShading, "worldMat");
+		glUniformMatrix4fv(glUniformLocArray.model, 1, GL_TRUE, modelMat);
+		glUniformMatrix4fv(glUniformLocArray.world, 1, GL_TRUE, worldMat);
+
+		// make input (vertices)
+		GLuint buffers[2];
+		GLuint vao;
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glGenBuffers(2, buffers);
+
+		GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
+		GLuint vColorLoc = glGetAttribLocation(currentShading, "vColor");
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(vPositionLoc);
+		glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3), color, GL_STATIC_DRAW);
+		glVertexAttrib3fv(vColorLoc, color);
+
+		glEnable(GL_DEPTH_TEST);
+		glBindVertexArray(vao);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // no fill
+		glLineWidth(1);
+		glDrawArrays(GL_TRIANGLES, 0, size);
+		glUseProgram(0);
+		glDeleteVertexArrays(1, &vao);
+	}
+	
+	else if (shadingSetup == Flat)
+	{
+		GLuint currentShading = glProgramArray.flat;
+		// flat
+		glUseProgram(currentShading);
+
+		// make uniform: camtransform, projection
+		glUniformLocArray.lookAt = glGetUniformLocation(currentShading, "lookAt");
+		glUniformLocArray.projection = glGetUniformLocation(currentShading, "proj");
+		glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
+		glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+
+		// make uniform: model, world, normals
+		glUniformLocArray.model = glGetUniformLocation(currentShading, "modelMat");
+		glUniformLocArray.world = glGetUniformLocation(currentShading, "worldMat");
+		glUniformLocArray.normals = glGetUniformLocation(currentShading, "normalMat");
+		glUniformMatrix4fv(glUniformLocArray.model, 1, GL_TRUE, modelMat);
+		glUniformMatrix4fv(glUniformLocArray.world, 1, GL_TRUE, worldMat);
+		glUniformMatrix4fv(glUniformLocArray.normals, 1, GL_TRUE, normalMat);
+
+		// material
+		glUniformLocArray.ambient = glGetUniformLocation(currentShading, "matAmbient");
+		glUniformLocArray.diffuse = glGetUniformLocation(currentShading, "matDiffuse");
+		glUniformLocArray.specular = glGetUniformLocation(currentShading, "matSpecular");
+		glUniformLocArray.emissive = glGetUniformLocation(currentShading, "matEmissive");
+		glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
+		glUniform3fv(glUniformLocArray.ambient, 1, mat.ambientColor);
+		glUniform3fv(glUniformLocArray.diffuse, 1, mat.diffuseColor);
+		glUniform3fv(glUniformLocArray.specular, 1, mat.specularColor);
+		glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
+		glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
+
+		// pointLights
+		vec3 pointLightPositions[6];
+		for (int i = 0; i < min(6, sceneLights->size()); i++)
+		{
+			pointLightPositions[i] = sceneLights->at(i)->position;
+		}
+
+		for (int i = 0; i < min(6, sceneLights->size()); i++)
+		{
+			char name[512];
+			sprintf(name, "pointLightPosition[%d]", i);
+			GLuint pointlightPositionLoc = glGetUniformLocation(currentShading, name);
+			glUniform3fv(pointlightPositionLoc, 1, pointLightPositions[i]);
+		}
+		// pointLights count
+		GLuint pointLightCountLoc = glGetUniformLocation(currentShading, "pointLightCount");
+		glUniform1i(pointLightCountLoc, min(6, sceneLights->size()));
+
+
+		// make input (vertices, face normals)
+		GLuint buffers[2];
+		GLuint vao;
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glGenBuffers(2, buffers);
+
+		GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
+		GLuint vNormalLoc = glGetAttribLocation(currentShading, "vNormal");
+		//GLuint vCenterLoc = glGetAttribLocation(currentShading, "vCenter");
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(vPositionLoc);
+		glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size , faceNormals, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(vNormalLoc);
+		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		//glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, centers, GL_STATIC_DRAW);
+		//glEnableVertexAttribArray(vCenterLoc);
+		//glVertexAttribPointer(vCenterLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glEnable(GL_DEPTH_TEST);
+		glBindVertexArray(vao);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill
+		glLineWidth(1);
+		glDrawArrays(GL_TRIANGLES, 0, size);
+		glUseProgram(0);
+		glDeleteVertexArrays(1, &vao);
+
+	}
+}
+
 void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, Material& mat)
 {
 	if (shadingSetup == WireFrame)
@@ -838,10 +982,21 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 	bool directional = !(direction.x == 0.0 && direction.y == 0.0 && direction.z == 0.0);
 	GLfloat size = directional ? 7.5 : 15.0;
 	GLfloat size2 = directional ? 5.3 : 10.6;
-	drawLine(Pos + vec3(-size, 0.0, 0.0), Pos + vec3(size, 0.0, 0.0), color);
-	drawLine(Pos + vec3(0.0, -size, 0.0), Pos + vec3(0.0, size, 0.0), color);
-	drawLine(Pos + vec3(-size2, -size2, 0.0), Pos + vec3(size2, size2, 0.0), color);
-	drawLine(Pos + vec3(-size2, size2, 0.0), Pos + vec3(size2, -size2, 0.0), color);
+
+	vec4 vertices[8];
+
+	int i = 0;
+	vertices[i++] = Pos + vec3(-size, 0.0, 0.0);
+	vertices[i++] = Pos + vec3(size, 0.0, 0.0);
+	vertices[i++] = Pos + vec3(0.0, -size, 0.0);
+	vertices[i++] = Pos + vec3(0.0, size, 0.0);
+	vertices[i++] = Pos + vec3(-size2, -size2, 0.0);
+	vertices[i++] = Pos + vec3(size2, size2, 0.0);
+	vertices[i++] = Pos + vec3(-size2, size2, 0.0);
+	vertices[i++] = Pos + vec3(size2, -size2, 0.0);
+
+	glDrawLines(vertices, 8, color, GL_LINES);
+
 	if (!(direction.x == 0.0 && direction.y == 0.0 && direction.z == 0.0))
 	{
 		drawLine(Pos , Dir, color);

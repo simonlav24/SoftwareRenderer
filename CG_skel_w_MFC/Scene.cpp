@@ -19,58 +19,6 @@ void Scene::loadOBJModel(string fileName)
 
 void Scene::draw()
 {
-	//============Demo
-	/*const int pnum = 3;
-	static const GLfloat points[pnum][4] = {
-		{-0.1, -0.1f, 0.0f,1.0f},
-		{0.1f, -0.1f, 0.0f,1.0f},
-		{0.0f,  0.1f, 0.0f,1.0f}
-	};
-
-	GLuint program = InitShader("minimal_vshader.glsl",
-		"minimal_fshader.glsl");
-
-	glUseProgram(program);
-
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-
-	GLuint buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points),
-		points, GL_STATIC_DRAW);
-
-
-
-
-	GLuint loc = glGetAttribLocation(program, "vPosition");
-	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glClearColor(1.0, 1.0, 1.0, 1.0);
-
-	glClear(GL_COLOR_BUFFER_BIT);
-	glDrawArrays(GL_LINE_LOOP, 0, pnum);
-	glFlush();
-	glutSwapBuffers();
-	return;*/
-
-	//===============Demo2
-	/*glClearColor(1.0, 1.0, 1.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glBegin(GL_POLYGON);
-	glColor3f(1, 0, 0); glVertex3f(-0.6, -0.75, 0.5);
-	glColor3f(0, 1, 0); glVertex3f(0.6, -0.75, 0);
-	glColor3f(0, 0, 1); glVertex3f(0, 0.75, 0);
-	glEnd();
-
-	glFlush();
-	glutSwapBuffers();
-	return;*/
-
 	//===============Start
 	// clear buffer
 	m_renderer->clearBuffer();
@@ -116,8 +64,10 @@ void Scene::draw()
 		// for all lights: draw indicator
 		for (int i = 0; i < lights.size(); i++)
 		{
-			vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
-			vec4 lightDir = viewPort(m_renderer->getDims(), homo2noHomo(m * (lights[i]->position + 2.0 * lights[i]->direction)));
+			vec4 lightPos = lights[i]->position;
+			vec4 lightDir = lights[i]->position + 2.0 * lights[i]->direction;
+			//vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
+			//vec4 lightDir = viewPort(m_renderer->getDims(), homo2noHomo(m * (lights[i]->position + 2.0 * lights[i]->direction)));
 			if(lights[i]->lightType == point)
 				m_renderer->drawLightIndicator(lightPos, lights[i]->color, vec3(0.0, 0.0, 0.0));
 			else if (lights[i]->lightType == parallel)
