@@ -15,7 +15,7 @@ struct Material
 	vec3 specularColor;
 	vec3 emissiveColor;
 	Material() :
-		color(0.8f, 0.8f, 0.8f), ambientColor(0.1f, 0.1f, 0.1f), diffuseColor(0.5f, 0.5f, 0.5f), specularColor(0.8f, 0.8f, 0.8f),
+		color(0.8f, 0.8f, 0.8f), ambientColor(0.1f, 0.1f, 0.1f), diffuseColor(0.5f, 0.5f, 0.6f), specularColor(0.8f, 0.8f, 0.8f),
 		emissiveColor(0.0f, 0.0f, 0.0f), shininessCoeficient(6.0f){}
 };
 

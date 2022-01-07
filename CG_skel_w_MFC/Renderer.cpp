@@ -18,6 +18,8 @@
 #define Z_BUFFER 1 
 #define BLUR_BUFFER 2
 
+#define MAX_NUM_OF_LIGHTS 6
+
 Renderer::Renderer() :m_width(DEFAULT_DIMS), m_height(DEFAULT_DIMS)
 {
 	InitOpenGLRendering();
@@ -45,7 +47,7 @@ void Renderer::Init()
 	fogMindist = -3.0;
 	fogColor = vec3(0.1, 0.1, 0.3);
 
-	shadingSetup = WireFrame;
+	shadingSetup = Flat;
 
 	// calculate kernel based on fixed sigma and size
 	int size = 15;
@@ -545,9 +547,8 @@ vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Materi
 	return Ispecular;
 }
 
-void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers, vec3* vertexNormals, int size, Material mat, mat4 modelMat, mat4 worldMat, mat4 normalMat)
+void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, int size, Material mat, mat4 worldModel, mat4 normalMat)
 {
-	
 	if (shadingSetup == WireFrame)
 	{
 		GLuint currentShading = glProgramArray.wireFrame;
@@ -563,10 +564,8 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers
 		glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
 
 		// make uniform: model, world
-		glUniformLocArray.model = glGetUniformLocation(currentShading, "modelMat");
-		glUniformLocArray.world = glGetUniformLocation(currentShading, "worldMat");
-		glUniformMatrix4fv(glUniformLocArray.model, 1, GL_TRUE, modelMat);
-		glUniformMatrix4fv(glUniformLocArray.world, 1, GL_TRUE, worldMat);
+		glUniformLocArray.worldModel = glGetUniformLocation(currentShading, "worldModelMat");
+		glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, worldModel);
 
 		// make input (vertices)
 		GLuint buffers[2];
@@ -597,7 +596,7 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers
 		glDeleteVertexArrays(1, &vao);
 	}
 	
-	else if (shadingSetup == Flat)
+	else if (shadingSetup == Flat || shadingSetup == Gouraud)
 	{
 		GLuint currentShading = glProgramArray.flat;
 		// flat
@@ -610,11 +609,9 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers
 		glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
 
 		// make uniform: model, world, normals
-		glUniformLocArray.model = glGetUniformLocation(currentShading, "modelMat");
-		glUniformLocArray.world = glGetUniformLocation(currentShading, "worldMat");
+		glUniformLocArray.worldModel = glGetUniformLocation(currentShading, "worldModelMat");
 		glUniformLocArray.normals = glGetUniformLocation(currentShading, "normalMat");
-		glUniformMatrix4fv(glUniformLocArray.model, 1, GL_TRUE, modelMat);
-		glUniformMatrix4fv(glUniformLocArray.world, 1, GL_TRUE, worldMat);
+		glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, worldModel);
 		glUniformMatrix4fv(glUniformLocArray.normals, 1, GL_TRUE, normalMat);
 
 		// material
@@ -629,20 +626,33 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers
 		glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
 		glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
 
+		// viewer
+		glUniformLocArray.viewer = glGetUniformLocation(currentShading, "viewerPos");
+		glUniform3fv(glUniformLocArray.viewer, 1, viewerPos[0]);
+
 		// pointLights
-		vec3 pointLightPositions[6];
-		for (int i = 0; i < min(6, sceneLights->size()); i++)
+		vec3 pointLightPositions[MAX_NUM_OF_LIGHTS];
+		vec3 pointLightColors[MAX_NUM_OF_LIGHTS];
+		for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
 		{
 			pointLightPositions[i] = sceneLights->at(i)->position;
+			pointLightColors[i] = sceneLights->at(i)->color;
 		}
 
-		for (int i = 0; i < min(6, sceneLights->size()); i++)
+		for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
 		{
-			char name[512];
-			sprintf(name, "pointLightPosition[%d]", i);
-			GLuint pointlightPositionLoc = glGetUniformLocation(currentShading, name);
+			char variable[50];
+
+			sprintf(variable, "pointLightPosition[%d]", i);
+			GLuint pointlightPositionLoc = glGetUniformLocation(currentShading, variable);
 			glUniform3fv(pointlightPositionLoc, 1, pointLightPositions[i]);
+
+			sprintf(variable, "pointLightColor[%d]", i);
+			GLuint pointlightColorLoc = glGetUniformLocation(currentShading, variable);
+			glUniform3fv(pointlightColorLoc, 1, pointLightColors[i]);
+
 		}
+
 		// pointLights count
 		GLuint pointLightCountLoc = glGetUniformLocation(currentShading, "pointLightCount");
 		glUniform1i(pointLightCountLoc, min(6, sceneLights->size()));
@@ -666,7 +676,10 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers
 		glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size , faceNormals, GL_STATIC_DRAW);
+		if(shadingSetup == Flat)
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size , faceNormals, GL_STATIC_DRAW);
+		if (shadingSetup == Gouraud)
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexNormals, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(vNormalLoc);
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
@@ -677,7 +690,7 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers
 
 		glEnable(GL_DEPTH_TEST);
 		glBindVertexArray(vao);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill
+		glPolygonMode(GL_FRONT, GL_FILL); // fill
 		glLineWidth(1);
 		glDrawArrays(GL_TRIANGLES, 0, size);
 		glUseProgram(0);
@@ -983,7 +996,13 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 	GLfloat size = directional ? 7.5 : 15.0;
 	GLfloat size2 = directional ? 5.3 : 10.6;
 
-	vec4 vertices[8];
+	vec4 vertex[2];
+	vertex[0] = pos;
+	vertex[1] = pos + vec4(1.0, 0.0,0.0,0.0);
+	glDrawLines(vertex, 2, color, GL_LINES);
+
+	return;
+	/*vec4 vertices[8];
 
 	int i = 0;
 	vertices[i++] = Pos + vec3(-size, 0.0, 0.0);
@@ -993,9 +1012,9 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 	vertices[i++] = Pos + vec3(-size2, -size2, 0.0);
 	vertices[i++] = Pos + vec3(size2, size2, 0.0);
 	vertices[i++] = Pos + vec3(-size2, size2, 0.0);
-	vertices[i++] = Pos + vec3(size2, -size2, 0.0);
+	vertices[i++] = Pos + vec3(size2, -size2, 0.0);*/
 
-	glDrawLines(vertices, 8, color, GL_LINES);
+	//glDrawLines(vertices, 8, color, GL_LINES);
 
 	if (!(direction.x == 0.0 && direction.y == 0.0 && direction.z == 0.0))
 	{

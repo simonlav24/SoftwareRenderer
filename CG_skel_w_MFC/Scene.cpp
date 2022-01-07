@@ -255,13 +255,13 @@ void Scene::translateCamera(int dx, int dy)
 
 	vec4 moveDx = normalize(cross(at - eye, up));
 
-	eye = Translate(moveDx * 0.1 * -dx) * eye;
-	at = Translate(moveDx * 0.1 * -dx) * at;
+	eye = Translate(moveDx * 0.03 * -dx) * eye;
+	at = Translate(moveDx * 0.03 * -dx) * at;
 
 	vec4 moveDy = normalize(cross(moveDx, eye - at));
 
-	eye = Translate(moveDy * 0.1 * -dy) * eye;
-	at = Translate(moveDy * 0.1 * -dy) * at;
+	eye = Translate(moveDy * 0.03 * -dy) * eye;
+	at = Translate(moveDy * 0.03 * -dy) * at;
 
 	cameras[activeCamera]->LookAt(homo2noHomo(eye), homo2noHomo(at), up);
 	setProjCam();

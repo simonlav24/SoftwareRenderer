@@ -403,10 +403,10 @@ int my_main(int argc, char** argv)
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
 	//scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 1.0, 20.0);
-	scene->currentCamera().Frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 20);
+	scene->currentCamera().Frustum(-0.5, 0.5, -0.5, 0.5, 1, 200);
 
-	//scene->addLight();
-	//scene->moveLight(vec3(4.0, 4.0, 8.0));
+	scene->addLight();
+	scene->moveLight(vec3(4.0, 4.0, 8.0));
 
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks

@@ -84,7 +84,7 @@ MeshModel::MeshModel(string fileName)
 	bounding_box[1] = vec3(0, 0, 0);
 
 	loadFile(fileName);
-	mat.color = vec3(0.7, 0.8, 0.7);
+	//mat.color = vec3(0.7, 0.8, 0.7);
 	mat.special = false;
 	showIndicators = true;
 }
@@ -173,17 +173,24 @@ void MeshModel::loadFile(string fileName)
 
 	//calculate center points & normals
 	faceCount = faces.size();
-	faceNormals = new vec3[vertexCount];
-	centerPoints = new vec3[vertexCount];
-	int k = 0;
-	for (int i = 0; i < vertexCount; i ++)
+	vec3* faceNorms = new vec3[faceCount];
+	centerPoints = new vec3[faceCount];
+	for (int i = 0, k = 0; i < vertexCount; i += 3)
 	{
-		int j = i / 3;
-		vec3 p1 = vertex_positions[j], p2 = vertex_positions[j + 1], p3 = vertex_positions[j + 2];
-		faceNormals[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
+		vec3 p1 = vertex_positions[i], p2 = vertex_positions[i + 1], p3 = vertex_positions[i + 2];
+		faceNorms[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
 		centerPoints[k] = (p1 + p2 + p3) / 3.0;//center point according to formula
 		k++;
 	}
+
+	faceNormals = new vec3[vertexCount];
+	for (int i = 0; i < vertexCount; i++)
+	{
+		faceNormals[i] = faceNorms[i / 3];
+	}
+
+
+	delete[] faceNorms;
 
 	//calculating vertex normals
 	vertexNormalsCount = vertices.size();
@@ -257,8 +264,15 @@ void MeshModel::drawWorldAxis(Renderer* r)
 
 void MeshModel::draw(Renderer* r)
 {
+	mat4 normalTransform = _normal_world_transform * _normal_transform;
+	mat4 worldModel = _world_transform * _model_transform;
 
-	r->DrawModel(vertex_positions, faceNormals, centerPoints, normal_positions, vertexCount, mat, _model_transform, _world_transform, _normal_transform);
+	/*for (int i = 0; i < vertexCount; i++)
+	{
+		cout << "point: " << vertex_positions[i] << endl;
+		cout << "normal: " << faceNormals[i] << endl;
+	}*/
+	r->DrawModel(vertex_positions, faceNormals, normal_positions, vertexCount, mat, worldModel, normalTransform);
 
 }
 

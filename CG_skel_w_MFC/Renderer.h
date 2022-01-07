@@ -19,14 +19,14 @@ struct GLProgramsArray {
 struct GLUniformLocArray {
 	GLuint lookAt;
 	GLuint projection;
-	GLuint model;
-	GLuint world;
+	GLuint worldModel;
 	GLuint normals;
 	GLuint ambient;
 	GLuint diffuse;
 	GLuint specular;
 	GLuint emissive;
 	GLuint shininess;
+	GLuint viewer;
 	
 };
 
@@ -129,6 +129,7 @@ public:
 
 	void glDrawLinesColors(vec4* vertices, vec4* colors, int size, GLuint lineMode = GL_LINE_STRIP);
 	void glDrawLines(vec4* vertices, int size, vec4 color, GLuint lineMode = GL_LINE_STRIP);
-	void DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* centers, vec3* vertexNormals, int size, Material mat, mat4 modelMat, mat4 worldMat, mat4 normalMat);
+
+	void DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, int size, Material mat, mat4 worldModel, mat4 normalMat);
 	void drawOriginAxis();
 };
