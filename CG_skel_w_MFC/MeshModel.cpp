@@ -267,11 +267,6 @@ void MeshModel::draw(Renderer* r)
 	mat4 normalTransform = _normal_world_transform * _normal_transform;
 	mat4 worldModel = _world_transform * _model_transform;
 
-	/*for (int i = 0; i < vertexCount; i++)
-	{
-		cout << "point: " << vertex_positions[i] << endl;
-		cout << "normal: " << faceNormals[i] << endl;
-	}*/
 	r->DrawModel(vertex_positions, faceNormals, normal_positions, vertexCount, mat, worldModel, normalTransform);
 
 }
@@ -350,7 +345,10 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 	line[1] = bounding_box[1]; line[1].y = bounding_box[0].y;
 	vertices[k++] = vec4(line[0]);
 	vertices[k++] = vec4(line[1]);
-	r->glDrawLines(vertices, 24, vec4(1.0, 1.0, 0.0, 1.0));
+
+	mat4 transform = projection * cTransform * _world_transform * _model_transform;
+
+	r->glDrawLines(vertices, 24, vec4(1.0, 1.0, 0.0, 1.0), transform);
 	return;
 	/*
 	vec2 rendererDims = r->getDims();
@@ -420,6 +418,22 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 
 void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 {
+	/*vec4* vertices = new vec4[vertexCount * 2];
+
+	mat4 transform = projection * cTransform;
+
+	for (int i = 0, k = 0; i < vertexCount; i++)
+	{
+		vertices[k++] = _world_transform * _model_transform * centerPoints[i];
+		vertices[k++] = vertices[k-1] + _normal_world_transform * _normal_transform * faceNormals[i];
+	}
+
+	r->glDrawLines(vertices, vertexCount, vec3(1.0, 1.0, 1.0), transform);
+	delete[] vertices;
+	*/
+
+	/*
+
 	vec2 rendererDims = r->getDims();
 	mat4 projWorld = projection * cTransform;
 	mat4 normalWorld = _normal_world_transform * _normal_transform;
@@ -445,6 +459,8 @@ void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 		vec3 point2 = viewPort(rendererDims, point);
 		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 1.0, 0.0));
 	}
+	*/
+	
 }
 
 void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projection)

@@ -13,7 +13,8 @@ enum ShadingSetup { WireFrame, Flat, Phong, Gouraud };
 struct GLProgramsArray {
 	GLuint line;
 	GLuint wireFrame;
-	GLuint flat;
+	GLuint flat_gouraud;
+	GLuint phong;
 };
 
 struct GLUniformLocArray {
@@ -27,7 +28,6 @@ struct GLUniformLocArray {
 	GLuint emissive;
 	GLuint shininess;
 	GLuint viewer;
-	
 };
 
 class Renderer
@@ -127,8 +127,8 @@ public:
 	void toggleFog();
 
 
-	void glDrawLinesColors(vec4* vertices, vec4* colors, int size, GLuint lineMode = GL_LINE_STRIP);
-	void glDrawLines(vec4* vertices, int size, vec4 color, GLuint lineMode = GL_LINE_STRIP);
+	void glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
+	void glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
 
 	void DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, int size, Material mat, mat4 worldModel, mat4 normalMat);
 	void drawOriginAxis();

@@ -35,10 +35,19 @@
 
 - [x] see some models
 - [ ] light shadings
-  - [ ] flat
-  - [ ] gouraud
+  - [x] flat
+  - [x] gouraud
   - [ ] phong
-- [ ] in line shader, can send the multiplied matrix
+- [ ] light types
+  - [ ] point
+  - [ ] parallel
+- [ ] draw all indicators
+  - [ ] lights
+  - [ ] bounding box
+  - [ ] normals face
+  - [ ] normals vertex
+- [ ] in line shaders, can send the multiplied matrix
+- [ ] problem with gouraud with some models: shark, sphere
 
 ### for lighting shader I need:
 

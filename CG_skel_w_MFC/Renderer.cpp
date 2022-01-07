@@ -64,10 +64,10 @@ void Renderer::Init()
 	glViewport(0, 0, m_width, m_height);
 	// init shaders programs
 	
-	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/basic_fs.glsl");
-	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/basic_fs.glsl");
-	glProgramArray.flat = InitShader("Shaders/flat_vs.glsl", "Shaders/basic_fs.glsl");
-	
+	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/standart_color.glsl");
+	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
+	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/standart_color.glsl");
+	glProgramArray.phong = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/standart_color.glsl");
 }
 
 void Renderer::drawOriginAxis()
@@ -92,19 +92,19 @@ void Renderer::drawOriginAxis()
 	colors[i++] = vec4(0.0, 0.0, 1.0, 1.0);
 	colors[i++] = vec4(0.0, 0.0, 1.0, 1.0);
 
-	glDrawLinesColors(vertices, colors, 6, GL_LINES);
+	mat4 transform = Proj * lookAt;
+
+	glDrawLinesColors(vertices, colors, 6, transform, GL_LINES);
 	
 }
 
-void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, GLuint lineMode)
+void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode)
 {
 	glUseProgram(glProgramArray.line);
-	glUniformLocArray.lookAt = glGetUniformLocation(glProgramArray.line, "lookAt");
-	glUniformLocArray.projection = glGetUniformLocation(glProgramArray.line, "proj");
+	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
 
-	// set camera
-	glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
-	glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+	// set transform
+	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, transform);
 
 	// draw
 	GLuint buffers[2];
@@ -127,27 +127,20 @@ void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, GLuint 
 	glEnableVertexAttribArray(vColorLoc);
 	glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(vao);
 	glLineWidth(1);
 	glDrawArrays(lineMode, 0, size);
 	glUseProgram(0);
 	glDeleteVertexArrays(1, &vao);
-
-	//GLenum errCode;
-	//if ((errCode = glGetError()) != GL_NO_ERROR)
-	//	cout << "OpenGl error! - " << gluErrorString(errCode) << endl;;
 }
 
-void Renderer::glDrawLines(vec4* vertices, int size, vec4 color, GLuint lineMode)
+void Renderer::glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode)
 {
 	glUseProgram(glProgramArray.line);
-	glUniformLocArray.lookAt = glGetUniformLocation(glProgramArray.line, "lookAt");
-	glUniformLocArray.projection = glGetUniformLocation(glProgramArray.line, "proj");
-
+	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
 	// set camera
-	glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
-	glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, transform);
 
 	// draw
 	GLuint buffers[2];
@@ -598,8 +591,8 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	
 	else if (shadingSetup == Flat || shadingSetup == Gouraud)
 	{
-		GLuint currentShading = glProgramArray.flat;
-		// flat
+		GLuint currentShading = glProgramArray.flat_gouraud;
+
 		glUseProgram(currentShading);
 
 		// make uniform: camtransform, projection
@@ -657,8 +650,7 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 		GLuint pointLightCountLoc = glGetUniformLocation(currentShading, "pointLightCount");
 		glUniform1i(pointLightCountLoc, min(6, sceneLights->size()));
 
-
-		// make input (vertices, face normals)
+		// make input (vertices, normals)
 		GLuint buffers[2];
 		GLuint vao;
 
@@ -668,7 +660,6 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 
 		GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
 		GLuint vNormalLoc = glGetAttribLocation(currentShading, "vNormal");
-		//GLuint vCenterLoc = glGetAttribLocation(currentShading, "vCenter");
 
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
@@ -683,18 +674,16 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 		glEnableVertexAttribArray(vNormalLoc);
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		//glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, centers, GL_STATIC_DRAW);
-		//glEnableVertexAttribArray(vCenterLoc);
-		//glVertexAttribPointer(vCenterLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
 		glEnable(GL_DEPTH_TEST);
 		glBindVertexArray(vao);
-		glPolygonMode(GL_FRONT, GL_FILL); // fill
-		glLineWidth(1);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDrawArrays(GL_TRIANGLES, 0, size);
 		glUseProgram(0);
 		glDeleteVertexArrays(1, &vao);
+	}
+
+	else if (shadingSetup == Phong)
+	{
 
 	}
 }
@@ -996,10 +985,12 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 	GLfloat size = directional ? 7.5 : 15.0;
 	GLfloat size2 = directional ? 5.3 : 10.6;
 
+	mat4 transform = Proj * lookAt;
+
 	vec4 vertex[2];
 	vertex[0] = pos;
 	vertex[1] = pos + vec4(1.0, 0.0,0.0,0.0);
-	glDrawLines(vertex, 2, color, GL_LINES);
+	glDrawLines(vertex, 2, color, transform,GL_LINES);
 
 	return;
 	/*vec4 vertices[8];

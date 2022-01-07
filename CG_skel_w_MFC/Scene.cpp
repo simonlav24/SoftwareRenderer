@@ -26,7 +26,7 @@ void Scene::draw()
 	// try line
 	//m_renderer->glDrawLine(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 	
-	m_renderer->drawOriginAxis(); // can hardcode the verties to save memory
+	
 
 
 
@@ -60,7 +60,6 @@ void Scene::draw()
 			m_renderer->drawPlusSign(camPos, vec3(1.0, 0.0, 0.0));
 		}
 
-
 		// for all lights: draw indicator
 		for (int i = 0; i < lights.size(); i++)
 		{
@@ -75,12 +74,12 @@ void Scene::draw()
 			else if (lights[i]->lightType == ambience)
 				m_renderer->drawPlusSign(lightPos, lights[i]->color);
 		}
-
-		
-		//drawOriginPoint();
+		m_renderer->drawOriginAxis(); // can hardcode the verties to save memory
 	}
 	// post proccessing
 	
+	
+
 	//m_renderer->postProccess();
 	
 	m_renderer->SwapBuffers();
@@ -252,7 +251,7 @@ void Scene::translateCamera(int dx, int dy)
 	vec4 eye = cameras[activeCamera]->Eye;
 	vec4 at = cameras[activeCamera]->At;
 	vec4 up = cameras[activeCamera]->Up;
-
+	
 	vec4 moveDx = normalize(cross(at - eye, up));
 
 	eye = Translate(moveDx * 0.03 * -dx) * eye;
