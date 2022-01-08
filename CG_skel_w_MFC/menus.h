@@ -114,9 +114,6 @@ void mainMenu(int id)
 {
 	switch (id)
 	{
-	case MAIN_DEMO:
-		scene->drawDemo();
-		break;
 	case MAIN_ABOUT:
 		AfxMessageBox(_T("Simon's 3D Software Renderer"));
 		break;
@@ -263,14 +260,14 @@ void cameraMenu(int id)
 	case CAMERA_ADD_ORTHO:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(0.0, 0.0, 10.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-		scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+		scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 1.0, 200.0);
 		scene->setProjCam();
 		scene->tState = camera;
 		break;
 	case CAMERA_ADD_PERSP:
 		scene->addCamera();
 		scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-		scene->currentCamera().Frustum(-5.0, 5.0, -5.0, 5.0, 5.0, 14.0);
+		scene->currentCamera().Frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 200.0);
 		scene->setProjCam();
 		scene->tState = camera;
 		break;
@@ -368,43 +365,6 @@ void materialMenu(int id)
 		break;
 	case MATERIAL_SPECIAL:
 		scene->changeMaterial(materialProperty::special, vec3());
-		break;
-	}
-}
-
-void postProccessMenu(int id)
-{
-	CRGBDialog dlg;
-	CFloatDialog fdlg;
-
-	switch (id)
-	{
-	case POST_FOG_TOGGLE:
-		renderer->toggleFog();
-		break;
-	case POST_FOG_COLOR:
-		dlg.mTitle = "Pick Color RGB";
-		dlg.insertData(scene->getMaterial(ambient));
-		if (dlg.DoModal() == IDOK) {
-			vec3 v = dlg.GetXYZ();
-			renderer->fogColor = v;
-		}
-		break;
-	case POST_SSAA_TOGGLE:
-		renderer->SSAA = !renderer->SSAA;
-		if (renderer->SSAA)
-		{
-			renderer->reshape(renderer->getDims().x * 2, renderer->getDims().y * 2);
-			scene->reshapeCamera(renderer->getDims().x * 2, renderer->getDims().y * 2);
-		}
-		else
-		{
-			renderer->reshape(renderer->getDims().x / 2, renderer->getDims().y / 2);
-			scene->reshapeCamera(renderer->getDims().x / 2, renderer->getDims().y / 2);
-		}
-		break;
-	case POST_LIGHT_BLOOM:
-		renderer->lightBloom = !renderer->lightBloom;
 		break;
 	}
 }

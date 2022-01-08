@@ -418,53 +418,18 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 
 void MeshModel::drawFaceNormals(Renderer* r, mat4& cTransform, mat4& projection)
 {
-	/*vec4* vertices = new vec4[vertexCount * 2];
 
-	mat4 transform = projection * cTransform;
-
-	for (int i = 0, k = 0; i < vertexCount; i++)
-	{
-		vertices[k++] = _world_transform * _model_transform * centerPoints[i];
-		vertices[k++] = vertices[k-1] + _normal_world_transform * _normal_transform * faceNormals[i];
-	}
-
-	r->glDrawLines(vertices, vertexCount, vec3(1.0, 1.0, 1.0), transform);
-	delete[] vertices;
-	*/
-
-	/*
-
-	vec2 rendererDims = r->getDims();
-	mat4 projWorld = projection * cTransform;
-	mat4 normalWorld = _normal_world_transform * _normal_transform;
-	mat4 modelWorld = _world_transform * _model_transform;
-
-	for (int i = 0; i < faceCount; i++)
-	{
-		vec4 origin = centerPoints[i];
-		vec4 normal = faceNormals[i];
-		normal.w = 0;
-
-		origin = modelWorld * origin;
-		normal = normalWorld * normal;
-		normal.w = 0;
-		normal = normalize(normal);
-
-		vec4 point = origin + normal;
-		normal =  origin + normal;
-		origin = homo2noHomo(projWorld * origin);
-		point = homo2noHomo(projWorld * point);
-		
-		vec3 point1 = viewPort(rendererDims, origin);
-		vec3 point2 = viewPort(rendererDims, point);
-		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 1.0, 0.0));
-	}
-	*/
+	
 	
 }
 
 void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projection)
 {
+	mat4 worldModel = _world_transform * _model_transform;
+	mat4 normalMat = _normal_world_transform * _normal_transform;
+	//r->drawNormals(vertex_positions, normal_positions, vertexCount, worldModel, normalMat);
+
+	/*
 	vec2 rendererDims = r->getDims();
 	mat4 projWorld = projection * cTransform;
 	mat4 normalWorld = _normal_world_transform * _normal_transform;
@@ -487,7 +452,7 @@ void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projectio
 		vec3 point1 = viewPort(rendererDims, origin);
 		vec3 point2 = viewPort(rendererDims, point);
 		//r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 0.0, 1.0));
-	}
+	}*/
 }
 
 void MeshModel::transform(const mat4& transform, bool world, bool scalling)

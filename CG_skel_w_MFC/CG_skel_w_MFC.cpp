@@ -46,12 +46,6 @@ void display(void)
 
 void reshape(int width, int height)
 {
-	if (renderer->SSAA)
-	{
-		width *= 2;
-		height *= 2;
-	}
-		
 	renderer->reshape(width, height);
 	scene->reshapeCamera(width, height);
 }
@@ -355,12 +349,6 @@ void initMenu()
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
 	glutAddMenuEntry("Toggle Special Material", MATERIAL_SPECIAL);
 
-	int menuPost = glutCreateMenu(postProccessMenu);
-	glutAddMenuEntry("Toggle Fog", POST_FOG_TOGGLE);
-	glutAddMenuEntry("Change Fog Color", POST_FOG_COLOR);
-	glutAddMenuEntry("Toggle SSAA", POST_SSAA_TOGGLE);
-	glutAddMenuEntry("Toggle Light Bloom", POST_LIGHT_BLOOM);
-
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
 	glutAddSubMenu("Material", menuMaterial);
@@ -370,7 +358,6 @@ void initMenu()
 	glutAddSubMenu("Light", menuLight);
 	glutAddSubMenu("Shading mode", menuShadingSetup);
 	glutAddSubMenu("Show", menuShow);
-	glutAddSubMenu("Post Proccessing", menuPost);
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -402,7 +389,6 @@ int my_main(int argc, char** argv)
 
 	scene->addCamera();
 	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	//scene->currentCamera().Ortho(-5.0, 5.0, -5.0, 5.0, 1.0, 20.0);
 	scene->currentCamera().Frustum(-0.5, 0.5, -0.5, 0.5, 1, 200);
 
 	scene->addLight();

@@ -77,7 +77,6 @@ public:
 	void draw();
 	void drawOriginPoint();
 	void drawGrid();
-	void drawDemo();
 	void toggleIndicators();
 
 	// models

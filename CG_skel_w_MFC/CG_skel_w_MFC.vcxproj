@@ -129,6 +129,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
+    <None Include="Shaders\normals_vs.glsl" />
     <None Include="Shaders\phong_fs.glsl" />
     <None Include="Shaders\phong_vs.glsl" />
     <None Include="Shaders\standart_color.glsl" />

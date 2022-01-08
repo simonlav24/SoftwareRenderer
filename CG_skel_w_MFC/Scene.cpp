@@ -51,12 +51,11 @@ void Scene::draw()
 
 	// for all camreras: draw indicators
 	if (showIndicators) {
-		mat4 m = cameras[activeCamera]->projection * cameras[activeCamera]->cTransform;
 		for (int i = 0; i < cameras.size(); i++)
 		{
 			if (i == activeCamera)
 				continue;
-			vec4 camPos = viewPort(m_renderer->getDims(), homo2noHomo(m * cameras[i]->Eye));
+			vec4 camPos = cameras[i]->Eye;
 			m_renderer->drawPlusSign(camPos, vec3(1.0, 0.0, 0.0));
 		}
 
@@ -65,8 +64,6 @@ void Scene::draw()
 		{
 			vec4 lightPos = lights[i]->position;
 			vec4 lightDir = lights[i]->position + 2.0 * lights[i]->direction;
-			//vec4 lightPos = viewPort(m_renderer->getDims(), homo2noHomo(m * lights[i]->position));
-			//vec4 lightDir = viewPort(m_renderer->getDims(), homo2noHomo(m * (lights[i]->position + 2.0 * lights[i]->direction)));
 			if(lights[i]->lightType == point)
 				m_renderer->drawLightIndicator(lightPos, lights[i]->color, vec3(0.0, 0.0, 0.0));
 			else if (lights[i]->lightType == parallel)
@@ -166,12 +163,6 @@ void Scene::drawGrid()
 
 		//m_renderer->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(0.5, 0.5, 0.5));
 	}
-}
-
-void Scene::drawDemo()
-{
-	m_renderer->SetDemoBuffer();
-	m_renderer->SwapBuffers();
 }
 
 void Scene::switchActiveModel()

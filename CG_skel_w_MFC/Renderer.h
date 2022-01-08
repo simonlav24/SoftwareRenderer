@@ -93,30 +93,11 @@ public:
 	vec4 viewerPos[2];
 	vector<Light*> *sceneLights;
 
-	// draw single pixel (0 < RGB < 1)
-	void drawPixel(int x, int y, const vec3& color);
-
-	void DrawTriangles(const std::vector<vec3>& vertices, Material& mat);
-	void DrawTriangles(const std::vector<vec3>& vertices, Material& mat, vector<vec4>& faceNormals);
-	void drawTrianglesWire(const std::vector<vec3>& vertices, Material& mat);
-	void drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color);
-	void drawTriangleFlat(vec3 p0, vec3 p1, vec3 p2, Material& mat);
-	void DrawTrianglePhong(vec3 p0, vec3 p1, vec3 p2, Material& mat, vec4& faceNormal);
-	// clear m_out buffer
+	// clear buffer
 	void clearBuffer();
-
-	void drawLine(int x0, int y0, int x1, int y1, const vec3& color);
-	void drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color);
-	void drawLine(vec3 a, vec3 b, const vec3& color);
-
-	void drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, Material& mat);
 
 	void drawPlusSign(vec4 pos, vec3 color);
 	void drawLightIndicator(vec4 pos, vec3 color, vec4 direction);
-
-	vec3 calculateAmbient(Material& mat);
-	vec3 calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
-	vec3 calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat);
 
 	void reshape(int width, int height);
 
