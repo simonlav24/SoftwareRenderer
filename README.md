@@ -38,17 +38,26 @@
   - [x] flat
   - [x] gouraud
   - [x] phong
-- [ ] light types
-  - [ ] point
-  - [ ] parallel
+- [x] light types
+  - [x] point
+  - [x] parallel
 - [x] emmissive color
 - [ ] draw all indicators
-  - [ ] lights
+  - [x] lights
   - [ ] bounding box
   - [ ] normals face
   - [ ] normals vertex
-- [ ] in line shaders, can send the multiplied matrix
-- [ ] problem with gouraud with some models: shark, sphere
+- [ ] texture
+  - [ ] texture mapping
+  - [ ] two canonical texture coordinates
+  - [ ] multiply by texture instead of color
+  - [ ] use pnglib to load textures
+  - [ ] normal mapping
+  - [ ] environment mapping
+  - [ ] toon shading
+  - [ ] color animation
+  - [ ] vertex animation
+  - [ ] turbulance function
 
 ### for lighting shader I need:
 

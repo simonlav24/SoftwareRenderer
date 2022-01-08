@@ -38,10 +38,10 @@ void Renderer::Init()
 	orthogonal = false;
 
 	shadingSetup = Phong;
-		
-	glViewport(0, 0, m_width, m_height);
-	// init shaders programs
 	
+	glViewport(0, 0, m_width, m_height);
+	
+	// init shaders programs
 	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/standart_color.glsl");
@@ -452,65 +452,3 @@ void Renderer::SwapBuffers()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-void Renderer::convolute(float* buffer, float* kernel, int kernelWidth, int kernelHeight)
-{
-	float* bufferResult = new float[m_width * m_height * 3];
-
-	// gather kernel sum (may be faster if i have sum already)
-	float kernelSum = 0.0;
-	for (int i = 0; i < kernelHeight * kernelWidth; i++)
-		kernelSum += kernel[i];
-
-	vec3 totalPixel, color;
-	int xval, yval, xToCheck, yToCheck;
-	float kernelVal;
-
-	for (int y = 0; y < m_height; y++)
-	{
-		for (int x = 0; x < m_width; x++)
-		{
-			totalPixel = vec3(0.0, 0.0, 0.0);
-			for (int kx = 0; kx < kernelWidth; kx++)
-			{
-				for (int ky = 0; ky < kernelHeight; ky++)
-				{
-					xval = kx - kernelWidth / 2;
-					yval = ky - kernelHeight / 2;
-
-					kernelVal = kernel[kx + ky * kernelWidth];
-
-					xToCheck = x + xval; yToCheck = y + yval;
-					if (xToCheck < 0 || xToCheck > m_width - 1 || yToCheck < 0 || yToCheck > m_height - 1)
-					{
-						color = vec3(0.0, 0.0, 0.0);
-					}
-					else
-					{
-						color.x = buffer[INDEX(m_width, xToCheck, yToCheck, 0)] * kernelVal;
-						color.y = buffer[INDEX(m_width, xToCheck, yToCheck, 1)] * kernelVal;
-						color.z = buffer[INDEX(m_width, xToCheck, yToCheck, 2)] * kernelVal;
-					}
-					totalPixel += color;
-				}
-			}
-			totalPixel /= kernelSum;
-			bufferResult[INDEX(m_width, x, y, 0)] = totalPixel.x;
-			bufferResult[INDEX(m_width, x, y, 1)] = totalPixel.y;
-			bufferResult[INDEX(m_width, x, y, 2)] = totalPixel.z;
-		}
-	}
-
-	// swap buffer
-	for (int y = 0; y < m_height; y++)
-	{
-		for (int x = 0; x < m_width; x++)
-		{
-			buffer[INDEX(m_width, x, y, 0)] = bufferResult[INDEX(m_width, x, y, 0)];
-			buffer[INDEX(m_width, x, y, 1)] = bufferResult[INDEX(m_width, x, y, 1)];
-			buffer[INDEX(m_width, x, y, 2)] = bufferResult[INDEX(m_width, x, y, 2)];
-		}
-	}
-
-	delete[] bufferResult;
-}

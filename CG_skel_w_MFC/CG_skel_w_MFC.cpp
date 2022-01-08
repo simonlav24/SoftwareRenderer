@@ -170,23 +170,6 @@ void keyboard(unsigned char key, int x, int y)
 	case '3':
 		scene->tMode = rotation;
 		break;
-	
-	case '7':
-		renderer->fogMaxdist += step * 0.25;
-		cout << "fog far point = " << renderer->fogMaxdist << endl;
-		break;
-	case '8':
-		renderer->fogMaxdist -= step * 0.25;
-		cout << "fog far point = " << renderer->fogMaxdist << endl;
-		break;
-	case '9':
-		renderer->fogMindist += step * 0.25;
-		cout << "fog near point = " << renderer->fogMindist << endl;
-		break;
-	case '0':
-		renderer->fogMindist -= step * 0.25;
-		cout << "fog near point = " << renderer->fogMindist << endl;
-		break;
 
 	case 'm':
 		scene->switchActiveModel();
@@ -208,23 +191,6 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case ']':
 		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.shininessCoeficient += 1;
-		break;
-	case 'l':
-		renderer->SSAA = !renderer->SSAA;
-		if (renderer->SSAA)
-		{
-			renderer->reshape(renderer->getDims().x * 2, renderer->getDims().y * 2);
-			scene->reshapeCamera(renderer->getDims().x * 2, renderer->getDims().y * 2);
-		}
-		else
-		{
-			renderer->reshape(renderer->getDims().x / 2, renderer->getDims().y / 2);
-			scene->reshapeCamera(renderer->getDims().x / 2, renderer->getDims().y / 2);
-		}
-		
-		break;
-	case 'k':
-		renderer->lightBloom = !renderer->lightBloom;
 		break;
 	case 'i':
 		scene->toggleIndicators();
