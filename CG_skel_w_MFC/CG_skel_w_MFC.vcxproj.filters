@@ -109,5 +109,11 @@
     <None Include="Shaders\standart_color.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\phong_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\phong_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

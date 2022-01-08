@@ -34,13 +34,14 @@
 ### tasks:
 
 - [x] see some models
-- [ ] light shadings
+- [x] light shadings
   - [x] flat
   - [x] gouraud
-  - [ ] phong
+  - [x] phong
 - [ ] light types
   - [ ] point
   - [ ] parallel
+- [x] emmissive color
 - [ ] draw all indicators
   - [ ] lights
   - [ ] bounding box

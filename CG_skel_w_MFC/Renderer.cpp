@@ -67,7 +67,7 @@ void Renderer::Init()
 	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/standart_color.glsl");
-	glProgramArray.phong = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/standart_color.glsl");
+	glProgramArray.phong = InitShader("Shaders/phong_vs.glsl", "Shaders/phong_fs.glsl");
 }
 
 void Renderer::drawOriginAxis()
@@ -455,488 +455,125 @@ vec3 hsav2rgb(vec3 hsv)
 	return vec3(r, g, b);
 }
 
-vec3 Renderer::calculateAmbient(Material& mat)
-{
-	vec3 Iambient(0.0, 0.0, 0.0);
-	for (int l = 0; l < sceneLights->size(); l++)
-	{
-		Iambient.x += sceneLights->at(l)->color.x * max(0.0, mat.ambientColor.x * sceneLights->at(l)->ambientIntensity);
-		Iambient.y += sceneLights->at(l)->color.y * max(0.0, mat.ambientColor.y * sceneLights->at(l)->ambientIntensity);
-		Iambient.z += sceneLights->at(l)->color.z * max(0.0, mat.ambientColor.z * sceneLights->at(l)->ambientIntensity);
-	}
-	return Iambient;
-}
-
-vec3 Renderer::calculateDiffusion(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
-{
-	vec3 Idiffuse(0.0, 0.0, 0.0);
-	vec3 dirToLight;
-	if (!mat.special)
-	{
-		for (int l = 0; l < sceneLights->size(); l++)
-		{
-			if (sceneLights->at(l)->lightType == ambience)
-				continue;
-			else if (sceneLights->at(l)->lightType == point)
-				dirToLight = sceneLights->at(l)->position - pointInWorld;
-			else if (sceneLights->at(l)->lightType == parallel)
-				dirToLight = -sceneLights->at(l)->direction;
-			GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
-			Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
-			Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
-			Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, mat.diffuseColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
-		}
-	}
-	else
-	{
-		for (int l = 0; l < sceneLights->size(); l++)
-		{
-			if (sceneLights->at(l)->lightType == ambience)
-				continue;
-			else if (sceneLights->at(l)->lightType == point)
-				dirToLight = sceneLights->at(l)->position - pointInWorld;
-			else if (sceneLights->at(l)->lightType == parallel)
-				dirToLight = -sceneLights->at(l)->direction;
-			GLfloat dotProd = dot(normalize(normalInWorld), normalize(dirToLight));
-			vec3 dirToViewer = vec3(viewerPos[0].x, viewerPos[0].y, viewerPos[0].z) - pointInWorld;
-			GLfloat dotProd2 = dot(normalize(normalInWorld), normalize(dirToViewer));
-			dotProd2 += dotProd;
-			vec3 difColor = vec3(0.5*sin(0.5*pointInWorld.x + 5* dotProd)+0.5, 0.5*sin(0.5*pointInWorld.y + 5* dotProd)+0.5, 0.5*sin(0.5*pointInWorld.z + 5* dotProd)+0.5);
-
-			Idiffuse.x += sceneLights->at(l)->color.x * max(0.0, mat.diffuseColor.x * difColor.x * dotProd * sceneLights->at(l)->diffuseIntensity);
-			Idiffuse.y += sceneLights->at(l)->color.y * max(0.0, mat.diffuseColor.y * difColor.y * dotProd * sceneLights->at(l)->diffuseIntensity);
-			Idiffuse.z += sceneLights->at(l)->color.z * max(0.0, mat.diffuseColor.z * difColor.z * dotProd * sceneLights->at(l)->diffuseIntensity);
-		}
-	}
-	return Idiffuse;
-}
-
-vec3 Renderer::calculateSpecular(vec3& pointInWorld, vec3& normalInWorld, Material& mat)
-{
-	vec3 Ispecular(0.0, 0.0, 0.0);
-	vec3 dirFromLight, reflected;
-	for (int l = 0; l < sceneLights->size(); l++)
-	{
-		normalInWorld = normalize(normalInWorld);
-		if (sceneLights->at(l)->lightType == point)
-			dirFromLight = pointInWorld - sceneLights->at(l)->position;
-		else if (sceneLights->at(l)->lightType == parallel)
-			dirFromLight = sceneLights->at(l)->direction;
-
-		reflected = dirFromLight - 2.0 * dot(dirFromLight, normalInWorld) * normalInWorld;
-		vec3 dirToViewer = vec3(viewerPos[0].x, viewerPos[0].y, viewerPos[0].z) - pointInWorld;
-		GLfloat dotProd = dot(normalize(reflected), normalize(dirToViewer));
-		//dotProd = sin(4.0 * 3.1415326 * dotProd);
-
-		if (dotProd <= 0)
-			continue;
-		dotProd = pow(dotProd, mat.shininessCoeficient);
-		
-		Ispecular.x += sceneLights->at(l)->color.x * max(0.0, mat.specularColor.x * dotProd * sceneLights->at(l)->specularIntensity);
-		Ispecular.y += sceneLights->at(l)->color.y * max(0.0, mat.specularColor.y * dotProd * sceneLights->at(l)->specularIntensity);
-		Ispecular.z += sceneLights->at(l)->color.z * max(0.0, mat.specularColor.z * dotProd * sceneLights->at(l)->specularIntensity);
-	}
-
-	return Ispecular;
-}
-
 void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, int size, Material mat, mat4 worldModel, mat4 normalMat)
 {
+	vec3 Wirecolor = vec3(1.0, 0.5, 0.7);
+
+	GLuint currentShading;
+	switch (shadingSetup)
+	{
+	case WireFrame:
+		currentShading = glProgramArray.wireFrame;
+		break;
+	case Flat:
+	case Gouraud:
+		currentShading = glProgramArray.flat_gouraud;
+		break;
+	case Phong:
+		currentShading = glProgramArray.phong;
+		break;
+	}
+
+	glUseProgram(currentShading);
+
+	// make uniform: camtransform, projection
+	glUniformLocArray.lookAt = glGetUniformLocation(currentShading, "lookAt");
+	glUniformLocArray.projection = glGetUniformLocation(currentShading, "proj");
+	glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
+	glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+
+	// make uniform: model, world
+	glUniformLocArray.worldModel = glGetUniformLocation(currentShading, "worldModelMat");
+	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, worldModel);
+
+	// make uniform normal mat
+	glUniformLocArray.normals = glGetUniformLocation(currentShading, "normalMat");
+	glUniformMatrix4fv(glUniformLocArray.normals, 1, GL_TRUE, normalMat);
+
+	// make uniform material
+	glUniformLocArray.ambient = glGetUniformLocation(currentShading, "matAmbient");
+	glUniformLocArray.diffuse = glGetUniformLocation(currentShading, "matDiffuse");
+	glUniformLocArray.specular = glGetUniformLocation(currentShading, "matSpecular");
+	glUniformLocArray.emissive = glGetUniformLocation(currentShading, "matEmissive");
+	glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
+	glUniform3fv(glUniformLocArray.ambient, 1, mat.ambientColor);
+	glUniform3fv(glUniformLocArray.diffuse, 1, mat.diffuseColor);
+	glUniform3fv(glUniformLocArray.specular, 1, mat.specularColor);
+	glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
+	glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
+
+	// make uniform viewer
+	glUniformLocArray.viewer = glGetUniformLocation(currentShading, "viewerPos");
+	glUniform3fv(glUniformLocArray.viewer, 1, viewerPos[0]);
+
+	// make uniform Lights
+	vec3 pointLightPositions[MAX_NUM_OF_LIGHTS];
+	vec3 pointLightColors[MAX_NUM_OF_LIGHTS];
+	for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
+	{
+		pointLightPositions[i] = sceneLights->at(i)->position;
+		pointLightColors[i] = sceneLights->at(i)->color;
+	}
+
+	for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
+	{
+		char variable[50];
+
+		sprintf(variable, "pointLightPosition[%d]", i);
+		GLuint pointlightPositionLoc = glGetUniformLocation(currentShading, variable);
+		glUniform3fv(pointlightPositionLoc, 1, pointLightPositions[i]);
+
+		sprintf(variable, "pointLightColor[%d]", i);
+		GLuint pointlightColorLoc = glGetUniformLocation(currentShading, variable);
+		glUniform3fv(pointlightColorLoc, 1, pointLightColors[i]);
+	}
+	GLuint pointLightCountLoc = glGetUniformLocation(currentShading, "pointLightCount");
+	glUniform1i(pointLightCountLoc, min(6, sceneLights->size()));
+
+	// make input
+	GLuint buffers[2];
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(2, buffers);
+
+	// bind first buffer: vertices
+	GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vPositionLoc);
+	glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	// bind second buffer
+	GLuint drawingMode = GL_FILL;
 	if (shadingSetup == WireFrame)
 	{
-		GLuint currentShading = glProgramArray.wireFrame;
-		vec3 color = vec3(1.0, 0.5, 0.7);
-
-		// wireframe
-		glUseProgram(currentShading);
-
-		// make uniform: camtransform, projection
-		glUniformLocArray.lookAt = glGetUniformLocation(currentShading, "lookAt");
-		glUniformLocArray.projection = glGetUniformLocation(currentShading, "proj");
-		glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
-		glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
-
-		// make uniform: model, world
-		glUniformLocArray.worldModel = glGetUniformLocation(currentShading, "worldModelMat");
-		glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, worldModel);
-
-		// make input (vertices)
-		GLuint buffers[2];
-		GLuint vao;
-
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-		glGenBuffers(2, buffers);
-
-		GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
+		drawingMode = GL_LINE;
 		GLuint vColorLoc = glGetAttribLocation(currentShading, "vColor");
-
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(vPositionLoc);
-		glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3), color, GL_STATIC_DRAW);
-		glVertexAttrib3fv(vColorLoc, color);
-
-		glEnable(GL_DEPTH_TEST);
-		glBindVertexArray(vao);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // no fill
-		glLineWidth(1);
-		glDrawArrays(GL_TRIANGLES, 0, size);
-		glUseProgram(0);
-		glDeleteVertexArrays(1, &vao);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3), Wirecolor, GL_STATIC_DRAW);
+		glVertexAttrib3fv(vColorLoc, Wirecolor);
 	}
-	
-	else if (shadingSetup == Flat || shadingSetup == Gouraud)
+	else if (shadingSetup == Flat || shadingSetup == Gouraud || shadingSetup == Phong)
 	{
-		GLuint currentShading = glProgramArray.flat_gouraud;
-
-		glUseProgram(currentShading);
-
-		// make uniform: camtransform, projection
-		glUniformLocArray.lookAt = glGetUniformLocation(currentShading, "lookAt");
-		glUniformLocArray.projection = glGetUniformLocation(currentShading, "proj");
-		glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
-		glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
-
-		// make uniform: model, world, normals
-		glUniformLocArray.worldModel = glGetUniformLocation(currentShading, "worldModelMat");
-		glUniformLocArray.normals = glGetUniformLocation(currentShading, "normalMat");
-		glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, worldModel);
-		glUniformMatrix4fv(glUniformLocArray.normals, 1, GL_TRUE, normalMat);
-
-		// material
-		glUniformLocArray.ambient = glGetUniformLocation(currentShading, "matAmbient");
-		glUniformLocArray.diffuse = glGetUniformLocation(currentShading, "matDiffuse");
-		glUniformLocArray.specular = glGetUniformLocation(currentShading, "matSpecular");
-		glUniformLocArray.emissive = glGetUniformLocation(currentShading, "matEmissive");
-		glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
-		glUniform3fv(glUniformLocArray.ambient, 1, mat.ambientColor);
-		glUniform3fv(glUniformLocArray.diffuse, 1, mat.diffuseColor);
-		glUniform3fv(glUniformLocArray.specular, 1, mat.specularColor);
-		glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
-		glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
-
-		// viewer
-		glUniformLocArray.viewer = glGetUniformLocation(currentShading, "viewerPos");
-		glUniform3fv(glUniformLocArray.viewer, 1, viewerPos[0]);
-
-		// pointLights
-		vec3 pointLightPositions[MAX_NUM_OF_LIGHTS];
-		vec3 pointLightColors[MAX_NUM_OF_LIGHTS];
-		for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
-		{
-			pointLightPositions[i] = sceneLights->at(i)->position;
-			pointLightColors[i] = sceneLights->at(i)->color;
-		}
-
-		for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
-		{
-			char variable[50];
-
-			sprintf(variable, "pointLightPosition[%d]", i);
-			GLuint pointlightPositionLoc = glGetUniformLocation(currentShading, variable);
-			glUniform3fv(pointlightPositionLoc, 1, pointLightPositions[i]);
-
-			sprintf(variable, "pointLightColor[%d]", i);
-			GLuint pointlightColorLoc = glGetUniformLocation(currentShading, variable);
-			glUniform3fv(pointlightColorLoc, 1, pointLightColors[i]);
-
-		}
-
-		// pointLights count
-		GLuint pointLightCountLoc = glGetUniformLocation(currentShading, "pointLightCount");
-		glUniform1i(pointLightCountLoc, min(6, sceneLights->size()));
-
-		// make input (vertices, normals)
-		GLuint buffers[2];
-		GLuint vao;
-
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-		glGenBuffers(2, buffers);
-
-		GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
 		GLuint vNormalLoc = glGetAttribLocation(currentShading, "vNormal");
-
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(vPositionLoc);
-		glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-		if(shadingSetup == Flat)
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size , faceNormals, GL_STATIC_DRAW);
-		if (shadingSetup == Gouraud)
+		if (shadingSetup == Flat)
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, faceNormals, GL_STATIC_DRAW);
+		if (shadingSetup == Gouraud || shadingSetup == Phong)
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexNormals, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(vNormalLoc);
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-		glEnable(GL_DEPTH_TEST);
-		glBindVertexArray(vao);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDrawArrays(GL_TRIANGLES, 0, size);
-		glUseProgram(0);
-		glDeleteVertexArrays(1, &vao);
 	}
 
-	else if (shadingSetup == Phong)
-	{
-
-	}
-}
-
-void Renderer::drawModel(vector<vec4>& modelVertices, vector<vec4>& modelFaceNormals, vector<vec4>& modelVertexNormals, Material& mat)
-{
-	if (shadingSetup == WireFrame)
-	{
-		vector<vec3> triangles;
-		for (int i = 0; i < modelVertices.size(); i++)
-		{
-			vec3 screenPoint = viewPort(homo2noHomo(ProjCam * modelVertices[i]));
-			triangles.push_back(screenPoint);
-		}
-		drawTrianglesWire(triangles, mat);
-		return;
-	}
-
-	else if (shadingSetup == Flat)
-	{
-		for (int i = 0; i < modelVertices.size(); i++)
-		{
-			vec4 p0 = modelVertices[i];
-			vec4 p1 = modelVertices[i + 1];
-			vec4 p2 = modelVertices[i + 2];
-
-			// calculate screen points
-			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
-			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
-			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
-
-			vec3 np0 = homo2noHomo(p0);
-			vec3 np1 = homo2noHomo(p1);
-			vec3 np2 = homo2noHomo(p2);
-
-			int yMax = max(sp0.y, max(sp1.y, sp2.y));
-			int yMin = min(sp0.y, min(sp1.y, sp2.y));
-
-			int xMax = max(sp0.x, max(sp1.x, sp2.x));
-			int xMin = min(sp0.x, min(sp1.x, sp2.x));
-
-			if (yMax >= m_height + border || yMin < 0 - border || xMax >= m_width + border || xMin < 0 - border)
-			{
-				i += 2;
-				continue;
-			}
-
-			GLfloat zValue;
-			vec3 alpha;
-			vec3 pointInWorld = vec3(np0 + np1 + np2) / 3.0;
-			vec3 normalInWorld = vec3(modelFaceNormals[i].x, modelFaceNormals[i].y, modelFaceNormals[i].z);
-			vec3 Color;
-
-			vec3 Iambient = calculateAmbient(mat);
-			vec3 Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
-			vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
-			
-			vec3 Itot = Idiffuse + Idiffuse + Ispecular;
-			Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z) + mat.emissiveColor;
-
-			for (int y = yMin; y <= yMax; y++)
-			{
-				for (int x = xMin; x <= xMax; x++)
-				{
-					if (x < 0 || x >= m_width || y < 0 || y >= m_height)
-						continue;
-					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
-					{
-						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
-						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
-						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
-						{
-							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							if (fogMode) Color = calculateFog(Color, zValue);
-
-							m_outBuffer[INDEX(m_width, x, y, 0)] = Color.x;
-							m_outBuffer[INDEX(m_width, x, y, 1)] = Color.y;
-							m_outBuffer[INDEX(m_width, x, y, 2)] = Color.z;
-							
-						}
-
-					}
-				}
-			}
-			i += 2;
-		}
-	}
-
-	else if (shadingSetup == Gouraud)
-	{
-		vec3 eyeInWorld = homo2noHomo(viewerPos[0]);
-		GLfloat Iambient = 0.0;
-		GLfloat Idiffuse = 0.0;
-		GLfloat Ispeculat = 0.0;
-		GLfloat Itot = 0.0;
-
-		for (int i = 0; i < modelVertices.size(); i++)
-		{
-			vec4 p0 = modelVertices[i];
-			vec4 p1 = modelVertices[i + 1];
-			vec4 p2 = modelVertices[i + 2];
-
-			// calculate screen points
-			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
-			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
-			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
-
-			vec3 np0 = homo2noHomo(p0);
-			vec3 np1 = homo2noHomo(p1);
-			vec3 np2 = homo2noHomo(p2);
-
-			int yMax = max(sp0.y, max(sp1.y, sp2.y));
-			int yMin = min(sp0.y, min(sp1.y, sp2.y));
-
-			int xMax = max(sp0.x, max(sp1.x, sp2.x));
-			int xMin = min(sp0.x, min(sp1.x, sp2.x));
-
-			if (yMax >= m_height + border || yMin < 0 - border || xMax >= m_width + border || xMin < 0 - border)
-			{
-				i += 2;
-				continue;
-			}
-
-			GLfloat zValue;
-			vec3 alpha;
-			vec3 pointInWorld;
-			vec3 normalInWorld;
-			vec3 Color;
-
-			vec3 Colors[3];
-			// find colors of points around
-			for (int c = 0; c < 3; c++)
-			{
-				pointInWorld = homo2noHomo(modelVertices[i + c]);
-				normalInWorld = vec3(modelVertexNormals[i + c].x, modelVertexNormals[i + c].y, modelVertexNormals[i + c].z);
-				vec3 Iambient = calculateAmbient(mat);
-				vec3 Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
-				vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
-
-				vec3 Itot = Iambient + Idiffuse + Ispecular;
-				Colors[c] = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z);
-			}
-
-			for (int y = yMin; y <= yMax; y++)
-			{
-				for (int x = xMin; x <= xMax; x++)
-				{
-					if (x < 0 || x >= m_width || y < 0 || y >= m_height)
-						continue;
-					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
-					{
-						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
-						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
-
-						Color = alpha.x * Colors[0] + alpha.y * Colors[1] + alpha.z * Colors[2] + mat.emissiveColor;
-
-						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
-						{
-							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							if (fogMode) Color = calculateFog(Color, zValue);
-							m_outBuffer[INDEX(m_width, x, y, 0)] = Color.x;
-							m_outBuffer[INDEX(m_width, x, y, 1)] = Color.y;
-							m_outBuffer[INDEX(m_width, x, y, 2)] = Color.z;
-						}
-
-					}
-				}
-			}
-			i += 2;
-		}
-	}
-
-	else if (shadingSetup == Phong)
-	{
-		vec3 eyeInWorld = homo2noHomo(viewerPos[0]);
-		GLfloat Itot = 0.0;
-
-		for (int i = 0; i < modelVertices.size(); i++)
-		{
-			vec4 p0 = modelVertices[i];
-			vec4 p1 = modelVertices[i + 1];
-			vec4 p2 = modelVertices[i + 2];
-
-			// calculate screen points
-			vec3 sp0 = viewPort(homo2noHomo(ProjCam * p0));
-			vec3 sp1 = viewPort(homo2noHomo(ProjCam * p1));
-			vec3 sp2 = viewPort(homo2noHomo(ProjCam * p2));
-
-			vec3 np0 = homo2noHomo(p0);
-			vec3 np1 = homo2noHomo(p1);
-			vec3 np2 = homo2noHomo(p2);
-
-			int yMax = max(sp0.y, max(sp1.y, sp2.y));
-			int yMin = min(sp0.y, min(sp1.y, sp2.y));
-
-			int xMax = max(sp0.x, max(sp1.x, sp2.x));
-			int xMin = min(sp0.x, min(sp1.x, sp2.x));
-
-			if (yMax >= m_height + border || yMin < 0 - border || xMax >= m_width + border || xMin < 0 - border)
-			{
-				i += 2;
-				continue;
-			}
-
-			GLfloat zValue;
-			vec3 alpha;
-			vec3 pointInWorld;
-			vec3 normalInWorld;
-			vec3 Color;
-
-			vec3 normals[3];
-			for (int n = 0; n < 3; n++)
-			{
-				normals[n] = vec3(modelVertexNormals[i + n].x, modelVertexNormals[i + n].y, modelVertexNormals[i + n].z);
-			}
-
-			for (int y = yMin; y <= yMax; y++)
-			{
-				for (int x = xMin; x <= xMax; x++)
-				{
-					if (x < 0 || x >= m_width || y < 0 || y >= m_height)
-						continue;
-					if (isInside(vec3(x, y, 0), sp0, sp1, sp2))
-					{
-						alpha = findCoeficients(vec3(x, y, 0), sp0, sp1, sp2);
-						zValue = alpha.x * sp0.z + alpha.y * sp1.z + alpha.z * sp2.z;
-
-						pointInWorld = alpha.x * np0 + alpha.y * np1 + alpha.z * np2;
-						normalInWorld = alpha.x * normals[0] + alpha.y * normals[1] + alpha.z * normals[2];
-
-						vec3 Iambient = calculateAmbient(mat);
-						vec3 Idiffuse = calculateDiffusion(pointInWorld, normalInWorld, mat);
-						vec3 Ispecular = calculateSpecular(pointInWorld, normalInWorld, mat);
-
-						vec3 Itot = Iambient + Idiffuse + Ispecular;
-						
-						Color = vec3(mat.color.x * Itot.x, mat.color.y * Itot.y, mat.color.z * Itot.z) + mat.emissiveColor;
-
-						if (zValue < m_zbuffer[INDEX_ZB(m_width, x, y)])
-						{
-							m_zbuffer[INDEX_ZB(m_width, x, y)] = zValue;
-							if (fogMode) Color = calculateFog(Color, zValue);
-							m_outBuffer[INDEX(m_width, x, y, 0)] = Color.x;
-							m_outBuffer[INDEX(m_width, x, y, 1)] = Color.y;
-							m_outBuffer[INDEX(m_width, x, y, 2)] = Color.z;
-						}
-
-					}
-				}
-			}
-			i += 2;
-		}
-	}
+	// draw
+	glEnable(GL_DEPTH_TEST);
+	glBindVertexArray(vao);
+	glPolygonMode(GL_FRONT_AND_BACK, drawingMode);
+	glLineWidth(1);
+	glDrawArrays(GL_TRIANGLES, 0, size);
+	glUseProgram(0);
+	glDeleteVertexArrays(1, &vao);
 }
 
 void Renderer::drawTrianglesWire(const std::vector<vec3>& vertices, Material& mat)
