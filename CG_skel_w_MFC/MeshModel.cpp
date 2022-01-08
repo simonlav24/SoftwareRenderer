@@ -247,19 +247,19 @@ void MeshModel::drawWorldAxis(Renderer* r)
 	xAxis = Mw * xAxis;
 	xAxis = homo2noHomo(xAxis);
 	vec3 xS = viewPort(rendererDims, xAxis);
-	r->drawLine((int)zeroS.x, (int)zeroS.y, (int)xS.x, (int)xS.y, vec3(1, 0, 0));
+	//r->drawLine((int)zeroS.x, (int)zeroS.y, (int)xS.x, (int)xS.y, vec3(1, 0, 0));
 
 	vec4 yAxis = vec4(0, 1, 0, 1);
 	yAxis = Mw * yAxis;
 	yAxis = homo2noHomo(yAxis);
 	vec3 yS = viewPort(rendererDims, yAxis);
-	r->drawLine((int)zeroS.x, (int)zeroS.y, (int)yS.x, (int)yS.y, vec3(0, 1, 0));
+	//r->drawLine((int)zeroS.x, (int)zeroS.y, (int)yS.x, (int)yS.y, vec3(0, 1, 0));
 
 	vec4 zAxis = vec4(0, 0, 1, 1);
 	zAxis = Mw * zAxis;
 	zAxis = homo2noHomo(zAxis);
 	vec3 zS = viewPort(rendererDims, zAxis);
-	r->drawLine((int)zeroS.x, (int)zeroS.y, (int)zS.x, (int)zS.y, vec3(0, 0, 1));
+	//r->drawLine((int)zeroS.x, (int)zeroS.y, (int)zS.x, (int)zS.y, vec3(0, 0, 1));
 }
 
 void MeshModel::draw(Renderer* r)
@@ -486,7 +486,7 @@ void MeshModel::drawVertexNormals(Renderer* r, mat4& cTransform, mat4& projectio
 
 		vec3 point1 = viewPort(rendererDims, origin);
 		vec3 point2 = viewPort(rendererDims, point);
-		r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 0.0, 1.0));
+		//r->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(1.0, 0.0, 1.0));
 	}
 }
 

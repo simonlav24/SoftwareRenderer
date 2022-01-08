@@ -261,132 +261,6 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::drawLine(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, const vec3& color)
-{
-	drawLine((int)x0, (int)y0, (int)x1, (int)y1, color);
-}
-
-void Renderer::drawLine(vec3 a, vec3 b, const vec3& color)
-{
-	glColor3f(color.x, color.y, color.z);
-	glBegin(GL_LINES);
-	{
-		glVertex2f(a.x, a.y);
-		glVertex2f(b.x, b.y);
-	}
-	glEnd();
-
-	return;
-	/*if (a.x > m_width + border || a.x < -border || b.x > m_width + border || b.x < -border || a.y > m_height + border || a.y < -border || b.y > m_height + border || b.y < -border)
-		return;
-	vec3 start, end;
-	bool steep;
-	if (abs(b.y - a.y) < abs(b.x - a.x))
-	{
-		if (a.x < b.x)
-		{
-			start = a;
-			end = b;
-		}
-		else
-		{
-			start = b;
-			end = a;
-		}
-		steep = false;
-	}
-	else
-	{
-		if (a.y < b.y)
-		{
-			start = a;
-			end = b;
-		}
-		else
-		{
-			start = b;
-			end = a;
-		}
-		steep = true;
-	}
-	int dx = end.x - start.x;
-	int dy = end.y - start.y;
-	if (steep)
-	{
-		int xdir = 1;
-		if (dx < 0)
-		{
-			xdir *= -1;
-			dx *= -1;
-		}
-		int d = 2 * dx - dy;
-		int x = start.x;
-		for (int y = start.y; y < end.y; y++)
-		{
-			if (d > 0)
-			{
-				x += xdir;
-				d += 2 * (dx - dy);
-			}
-			else
-			{
-				d += 2 * dx;
-			}
-			if (!(x < 0 || x >= m_width || y < 0 || y >= m_height))
-			{
-				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
-				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
-				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
-			}
-		}
-	}
-	else
-	{
-		int ydir = 1;
-		if (dy < 0)
-		{
-			ydir *= -1;
-			dy *= -1;
-		}
-		int d = 2 * dy - dx;
-		int y = start.y;
-		for (int x = start.x; x < end.x; x++)
-		{
-			if (d > 0)
-			{
-				y += ydir;
-				d += 2 * (dy - dx);
-			}
-			else
-			{
-				d += 2 * dy;
-			}
-			if (!(x < 0 || x >= m_width || y < 0 || y >= m_height))
-			{
-				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
-				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
-				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
-			}
-		}
-	}*/
-}
-
-void Renderer::drawLine(int x0, int y0, int x1, int y1, const vec3& color)
-{
-	drawLine(vec3(x0, y0, 0), vec3(x1, y1, 0), color);
-}
-
-void Renderer::DrawTriangles(const std::vector<vec3>& vertices, Material& mat, vector<vec4>& faceNormals)
-{
-	for (int i = 0; i < vertices.size(); i+=3)
-	{
-		//drawTriangleFlat(vertices[i + 0], vertices[i + 1], vertices[i + 2], color);
-		//DrawTrianglePhong(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat, faceNormals[i / 3]);
-
-		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat.color);
-	}
-}
-
 vec3 findCoeficients(vec3 point, vec3 p0, vec3 p1, vec3 p2)
 {
 	// find area using determinant
@@ -507,28 +381,37 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	glUniform3fv(glUniformLocArray.viewer, 1, viewerPos[0]);
 
 	// make uniform Lights
-	vec3 pointLightPositions[MAX_NUM_OF_LIGHTS];
-	vec3 pointLightColors[MAX_NUM_OF_LIGHTS];
+	vec3 lightPositions[MAX_NUM_OF_LIGHTS];
+	vec3 lightColors[MAX_NUM_OF_LIGHTS];
+	GLint lightTypes[MAX_NUM_OF_LIGHTS];
 	for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
 	{
-		pointLightPositions[i] = sceneLights->at(i)->position;
-		pointLightColors[i] = sceneLights->at(i)->color;
+		if(sceneLights->at(i)->lightType == point)
+			lightPositions[i] = sceneLights->at(i)->position;
+		else if (sceneLights->at(i)->lightType == parallel)
+			lightPositions[i] = sceneLights->at(i)->direction;
+		lightColors[i] = sceneLights->at(i)->color;
+		lightTypes[i] = (GLuint)sceneLights->at(i)->lightType;
 	}
 
 	for (int i = 0; i < min(MAX_NUM_OF_LIGHTS, sceneLights->size()); i++)
 	{
 		char variable[50];
 
-		sprintf(variable, "pointLightPosition[%d]", i);
-		GLuint pointlightPositionLoc = glGetUniformLocation(currentShading, variable);
-		glUniform3fv(pointlightPositionLoc, 1, pointLightPositions[i]);
+		sprintf(variable, "lightPositions[%d]", i);
+		GLuint lightPositionLoc = glGetUniformLocation(currentShading, variable);
+		glUniform3fv(lightPositionLoc, 1, lightPositions[i]);
 
-		sprintf(variable, "pointLightColor[%d]", i);
-		GLuint pointlightColorLoc = glGetUniformLocation(currentShading, variable);
-		glUniform3fv(pointlightColorLoc, 1, pointLightColors[i]);
+		sprintf(variable, "lightColors[%d]", i);
+		GLuint lightColorLoc = glGetUniformLocation(currentShading, variable);
+		glUniform3fv(lightColorLoc, 1, lightColors[i]);
+
+		sprintf(variable, "lightTypes[%d]", i);
+		GLuint lightTypeLoc = glGetUniformLocation(currentShading, variable);
+		glUniform1iv(lightTypeLoc, 1, &lightTypes[i]);
 	}
-	GLuint pointLightCountLoc = glGetUniformLocation(currentShading, "pointLightCount");
-	glUniform1i(pointLightCountLoc, min(6, sceneLights->size()));
+	GLuint lightCountLoc = glGetUniformLocation(currentShading, "lightCount");
+	glUniform1i(lightCountLoc, min(6, sceneLights->size()));
 
 	// make input
 	GLuint buffers[2];
@@ -574,21 +457,6 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	glDrawArrays(GL_TRIANGLES, 0, size);
 	glUseProgram(0);
 	glDeleteVertexArrays(1, &vao);
-}
-
-void Renderer::drawTrianglesWire(const std::vector<vec3>& vertices, Material& mat)
-{
-	for (int i = 0; i < vertices.size(); i += 3)
-	{
-		drawTriangleWire(vertices[i + 0], vertices[i + 1], vertices[i + 2], mat.color);
-	}
-}
-
-void Renderer::drawTriangleWire(vec3 p0, vec3 p1, vec3 p2, const vec3& color)
-{
-	drawLine(p0, p1, color);
-	drawLine(p1, p2, color);
-	drawLine(p2, p0, color);
 }
 
 vec2 Renderer::getDims()
@@ -646,10 +514,10 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 
 	if (!(direction.x == 0.0 && direction.y == 0.0 && direction.z == 0.0))
 	{
-		drawLine(Pos , Dir, color);
+		//drawLine(Pos , Dir, color);
 		vec3 direction = normalize(Dir - Pos);
-		drawLine(Dir, Dir - 7.5 * direction + 7.5 * vec3(-direction.y, direction.x, 0.0), color);
-		drawLine(Dir, Dir - 7.5 * direction - 7.5 * vec3(-direction.y, direction.x, 0.0), color);
+		//drawLine(Dir, Dir - 7.5 * direction + 7.5 * vec3(-direction.y, direction.x, 0.0), color);
+		//drawLine(Dir, Dir - 7.5 * direction - 7.5 * vec3(-direction.y, direction.x, 0.0), color);
 	}
 }
 

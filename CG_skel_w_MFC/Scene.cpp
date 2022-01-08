@@ -121,19 +121,19 @@ void Scene::drawOriginPoint()
 	xAxis = Mw * xAxis;
 	xAxis = homo2noHomo(xAxis);
 	vec3 xS = viewPort(rendererDims, xAxis);
-	m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)xS.x, (int)xS.y, vec3(1, 0, 0));
+	//m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)xS.x, (int)xS.y, vec3(1, 0, 0));
 
 	vec4 yAxis = vec4(0, axisSize, 0, 1);
 	yAxis = Mw * yAxis;
 	yAxis = homo2noHomo(yAxis);
 	vec3 yS = viewPort(rendererDims, yAxis);
-	m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)yS.x, (int)yS.y, vec3(0, 1, 0));
+	//m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)yS.x, (int)yS.y, vec3(0, 1, 0));
 
 	vec4 zAxis = vec4(0, 0, axisSize, 1);
 	zAxis = Mw * zAxis;
 	zAxis = homo2noHomo(zAxis);
 	vec3 zS = viewPort(rendererDims, zAxis);
-	m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)zS.x, (int)zS.y, vec3(0, 0, 1));
+	//m_renderer->drawLine((int)zeroS.x, (int)zeroS.y, (int)zS.x, (int)zS.y, vec3(0, 0, 1));
 }
 
 void Scene::drawGrid()
@@ -164,7 +164,7 @@ void Scene::drawGrid()
 		point1 = viewPort(rendererDims, homo2noHomo(Mw * point1));
 		point2 = viewPort(rendererDims, homo2noHomo(Mw * point2));
 
-		m_renderer->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(0.5, 0.5, 0.5));
+		//m_renderer->drawLine(point1.x, point1.y, point2.x, point2.y, vec3(0.5, 0.5, 0.5));
 	}
 }
 
