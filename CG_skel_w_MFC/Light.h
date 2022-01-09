@@ -7,13 +7,16 @@ enum LightType {point, parallel, ambience};
 
 struct Material
 {
-	bool texturized;
 	vec3 color;
 	vec3 ambientColor;
 	vec3 diffuseColor;
 	vec3 specularColor;
 	vec3 emissiveColor;
 	GLfloat shininessCoeficient;
+
+	bool texturized;
+	std::string textureFilePath;
+
 	Material() :
 		color(0.8f, 0.8f, 0.8f),
 		ambientColor(0.1f, 0.1f, 0.1f),

@@ -308,6 +308,7 @@ void initMenu()
 
 	int menuMaterial = glutCreateMenu(materialMenu);
 	glutAddMenuEntry("Edit Color", MATERIAL_CHANGE_COLOR);
+	glutAddMenuEntry("Load Texture", MATERIAL_LOAD_TEXTURE);
 	glutAddMenuEntry("Edit Ambient Color", MATERIAL_CHANGE_AMBIENT);
 	glutAddMenuEntry("Edit Diffuse Color", MATERIAL_CHANGE_DIFFUSE);
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);

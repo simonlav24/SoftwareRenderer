@@ -149,7 +149,7 @@ void MeshModel::loadFile(string fileName)
 	calculateBoundingBox(vertices_fromInput);
 
 	// scale models to match general size (if its way too big or way too small):
-	bool scaleModels = false;
+	bool scaleModels = true;
 	if (scaleModels)
 	{
 		if (2.0 > bounding_box[0].y || bounding_box[0].y > 6.0)

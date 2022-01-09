@@ -5,6 +5,7 @@
 #include "GL\freeglut.h" // might not need (?)
 #include "InitShader.h"
 #include <chrono>
+#include "PngLib/PngWrapper.h"
 
 #define viewPort(dims, a) vec3((dims.x / 2.0) * (a.x + 1), (dims.y / 2.0) * (a.y + 1), a.z)
 
@@ -554,4 +555,11 @@ vec3 Scene::getMaterial(materialProperty prop)
 		break;
 	}
 	return result;
+}
+
+void Scene::loadTexture(string fileName)
+{
+	if (activeModel == -1)
+		return;
+	static_cast<MeshModel*>(models[activeModel])->mat.textureFilePath = fileName;
 }

@@ -57,6 +57,7 @@
 #define MATERIAL_CHANGE_SHININESS 4
 #define MATERIAL_SPECIAL 5
 #define MATERIAL_CHANGE_EMISSION 6
+#define MATERIAL_LOAD_TEXTURE 7
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -312,7 +313,7 @@ void materialMenu(int id)
 {
 	CRGBDialog dlg;
 	CFloatDialog fdlg;
-
+	CFileDialog dlgFile(TRUE, _T(".png"), NULL, NULL, _T("*.png|*.*"));
 	switch (id)
 	{
 	case MATERIAL_CHANGE_COLOR:
@@ -321,6 +322,13 @@ void materialMenu(int id)
 		if (dlg.DoModal() == IDOK) {
 			vec3 v = dlg.GetXYZ();
 			scene->changeMaterial(color, v);
+		}
+		break;
+	case MATERIAL_LOAD_TEXTURE:
+		if (dlgFile.DoModal() == IDOK)
+		{
+			std::string s((LPCTSTR)dlgFile.GetPathName());
+			scene->loadTexture((LPCTSTR)dlgFile.GetPathName());
 		}
 		break;
 	case MATERIAL_CHANGE_AMBIENT:

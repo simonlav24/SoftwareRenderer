@@ -117,4 +117,6 @@ public:
 	bool showVertexNormals;
 	bool showIndicators;
 	bool showGrid;
+
+	void loadTexture(string fileName);
 };
