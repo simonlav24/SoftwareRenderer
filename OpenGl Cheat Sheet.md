@@ -57,7 +57,6 @@ GLint modelviewLoc = glGetUniformLocation(program, "modelview");// defining mode
 glUniformMatrix4fv(modelviewLoc, 1/*one matrix*/, GL_FALSE/*do not transpose*/, mvMat/*the actual matrix in cpp*/);
 ```
 
+### OBJ
 
-
-
-
+f vertex/texture/normal

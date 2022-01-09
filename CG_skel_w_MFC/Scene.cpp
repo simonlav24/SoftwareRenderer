@@ -519,7 +519,7 @@ void Scene::changeMaterial(materialProperty prop, vec3 values)
 		static_cast<MeshModel*>(models[activeModel])->mat.shininessCoeficient = values.x;
 		break;
 	case materialProperty::special:
-		static_cast<MeshModel*>(models[activeModel])->mat.special = !static_cast<MeshModel*>(models[activeModel])->mat.special;
+		
 		break;
 	case materialProperty::emission:
 		static_cast<MeshModel*>(models[activeModel])->mat.emissiveColor = values;

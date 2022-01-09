@@ -84,26 +84,28 @@ MeshModel::MeshModel(string fileName)
 	bounding_box[1] = vec3(0, 0, 0);
 
 	loadFile(fileName);
-	//mat.color = vec3(0.7, 0.8, 0.7);
-	mat.special = false;
 	showIndicators = true;
 }
 
 MeshModel::~MeshModel(void)
 {
 	delete[] vertex_positions;
-	delete[] vertexNormals;
+	delete[] vertexNormal_positions;
+	delete[] vertexTexture_positions;
+
 	delete[] faceNormals;
 	delete[] centerPoints;
-	delete[] normal_positions;
+	
 }
 
 void MeshModel::loadFile(string fileName)
 {
 	//loading file buffer
 	ifstream ifile(fileName.c_str());
-	//saving info about v, vn and f
-	vector<vec3> vertices_normals;
+	//saving v, vn, vt, f
+	vector<vec3> vertices_fromInput;
+	vector<vec3> vertices_normals_fromInput;
+	vector<vec2> vertices_texture_fromInput;
 	vector<FaceIdcs> faces;
 	// while not end of file
 	while (!ifile.eof())
@@ -120,18 +122,22 @@ void MeshModel::loadFile(string fileName)
 		// based on the type parse data (v, vn or f)
 		if (lineType == "v") /*point pos*/
 		{
-			vertices.push_back(vec3fFromStream(issLine));
+			vertices_fromInput.push_back(vec3fFromStream(issLine));
+		}
+		else if (lineType == "vn") /*face data*/
+		{
+			vertices_normals_fromInput.push_back(vec3fFromStream(issLine));
+		}
+		else if (lineType == "vt")
+		{
+			vertices_texture_fromInput.push_back(vec2fFromStream(issLine));
 		}
 		else if (lineType == "f") { /*face data*/
 			faces.push_back(issLine);
 		}
-		else if (lineType == "vn") /*face data*/
-		{
-			vertices_normals.push_back(vec3fFromStream(issLine));
-		}
 		else if (lineType == "#" || lineType == "")
 		{
-			// comment / empty line
+			// comment
 		}
 		else
 		{
@@ -140,39 +146,77 @@ void MeshModel::loadFile(string fileName)
 	}
 
 	// calculate bounding box
-	calculateBoundingBox(vertices);
+	calculateBoundingBox(vertices_fromInput);
 
 	// scale models to match general size (if its way too big or way too small):
-	if (2.0 > bounding_box[0].y || bounding_box[0].y > 6.0)
+	bool scaleModels = false;
+	if (scaleModels)
 	{
-		GLfloat scaleFactor = 4.0 / bounding_box[0].y;
-		bounding_box[0] = vec3();
-		bounding_box[1] = vec3();
-		for (int i = 0; i < vertices.size(); i++)
+		if (2.0 > bounding_box[0].y || bounding_box[0].y > 6.0)
 		{
-			vertices[i] = vertices[i] * scaleFactor;
+			GLfloat scaleFactor = 4.0 / bounding_box[0].y;
+			bounding_box[0] = vec3();
+			bounding_box[1] = vec3();
+			for (int i = 0; i < vertices_fromInput.size(); i++)
+			{
+				vertices_fromInput[i] = vertices_fromInput[i] * scaleFactor;
+			}
+		}
+		// calculate bounding box again
+		calculateBoundingBox(vertices_fromInput);
+	}
+
+	//vertex count in triangle positions
+	vertexCount = faces.size() * 3;
+
+	// initializing model data
+	vertex_positions = new vec3[vertexCount];
+	vertexNormal_positions = new vec3[vertexCount];
+	vertexTexture_positions = new vec2[vertexCount];
+
+	// setup calculation for vertex normals
+	faceCount = faces.size();
+	vec3* vertexNormalsForCalc = new vec3[vertices_fromInput.size()];
+	if (!vertices_normals_fromInput.empty())
+	{
+		for (int i = 0; i < faceCount; i++) {
+			for (int j = 0; j < 3; j++) {
+				vertexNormalsForCalc[faces[i].v[j] - 1] += vertices_normals_fromInput[faces[i].vn[j] - 1];
+			}
 		}
 	}
 
-
-	// calculate bounding box yet again
-	calculateBoundingBox(vertices);
-
-	//init vertex_positions array
-	vertexCount = faces.size() * 3;
-	vertex_positions = new vec3[vertexCount];
-	normal_positions = new vec3[vertexCount];
 	// iterate through all stored faces and create triangles
+	bool printDebug = false;
 	for (int i = 0, k = 0; i < faces.size(); i++)
 	{
+		if (printDebug) cout << i << ": ";
 		for (int j = 0; j < 3; j++)
 		{
-			vertex_positions[k++] = vertices[faces[i].v[j] - 1];
+			vertex_positions[k] = vertices_fromInput[faces[i].v[j] - 1];
+			if (printDebug) cout << "v: " << vertex_positions[k] << " ";
+			if (!vertices_normals_fromInput.empty())
+			{
+				vertexNormal_positions[k] = normalize(vertexNormalsForCalc[faces[i].v[j] - 1]);
+				if (printDebug) cout << "vn: " << vertexNormal_positions[k] << " ";
+			}
+				
+			if (!vertices_texture_fromInput.empty())
+			{
+				vertexTexture_positions[k] = vertices_texture_fromInput[faces[i].vt[j] - 1];
+				if (printDebug) cout << "vt: " << vertexTexture_positions[k] << " ";
+			}
+			k++;
 		}
+		if (printDebug) cout << endl;
 	}
+	delete[] vertexNormalsForCalc;
+
+	// define texturized
+	if (!vertices_texture_fromInput.empty())
+		mat.texturized = true;
 
 	//calculate center points & normals
-	faceCount = faces.size();
 	vec3* faceNorms = new vec3[faceCount];
 	centerPoints = new vec3[faceCount];
 	for (int i = 0, k = 0; i < vertexCount; i += 3)
@@ -188,43 +232,8 @@ void MeshModel::loadFile(string fileName)
 	{
 		faceNormals[i] = faceNorms[i / 3];
 	}
-
-
 	delete[] faceNorms;
 
-	//calculating vertex normals
-	vertexNormalsCount = vertices.size();
-	vertexNormals = new vec3[vertexNormalsCount];
-	if (vertices_normals.empty()) { //if no given vn-s, calculating manualy (according to formula)
-		for (int i = 0; i < faceCount; i++) {
-			vec3 p1 = vertex_positions[3 * i], p2 = vertex_positions[3 * i + 1], p3 = vertex_positions[3 * i + 2];
-			vec3 addition = length(cross(p2 - p1, p3 - p1)) * faceNormals[i];
-			for (int j = 0; j < 3; j++) {
-				vertexNormals[faces[i].v[j] - 1] += addition;
-			}
-		}
-	}
-	else {
-		for (int i = 0; i < faceCount; i++) {
-			for (int j = 0; j < 3; j++) {
-				vertexNormals[faces[i].v[j] - 1] += vertices_normals[faces[i].vn[j] - 1];
-			}
-		}
-	}
-
-	//normalize
-	for (int i = 0; i < vertexNormalsCount; i++) {
-		vertexNormals[i] = normalize(vertexNormals[i]);
-	}
-
-	//
-	for (int i = 0, k = 0; i < faces.size(); i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			normal_positions[k++] = vertexNormals[faces[i].v[j] - 1];
-		}
-	}
 	
 }
 
@@ -267,7 +276,7 @@ void MeshModel::draw(Renderer* r)
 	mat4 normalTransform = _normal_world_transform * _normal_transform;
 	mat4 worldModel = _world_transform * _model_transform;
 
-	r->DrawModel(vertex_positions, faceNormals, normal_positions, vertexCount, mat, worldModel, normalTransform);
+	r->DrawModel(vertex_positions, faceNormals, vertexNormal_positions, vertexCount, mat, worldModel, normalTransform);
 
 }
 
@@ -485,111 +494,113 @@ void MeshModel::transform(const mat4& transform, bool world, bool scalling)
 
 PrimMeshModel::PrimMeshModel()
 {
-	vertex_positions = new vec3[36];
-	vector<FaceIdcs> faces;
-	vector<vec3> vertices_normals;
+	return;
+	//vertex_positions = new vec3[36];
+	//vector<FaceIdcs> faces;
+	//vector<vec3> vertices_normals;
+	//vector<vec3> vertices;
 
-	vec3 offset(0.5, 0.5, 0.5);
-	vertices.push_back(vec3(0.0, 0.0, 0.0) - offset);
-	vertices.push_back(vec3(0.0, 0.0, 1.0) - offset);
-	vertices.push_back(vec3(0.0, 1.0, 0.0) - offset);
-	vertices.push_back(vec3(0.0, 1.0, 1.0) - offset);
-	vertices.push_back(vec3(1.0, 0.0, 0.0) - offset);
-	vertices.push_back(vec3(1.0, 0.0, 1.0) - offset);
-	vertices.push_back(vec3(1.0, 1.0, 0.0) - offset);
-	vertices.push_back(vec3(1.0, 1.0, 1.0) - offset);
+	//vec3 offset(0.5, 0.5, 0.5);
+	//vertices.push_back(vec3(0.0, 0.0, 0.0) - offset);
+	//vertices.push_back(vec3(0.0, 0.0, 1.0) - offset);
+	//vertices.push_back(vec3(0.0, 1.0, 0.0) - offset);
+	//vertices.push_back(vec3(0.0, 1.0, 1.0) - offset);
+	//vertices.push_back(vec3(1.0, 0.0, 0.0) - offset);
+	//vertices.push_back(vec3(1.0, 0.0, 1.0) - offset);
+	//vertices.push_back(vec3(1.0, 1.0, 0.0) - offset);
+	//vertices.push_back(vec3(1.0, 1.0, 1.0) - offset);
 
-	faces.push_back(FaceIdcs(1, 7, 5));
-	faces.push_back(FaceIdcs(1, 3, 7));
-	faces.push_back(FaceIdcs(1, 4, 3));
-	faces.push_back(FaceIdcs(1, 2, 4));
-	faces.push_back(FaceIdcs(3, 8, 7));
-	faces.push_back(FaceIdcs(3, 4, 8));
-	faces.push_back(FaceIdcs(5, 7, 8));
-	faces.push_back(FaceIdcs(5, 8, 6));
-	faces.push_back(FaceIdcs(1, 5, 6));
-	faces.push_back(FaceIdcs(1, 6, 2));
-	faces.push_back(FaceIdcs(2, 6, 8));
-	faces.push_back(FaceIdcs(2, 8, 4));
+	//faces.push_back(FaceIdcs(1, 7, 5));
+	//faces.push_back(FaceIdcs(1, 3, 7));
+	//faces.push_back(FaceIdcs(1, 4, 3));
+	//faces.push_back(FaceIdcs(1, 2, 4));
+	//faces.push_back(FaceIdcs(3, 8, 7));
+	//faces.push_back(FaceIdcs(3, 4, 8));
+	//faces.push_back(FaceIdcs(5, 7, 8));
+	//faces.push_back(FaceIdcs(5, 8, 6));
+	//faces.push_back(FaceIdcs(1, 5, 6));
+	//faces.push_back(FaceIdcs(1, 6, 2));
+	//faces.push_back(FaceIdcs(2, 6, 8));
+	//faces.push_back(FaceIdcs(2, 8, 4));
 
-	bounding_box[0] = vec3(0, 0, 0);
-	bounding_box[1] = vec3(0, 0, 0);
+	//bounding_box[0] = vec3(0, 0, 0);
+	//bounding_box[1] = vec3(0, 0, 0);
 
-	// calculate bounding box
-	calculateBoundingBox(vertices);
+	//// calculate bounding box
+	//calculateBoundingBox(vertices);
 
-	// scale models to match general size (if its way too big or way too small):
-	if (2.0 > bounding_box[0].y || bounding_box[0].y > 6.0)
-	{
-		GLfloat scaleFactor = 4.0 / bounding_box[0].y;
-		bounding_box[0] = vec3();
-		bounding_box[1] = vec3();
-		for (int i = 0; i < vertices.size(); i++)
-		{
-			vertices[i] = vertices[i] * scaleFactor;
-		}
-	}
+	//// scale models to match general size (if its way too big or way too small):
+	//if (2.0 > bounding_box[0].y || bounding_box[0].y > 6.0)
+	//{
+	//	GLfloat scaleFactor = 4.0 / bounding_box[0].y;
+	//	bounding_box[0] = vec3();
+	//	bounding_box[1] = vec3();
+	//	for (int i = 0; i < vertices.size(); i++)
+	//	{
+	//		vertices[i] = vertices[i] * scaleFactor;
+	//	}
+	//}
 
-	// calculate bounding box yet again
-	calculateBoundingBox(vertices);
+	//// calculate bounding box yet again
+	//calculateBoundingBox(vertices);
 
-	//init vertex_positions array
-	vertexCount = faces.size() * 3;
-	vertex_positions = new vec3[vertexCount];
-	// iterate through all stored faces and create triangles
-	for (int i = 0, k = 0; i < faces.size(); i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			vertex_positions[k++] = vertices[faces[i].v[j] - 1];
-		}
-	}
+	////init vertex_positions array
+	//vertexCount = faces.size() * 3;
+	//vertex_positions = new vec3[vertexCount];
+	//// iterate through all stored faces and create triangles
+	//for (int i = 0, k = 0; i < faces.size(); i++)
+	//{
+	//	for (int j = 0; j < 3; j++)
+	//	{
+	//		vertex_positions[k++] = vertices[faces[i].v[j] - 1];
+	//	}
+	//}
 
-	//calculate center points & normals
-	faceCount = faces.size();
-	faceNormals = new vec3[faceCount];
-	centerPoints = new vec3[faceCount];
-	for (int i = 0, k = 0; i < vertexCount; i += 3)
-	{
-		vec3 p1 = vertex_positions[i], p2 = vertex_positions[i + 1], p3 = vertex_positions[i + 2];
-		faceNormals[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
-		centerPoints[k] = (p1 + p2 + p3) / 3.0;//center point according to formula
-		k++;
-	}
+	////calculate center points & normals
+	//faceCount = faces.size();
+	//faceNormals = new vec3[faceCount];
+	//centerPoints = new vec3[faceCount];
+	//for (int i = 0, k = 0; i < vertexCount; i += 3)
+	//{
+	//	vec3 p1 = vertex_positions[i], p2 = vertex_positions[i + 1], p3 = vertex_positions[i + 2];
+	//	faceNormals[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
+	//	centerPoints[k] = (p1 + p2 + p3) / 3.0;//center point according to formula
+	//	k++;
+	//}
 
-	//calculating vertex normals
-	vertexNormalsCount = vertices.size();
-	vertexNormals = new vec3[vertexNormalsCount];
-	normal_positions = new vec3[vertexCount];
+	////calculating vertex normals
+	//vertexNormalsCount = vertices.size();
+	////vertexNormals = new vec3[vertexNormalsCount];
+	//vertexNormal_positions = new vec3[vertexCount];
 
-	if (vertices_normals.empty()) { //if no given vn-s, calculating manualy (according to formula)
-		for (int i = 0; i < faceCount; i++) {
-			vec3 p1 = vertex_positions[3 * i], p2 = vertex_positions[3 * i + 1], p3 = vertex_positions[3 * i + 2];
-			vec3 addition = length(cross(p2 - p1, p3 - p1)) * faceNormals[i];
-			for (int j = 0; j < 3; j++) {
-				vertexNormals[faces[i].v[j] - 1] += addition;
-			}
-		}
-	}
-	else {
-		for (int i = 0; i < faceCount; i++) {
-			for (int j = 0; j < 3; j++) {
-				vertexNormals[faces[i].v[j] - 1] += vertices_normals[faces[i].vn[j] - 1];
-			}
-		}
-	}
+	//if (vertices_normals.empty()) { //if no given vn-s, calculating manualy (according to formula)
+	//	for (int i = 0; i < faceCount; i++) {
+	//		vec3 p1 = vertex_positions[3 * i], p2 = vertex_positions[3 * i + 1], p3 = vertex_positions[3 * i + 2];
+	//		vec3 addition = length(cross(p2 - p1, p3 - p1)) * faceNormals[i];
+	//		for (int j = 0; j < 3; j++) {
+	//			vertexNormal_positions[faces[i].v[j] - 1] += addition;
+	//		}
+	//	}
+	//}
+	//else {
+	//	for (int i = 0; i < faceCount; i++) {
+	//		for (int j = 0; j < 3; j++) {
+	//			vertexNormal_positions[faces[i].v[j] - 1] += vertices_normals[faces[i].vn[j] - 1];
+	//		}
+	//	}
+	//}
 
-	//normalize
-	for (int i = 0; i < vertexNormalsCount; i++) {
-		vertexNormals[i] = normalize(vertexNormals[i]);
-	}
+	////normalize
+	//for (int i = 0; i < vertexNormalsCount; i++) {
+	//	vertexNormal_positions[i] = normalize(vertexNormal_positions[i]);
+	//}
 
-	for (int i = 0, k = 0; i < faces.size(); i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			normal_positions[k++] = vertexNormals[faces[i].v[j] - 1];
-		}
-	}
+	//for (int i = 0, k = 0; i < faces.size(); i++)
+	//{
+	//	for (int j = 0; j < 3; j++)
+	//	{
+	//		vertexNormal_positions[k++] = vertexNormal_positions[faces[i].v[j] - 1];
+	//	}
+	//}
 
 }

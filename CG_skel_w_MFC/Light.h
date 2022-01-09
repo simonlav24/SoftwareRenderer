@@ -7,16 +7,22 @@ enum LightType {point, parallel, ambience};
 
 struct Material
 {
-	bool special;
+	bool texturized;
 	vec3 color;
-	GLfloat shininessCoeficient;
 	vec3 ambientColor;
 	vec3 diffuseColor;
 	vec3 specularColor;
 	vec3 emissiveColor;
+	GLfloat shininessCoeficient;
 	Material() :
-		color(0.8f, 0.8f, 0.8f), ambientColor(0.1f, 0.1f, 0.1f), diffuseColor(0.5f, 0.5f, 0.6f), specularColor(0.8f, 0.8f, 0.8f),
-		emissiveColor(0.0f, 0.0f, 0.0f), shininessCoeficient(6.0f){}
+		color(0.8f, 0.8f, 0.8f),
+		ambientColor(0.1f, 0.1f, 0.1f),
+		diffuseColor(0.4f, 0.5f, 0.5f),
+		specularColor(0.8f, 0.8f, 0.8f),
+		emissiveColor(0.0f, 0.0f, 0.0f),
+		shininessCoeficient(16.0f),
+		texturized(false)
+	{}
 };
 
 class Light {
