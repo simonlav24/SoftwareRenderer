@@ -604,3 +604,8 @@ PrimMeshModel::PrimMeshModel()
 	//}
 
 }
+
+void MeshModel::loadTexture(std::string fileName)
+{
+
+}

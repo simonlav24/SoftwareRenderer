@@ -5,7 +5,6 @@
 #include "GL\freeglut.h" // might not need (?)
 #include "InitShader.h"
 #include <chrono>
-#include "PngLib/PngWrapper.h"
 
 #define viewPort(dims, a) vec3((dims.x / 2.0) * (a.x + 1), (dims.y / 2.0) * (a.y + 1), a.z)
 
@@ -308,7 +307,7 @@ void Scene::rotateZoomCamera(int dx, int dy, int scroll, GLfloat step)
 			float top = cameras[activeCamera]->rectPos.w;
 			float znear = cameras[activeCamera]->zPos.x;
 			float zfar = cameras[activeCamera]->zPos.y;
-			cameras[activeCamera]->Ortho(left * 1.1, right * 1.1, bottom * 1.1, top * 1.1, znear, zfar);
+			cameras[activeCamera]->Ortho(left * 1.1f, right * 1.1f, bottom * 1.1f, top * 1.1f, znear, zfar);
 		}
 		else
 		{
@@ -561,5 +560,5 @@ void Scene::loadTexture(string fileName)
 {
 	if (activeModel == -1)
 		return;
-	static_cast<MeshModel*>(models[activeModel])->mat.textureFilePath = fileName;
+	static_cast<MeshModel*>(models[activeModel])->loadTexture(fileName);
 }

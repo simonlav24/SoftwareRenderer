@@ -11,14 +11,12 @@ class MeshModel : public Model
 {
 protected :
 	MeshModel() {}
-	//vector<vec3> vertices;
 	//useful arrays contaning info about the models
 	vec3* vertex_positions;
-	//vec3* vertexNormals;
 	vec3* vertexNormal_positions;
+	vec2* vertexTexture_positions;
 	vec3* faceNormals;
 	vec3* centerPoints;
-	vec2* vertexTexture_positions;
 	//transform matrix
 	mat4 _model_transform;
 	mat4 _world_transform;
@@ -31,6 +29,8 @@ protected :
 	// 6 vertices for bounding box definition
 	vec3 bounding_box[2];
 	vec4 bounding_BoxFull[24];
+
+	unsigned char* TextureImage;
 	
 public:
 	Material mat;
@@ -52,6 +52,8 @@ public:
 	//void transformWorld(const mat4& transform);
 	vec3 getPosition() override;
 	void setPosition(vec3 pos) override;
+
+	void loadTexture(std::string fileName);
 };
 
 class PrimMeshModel : public MeshModel
