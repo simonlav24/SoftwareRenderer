@@ -236,7 +236,26 @@ void MeshModel::loadFile(string fileName)
 	}
 	delete[] faceNorms;
 
-	
+	// generate buffers and vao
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(4, buffers);
+
+	bindData();
+}
+
+void MeshModel::bindData()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]); // vertex positions
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexCount, vertex_positions, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]); // face normals positions
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexCount, faceNormals, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[2]); // vertex normals positions
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexCount, vertexNormal_positions, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[3]); // vertex normals positions
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * vertexCount, vertexTexture_positions, GL_STATIC_DRAW);
 }
 
 vec3 transformPoint(vec4 point, mat4 m, vec2 rendererDims)
@@ -278,7 +297,16 @@ void MeshModel::draw(Renderer* r)
 	mat4 normalTransform = _normal_world_transform * _normal_transform;
 	mat4 worldModel = _world_transform * _model_transform;
 
-	r->DrawModel(vertex_positions, faceNormals, vertexNormal_positions, vertexTexture_positions, vertexCount, mat, worldModel, normalTransform);
+	vaoData vData;
+	vData.vao = vao;
+	vData.buffers = buffers;
+	vData.vertexPos = vertex_positions;
+	vData.faceNormals = faceNormals;
+	vData.vertexNormals = vertexNormal_positions;
+	vData.vertexTexture = vertexTexture_positions;
+	vData.size = vertexCount;
+
+	r->DrawModel(vData, mat, worldModel, normalTransform);
 
 }
 

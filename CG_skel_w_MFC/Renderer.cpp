@@ -207,7 +207,7 @@ vec3 hsav2rgb(vec3 hsv)
 	return vec3(r, g, b);
 }
 
-void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, vec2* texturePositions, int size, Material mat, mat4 worldModel, mat4 normalMat)
+void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat)
 {
 	vec3 Wirecolor = vec3(1.0, 0.5, 0.7);
 
@@ -254,6 +254,12 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
 	glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
 
+	// make uniform color wireframe
+	glUniform3fv(glGetUniformLocation(currentShading, "wireColor"), 1, Wirecolor);
+
+	// make uniform isTexturized
+	glUniform1i(glGetUniformLocation(currentShading, "isTexturized"), mat.isTexturized);
+
 	// make uniform viewer
 	glUniformLocArray.viewer = glGetUniformLocation(currentShading, "viewerPos");
 	glUniform3fv(glUniformLocArray.viewer, 1, viewerPos[0]);
@@ -291,18 +297,12 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	GLuint lightCountLoc = glGetUniformLocation(currentShading, "lightCount");
 	glUniform1i(lightCountLoc, min(6, sceneLights->size()));
 
-	// make input
-	//GLuint buffers[3];
-	//GLuint vao;
-	//glGenVertexArrays(1, &vao);
-	//glGenBuffers(3, buffers);
-	glBindVertexArray(vao);
-	
+	// bind data
+	glBindVertexArray(vData.vao);
 
 	// bind first buffer: vertices
 	GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexPositions, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[0]);
 	glEnableVertexAttribArray(vPositionLoc);
 	glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
@@ -311,35 +311,25 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	if (shadingSetup == WireFrame)
 	{
 		drawingMode = GL_LINE;
-		GLuint vColorLoc = glGetAttribLocation(currentShading, "vColor");
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec3), Wirecolor, GL_STATIC_DRAW);
-		glVertexAttrib3fv(vColorLoc, Wirecolor);
 	}
 	else if (shadingSetup == Flat || shadingSetup == Gouraud || shadingSetup == Phong)
 	{
 		GLuint vNormalLoc = glGetAttribLocation(currentShading, "vNormal");
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-		if (shadingSetup == Flat)
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, faceNormals, GL_STATIC_DRAW);
-		if (shadingSetup == Gouraud || shadingSetup == Phong)
-			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexNormals, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[shadingSetup == Flat ? 1 : 2]);
 		glEnableVertexAttribArray(vNormalLoc);
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 	// bind textures
 	if (mat.isTexturized)
 	{
-		
 		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
 		// TODO: channel check ?
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureImage.width, mat.textureImage.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureImage.data);
-		//glGenerateMipmap(GL_TEXTURE_2D);
+		//glGenerateMipmap(GL_TEXTURE_2D); - not needed i think
 
 		GLuint vTextureLoc = glGetAttribLocation(currentShading, "vTexture");
 
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * size, texturePositions, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[3]);
 
 		glEnableVertexAttribArray(vTextureLoc);
 		glVertexAttribPointer(vTextureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -353,12 +343,9 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 
 	// draw
 	glEnable(GL_DEPTH_TEST);
-	glBindVertexArray(vao);
 	glPolygonMode(GL_FRONT_AND_BACK, drawingMode);
 	glLineWidth(1);
-	glDrawArrays(GL_TRIANGLES, 0, size);
-	glUseProgram(0);
-	glDeleteVertexArrays(1, &vao);
+	glDrawArrays(GL_TRIANGLES, 0, vData.size);
 }
 
 vec2 Renderer::getDims()

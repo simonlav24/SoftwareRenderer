@@ -30,6 +30,16 @@ struct GLUniformLocArray {
 	GLuint viewer;
 };
 
+struct vaoData {
+	GLuint vao;
+	int size;
+	GLuint* buffers;
+	vec3* vertexPos;
+	vec3* faceNormals;
+	vec3* vertexNormals;
+	vec2* vertexTexture;
+};
+
 class Renderer
 {
 	int m_width, m_height;
@@ -83,6 +93,6 @@ public:
 	void glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
 	void glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
 
-	void DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, vec2* texturePositions, int size, Material mat, mat4 worldModel, mat4 normalMat);
+	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat);
 	void drawOriginAxis();
 };

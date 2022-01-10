@@ -21,6 +21,7 @@ uniform	vec3 matEmissive;
 uniform float matShininess;
 
 uniform vec3 viewerPos;
+uniform bool isTexturized;
 
 // point lights
 uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
@@ -42,8 +43,9 @@ void main()
     totalColor += calculateDiffusionLight(posInCam, vec4(normalInCam, 0.0));
     totalColor += calculateSpecularLight(posInCam, vec4(normalInCam, 0.0));
     totalColor += matEmissive;
-
-    totalColor *= texture(ourTexture, TexCoord).xyz;
+    
+    if(isTexturized)
+        totalColor *= texture(ourTexture, TexCoord).xyz;
 
     fcolor = vec4(totalColor, 1);
 }

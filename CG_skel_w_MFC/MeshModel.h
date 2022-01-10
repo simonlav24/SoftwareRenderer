@@ -30,9 +30,11 @@ protected :
 	vec3 bounding_box[2];
 	vec4 bounding_BoxFull[24];
 
-	unsigned char* TextureImage;
+	GLuint vao;
+	GLuint buffers[4];
 	
 public:
+	
 	Material mat;
 
 	MeshModel(string fileName);
@@ -54,6 +56,8 @@ public:
 	void setPosition(vec3 pos) override;
 
 	void loadTexture(std::string fileName);
+	void bindData();
+	
 };
 
 class PrimMeshModel : public MeshModel
