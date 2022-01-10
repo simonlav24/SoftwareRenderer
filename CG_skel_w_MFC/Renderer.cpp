@@ -44,7 +44,7 @@ void Renderer::Init()
 	// init shaders programs
 	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
-	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/standart_color.glsl");
+	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/flat_gouraud_fs.glsl");
 	glProgramArray.phong = InitShader("Shaders/phong_vs.glsl", "Shaders/phong_fs.glsl");
 }
 
@@ -300,13 +300,13 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	// bind data
 	glBindVertexArray(vData.vao);
 
-	// bind first buffer: vertices
+	// bind vertices buffer
 	GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
 	glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[0]);
 	glEnableVertexAttribArray(vPositionLoc);
 	glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-	// bind second buffer
+	// bind normal buffer
 	GLuint drawingMode = GL_FILL;
 	if (shadingSetup == WireFrame)
 	{
@@ -319,6 +319,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 		glEnableVertexAttribArray(vNormalLoc);
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	}
+
 	// bind textures
 	if (mat.isTexturized)
 	{

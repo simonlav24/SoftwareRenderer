@@ -535,6 +535,7 @@ void MeshModel::loadTexture(std::string fileName)
 		stbi_image_free(mat.textureImage.data);
 	}
 	mat.isTexturized = true;
+	stbi_set_flip_vertically_on_load(true);
 	mat.textureImage.data = stbi_load(fileName.c_str(), &(mat.textureImage.width), &(mat.textureImage.height), &(mat.textureImage.nrChannels), 0);
 	cout << "loaded texture " << fileName << " (" << mat.textureImage.width << ", " << mat.textureImage.height << ", " << mat.textureImage.nrChannels << ")" << endl;
 

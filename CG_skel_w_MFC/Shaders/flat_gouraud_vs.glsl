@@ -13,7 +13,9 @@ in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vCenter;
 in vec2 vTexture;
+out vec2 vTextureCoordinates;
 out vec4 color;
+out vec3 totalColorOut;
 
 uniform mat4 lookAt;
 uniform mat4 proj;
@@ -27,14 +29,13 @@ uniform	vec3 matEmissive;
 uniform float matShininess;
 
 uniform vec3 viewerPos;
+uniform bool isTexturized;
 
 // point lights
 uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
 uniform vec3 lightColors[MAX_NUM_OF_LIGHTS];
 uniform int lightTypes[MAX_NUM_OF_LIGHTS];
 uniform int lightCount;
-
-uniform sampler2D ourTexture;
 
 void main()
 {
@@ -51,9 +52,10 @@ void main()
     totalColor += matEmissive;
 
     //totalColor = texture(ourTexture, vTexture).xyz;
+    totalColorOut = totalColor;
     
-    vec4 colorTemp = vec4(totalColor, 1.0);
-    color = colorTemp;
+    color = vec4(totalColor, 1.0);
+    vTextureCoordinates = vTexture;
 }
 
 vec3 calculateAmbientLight()
