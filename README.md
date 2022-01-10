@@ -48,10 +48,10 @@
   - [ ] normals face
   - [ ] normals vertex
 - [ ] texture
-  - [ ] texture mapping
+  - [x] texture mapping
   - [ ] two canonical texture coordinates
-  - [ ] multiply by texture instead of color
-  - [ ] use pnglib to load textures
+  - [x] multiply by texture instead of color
+  - [x] use stb_image load textures
   - [ ] normal mapping
   - [ ] environment mapping
   - [ ] toon shading

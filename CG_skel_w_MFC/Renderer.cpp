@@ -111,6 +111,7 @@ void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 tr
 	glDrawArrays(lineMode, 0, size);
 	glUseProgram(0);
 	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(2, buffers);
 }
 
 void Renderer::glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode)
@@ -147,6 +148,7 @@ void Renderer::glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform,
 	glDrawArrays(lineMode, 0, size);
 	glUseProgram(0);
 	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(2, buffers);
 }
 
 Renderer::~Renderer(void)

@@ -97,9 +97,10 @@ void modelMenu(int id)
 		{
 			std::string s((LPCTSTR)dlgFile.GetPathName());
 			scene->loadOBJModel((LPCTSTR)dlgFile.GetPathName());
+			scene->tState = world;
+			scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
 		}
-		scene->tState = world;
-		scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
+		
 		break;
 	case MODEL_MOVE:
 		if (dlgxyz.DoModal() == IDOK) {

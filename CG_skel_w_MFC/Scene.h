@@ -13,11 +13,8 @@ enum transformMode { position, scale, rotation };
 enum materialProperty {color, ambient, diffuse, specular, shine, special, emission};
 
 class Model {
-protected:
-	virtual ~Model() {}
-	
-	
 public:
+	virtual ~Model() {}
 	bool showIndicators;
 	void virtual draw(Renderer* r)=0;
 	// multiply by modelTransform matrix

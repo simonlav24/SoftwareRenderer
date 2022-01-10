@@ -91,6 +91,8 @@ MeshModel::MeshModel(string fileName)
 
 MeshModel::~MeshModel(void)
 {
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(2, buffers);
 	if(mat.isTexturized)
 		stbi_image_free(mat.textureImage.data);
 	delete[] vertex_positions;

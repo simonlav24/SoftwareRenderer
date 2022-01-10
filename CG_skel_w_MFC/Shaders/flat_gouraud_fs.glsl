@@ -18,5 +18,7 @@ void main()
 		fcolor = vec4(totalColorOut * texture(ourTexture, vTextureCoordinates).xyz, 1.0f);
 	}
 	else
+	{
 		fcolor = color;
+	}
 }
