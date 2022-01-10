@@ -90,8 +90,8 @@ public:
 	vec2 getDims();
 	ShadingSetup shadingSetup;
 
-	void glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
-	void glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
+	void glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode = GL_LINE_STRIP, bool singleColor = false);
+	//void glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
 
 	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat);
 	void drawOriginAxis();

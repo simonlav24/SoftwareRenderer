@@ -50,7 +50,6 @@ void Renderer::Init()
 
 void Renderer::drawOriginAxis()
 {
-	// can refactor this to hardcoded to save memory
 	vec4 vertices[6];
 	vec4 colors[6];
 
@@ -72,11 +71,11 @@ void Renderer::drawOriginAxis()
 
 	mat4 transform = Proj * lookAt;
 
-	glDrawLinesColors(vertices, colors, 6, transform, GL_LINES);
+	glDrawLines(vertices, colors, 6, transform, GL_LINES);
 	
 }
 
-void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode)
+void Renderer::glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode, bool singleColor)
 {
 	glUseProgram(glProgramArray.line);
 	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
@@ -101,48 +100,20 @@ void Renderer::glDrawLinesColors(vec4* vertices, vec4* colors, int size, mat4 tr
 	glVertexAttribPointer(vPositionLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * size, colors, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(vColorLoc);
-	glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	if (singleColor)
+	{
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec4), colors, GL_STATIC_DRAW);
+		glVertexAttrib3fv(vColorLoc, *colors);
+	}
+	else
+	{
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * size, colors, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(vColorLoc);
+		glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	}
+	
 
 	glDisable(GL_DEPTH_TEST);
-	glBindVertexArray(vao);
-	glLineWidth(1);
-	glDrawArrays(lineMode, 0, size);
-	glUseProgram(0);
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(2, buffers);
-}
-
-void Renderer::glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode)
-{
-	glUseProgram(glProgramArray.line);
-	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
-	// set camera
-	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, transform);
-
-	// draw
-	GLuint buffers[2];
-	GLuint vao;
-
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	glGenBuffers(2, buffers);
-
-	GLuint vPositionLoc = glGetAttribLocation(glProgramArray.line, "vPosition");
-	GLuint vColorLoc = glGetAttribLocation(glProgramArray.line, "vColor");
-
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * size, vertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(vPositionLoc);
-	glVertexAttribPointer(vPositionLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) , color, GL_STATIC_DRAW);
-	glVertexAttrib3fv(vColorLoc, color);
-	//glVertexAttribPointer(vColorLoc, 1, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(vao);
 	glLineWidth(1);
 	glDrawArrays(lineMode, 0, size);
@@ -368,7 +339,7 @@ void Renderer::drawPlusSign(vec4 pos, vec3 color)
 	vertex[i++] = pos - vec4(0.0, 0.0, 0.5, 0.0);
 	vertex[i++] = pos + vec4(0.0, 0.0, 0.5, 0.0);
 
-	glDrawLines(vertex, 6, color, transform, GL_LINES);
+	glDrawLines(vertex, &vec4(color, 1.0f), 6, transform, GL_LINES, true);
 }
 
 void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
@@ -384,7 +355,7 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 	vertex[i++] = pos - vec4(0.0, 0.0, 1.0, 0.0);
 	vertex[i++] = pos + vec4(0.0, 0.0, 1.0, 0.0);
 
-	glDrawLines(vertex, 6, color, transform, GL_LINES);
+	glDrawLines(vertex, &vec4(color, 1.0f), 6, transform, GL_LINES, true);
 
 	if (parallel)
 	{
@@ -392,7 +363,7 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 		i = 0;
 		vertexArrow[i++] = pos;
 		vertexArrow[i++] = pos + direction * 10;
-		glDrawLines(vertexArrow, 2, color, transform, GL_LINES);
+		glDrawLines(vertexArrow, &vec4(color, 1.0f), 2, transform, GL_LINES, true);
 	}
 }
 

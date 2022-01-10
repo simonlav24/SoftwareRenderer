@@ -361,7 +361,7 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 		vertices[k++] = vec4(line[0]);
 		vertices[k++] = vec4(line[1]);
 	}
-
+	
 	line[0] = bounding_box[0]; line[0].y = bounding_box[1].y;
 	line[1] = bounding_box[1]; line[1].x = bounding_box[0].x;
 	vertices[k++] = vec4(line[0]);
@@ -389,7 +389,7 @@ void MeshModel::drawBoundingBox(Renderer* r, mat4& cTransform, mat4& projection)
 
 	mat4 transform = projection * cTransform * _world_transform * _model_transform;
 
-	r->glDrawLines(vertices, 24, vec4(1.0, 1.0, 0.0, 1.0), transform);
+	r->glDrawLines(vertices, &vec4(1.0, 1.0, 0.0, 1.0), 24, transform, 3U, true);
 	return;
 	/*
 	vec2 rendererDims = r->getDims();
