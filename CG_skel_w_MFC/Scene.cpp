@@ -6,6 +6,7 @@
 #include "InitShader.h"
 #include <chrono>
 
+
 #define viewPort(dims, a) vec3((dims.x / 2.0) * (a.x + 1), (dims.y / 2.0) * (a.y + 1), a.z)
 
 using namespace std;

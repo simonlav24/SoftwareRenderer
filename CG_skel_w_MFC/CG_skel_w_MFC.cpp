@@ -355,11 +355,20 @@ int my_main(int argc, char** argv)
 	scene = new Scene(renderer);
 
 	scene->addCamera();
-	scene->currentCamera().LookAt(vec4(8, 8, -8.0, 1), vec4(0, 0, 0, 1), vec4(0, 1, 0, 1));
-	scene->currentCamera().Frustum(-0.5, 0.5, -0.5, 0.5, 1, 200);
+	scene->currentCamera().LookAt(vec4(8.0f, 8.0f, -8.0f, 1.0f), vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	scene->currentCamera().Frustum(-0.5f, 0.5f, -0.5f, 0.5f, 1.0f, 200.0f);
 
-	scene->addLight();
-	scene->moveLight(vec3(4.0, 4.0, 8.0));
+	//scene->addLight();
+	//scene->moveLight(vec3(4.0f, 4.0f, 8.0f));
+
+	scene->addLight(parallel);
+	scene->moveLight(vec3(0.0f, 8.0f, 0.0f));
+	scene->changeLightColor(vec3(1.0f, 1.0f, 0.8f));
+
+	scene->addLight(parallel);
+	scene->moveLight(vec3(0.0f, -8.0f, 0.0f));
+	scene->changeLightDirection(vec3(0.0f, 1.0f, 0.0f));
+	scene->changeLightColor(vec3(0.8f, 0.8f, 1.0f));
 
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks

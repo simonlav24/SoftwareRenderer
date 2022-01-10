@@ -5,6 +5,15 @@
 
 enum LightType {point, parallel, ambience};
 
+struct texture
+{
+	int width;
+	int height;
+	int nrChannels;
+	GLuint textureId;
+	unsigned char* data;
+};
+
 struct Material
 {
 	vec3 color;
@@ -14,8 +23,8 @@ struct Material
 	vec3 emissiveColor;
 	GLfloat shininessCoeficient;
 
-	bool texturized;
-	std::string textureFilePath;
+	bool isTexturized;
+	texture textureImage;
 
 	Material() :
 		color(0.8f, 0.8f, 0.8f),
@@ -24,7 +33,7 @@ struct Material
 		specularColor(0.8f, 0.8f, 0.8f),
 		emissiveColor(0.0f, 0.0f, 0.0f),
 		shininessCoeficient(16.0f),
-		texturized(false)
+		isTexturized(false)
 	{}
 };
 

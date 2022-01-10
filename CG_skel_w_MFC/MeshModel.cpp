@@ -5,6 +5,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 using namespace std;
 //todo: understand better
@@ -89,13 +91,13 @@ MeshModel::MeshModel(string fileName)
 
 MeshModel::~MeshModel(void)
 {
+	if(mat.isTexturized)
+		stbi_image_free(mat.textureImage.data);
 	delete[] vertex_positions;
 	delete[] vertexNormal_positions;
 	delete[] vertexTexture_positions;
-
 	delete[] faceNormals;
 	delete[] centerPoints;
-	
 }
 
 void MeshModel::loadFile(string fileName)
@@ -198,7 +200,7 @@ void MeshModel::loadFile(string fileName)
 			if (!vertices_normals_fromInput.empty())
 			{
 				vertexNormal_positions[k] = normalize(vertexNormalsForCalc[faces[i].v[j] - 1]);
-				if (printDebug) cout << "vn: " << vertexNormal_positions[k] << " ";
+				if (printDebug && false) cout << "vn: " << vertexNormal_positions[k] << " ";
 			}
 				
 			if (!vertices_texture_fromInput.empty())
@@ -213,8 +215,8 @@ void MeshModel::loadFile(string fileName)
 	delete[] vertexNormalsForCalc;
 
 	// define texturized
-	if (!vertices_texture_fromInput.empty())
-		mat.texturized = true;
+	//if (!vertices_texture_fromInput.empty())
+	//	mat.texturized = true;
 
 	//calculate center points & normals
 	vec3* faceNorms = new vec3[faceCount];
@@ -276,7 +278,7 @@ void MeshModel::draw(Renderer* r)
 	mat4 normalTransform = _normal_world_transform * _normal_transform;
 	mat4 worldModel = _world_transform * _model_transform;
 
-	r->DrawModel(vertex_positions, faceNormals, vertexNormal_positions, vertexCount, mat, worldModel, normalTransform);
+	r->DrawModel(vertex_positions, faceNormals, vertexNormal_positions, vertexTexture_positions, vertexCount, mat, worldModel, normalTransform);
 
 }
 
@@ -495,117 +497,19 @@ void MeshModel::transform(const mat4& transform, bool world, bool scalling)
 PrimMeshModel::PrimMeshModel()
 {
 	return;
-	//vertex_positions = new vec3[36];
-	//vector<FaceIdcs> faces;
-	//vector<vec3> vertices_normals;
-	//vector<vec3> vertices;
-
-	//vec3 offset(0.5, 0.5, 0.5);
-	//vertices.push_back(vec3(0.0, 0.0, 0.0) - offset);
-	//vertices.push_back(vec3(0.0, 0.0, 1.0) - offset);
-	//vertices.push_back(vec3(0.0, 1.0, 0.0) - offset);
-	//vertices.push_back(vec3(0.0, 1.0, 1.0) - offset);
-	//vertices.push_back(vec3(1.0, 0.0, 0.0) - offset);
-	//vertices.push_back(vec3(1.0, 0.0, 1.0) - offset);
-	//vertices.push_back(vec3(1.0, 1.0, 0.0) - offset);
-	//vertices.push_back(vec3(1.0, 1.0, 1.0) - offset);
-
-	//faces.push_back(FaceIdcs(1, 7, 5));
-	//faces.push_back(FaceIdcs(1, 3, 7));
-	//faces.push_back(FaceIdcs(1, 4, 3));
-	//faces.push_back(FaceIdcs(1, 2, 4));
-	//faces.push_back(FaceIdcs(3, 8, 7));
-	//faces.push_back(FaceIdcs(3, 4, 8));
-	//faces.push_back(FaceIdcs(5, 7, 8));
-	//faces.push_back(FaceIdcs(5, 8, 6));
-	//faces.push_back(FaceIdcs(1, 5, 6));
-	//faces.push_back(FaceIdcs(1, 6, 2));
-	//faces.push_back(FaceIdcs(2, 6, 8));
-	//faces.push_back(FaceIdcs(2, 8, 4));
-
-	//bounding_box[0] = vec3(0, 0, 0);
-	//bounding_box[1] = vec3(0, 0, 0);
-
-	//// calculate bounding box
-	//calculateBoundingBox(vertices);
-
-	//// scale models to match general size (if its way too big or way too small):
-	//if (2.0 > bounding_box[0].y || bounding_box[0].y > 6.0)
-	//{
-	//	GLfloat scaleFactor = 4.0 / bounding_box[0].y;
-	//	bounding_box[0] = vec3();
-	//	bounding_box[1] = vec3();
-	//	for (int i = 0; i < vertices.size(); i++)
-	//	{
-	//		vertices[i] = vertices[i] * scaleFactor;
-	//	}
-	//}
-
-	//// calculate bounding box yet again
-	//calculateBoundingBox(vertices);
-
-	////init vertex_positions array
-	//vertexCount = faces.size() * 3;
-	//vertex_positions = new vec3[vertexCount];
-	//// iterate through all stored faces and create triangles
-	//for (int i = 0, k = 0; i < faces.size(); i++)
-	//{
-	//	for (int j = 0; j < 3; j++)
-	//	{
-	//		vertex_positions[k++] = vertices[faces[i].v[j] - 1];
-	//	}
-	//}
-
-	////calculate center points & normals
-	//faceCount = faces.size();
-	//faceNormals = new vec3[faceCount];
-	//centerPoints = new vec3[faceCount];
-	//for (int i = 0, k = 0; i < vertexCount; i += 3)
-	//{
-	//	vec3 p1 = vertex_positions[i], p2 = vertex_positions[i + 1], p3 = vertex_positions[i + 2];
-	//	faceNormals[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
-	//	centerPoints[k] = (p1 + p2 + p3) / 3.0;//center point according to formula
-	//	k++;
-	//}
-
-	////calculating vertex normals
-	//vertexNormalsCount = vertices.size();
-	////vertexNormals = new vec3[vertexNormalsCount];
-	//vertexNormal_positions = new vec3[vertexCount];
-
-	//if (vertices_normals.empty()) { //if no given vn-s, calculating manualy (according to formula)
-	//	for (int i = 0; i < faceCount; i++) {
-	//		vec3 p1 = vertex_positions[3 * i], p2 = vertex_positions[3 * i + 1], p3 = vertex_positions[3 * i + 2];
-	//		vec3 addition = length(cross(p2 - p1, p3 - p1)) * faceNormals[i];
-	//		for (int j = 0; j < 3; j++) {
-	//			vertexNormal_positions[faces[i].v[j] - 1] += addition;
-	//		}
-	//	}
-	//}
-	//else {
-	//	for (int i = 0; i < faceCount; i++) {
-	//		for (int j = 0; j < 3; j++) {
-	//			vertexNormal_positions[faces[i].v[j] - 1] += vertices_normals[faces[i].vn[j] - 1];
-	//		}
-	//	}
-	//}
-
-	////normalize
-	//for (int i = 0; i < vertexNormalsCount; i++) {
-	//	vertexNormal_positions[i] = normalize(vertexNormal_positions[i]);
-	//}
-
-	//for (int i = 0, k = 0; i < faces.size(); i++)
-	//{
-	//	for (int j = 0; j < 3; j++)
-	//	{
-	//		vertexNormal_positions[k++] = vertexNormal_positions[faces[i].v[j] - 1];
-	//	}
-	//}
 
 }
 
 void MeshModel::loadTexture(std::string fileName)
 {
+	if (mat.isTexturized)
+	{
+		stbi_image_free(mat.textureImage.data);
+	}
+	mat.isTexturized = true;
+	mat.textureImage.data = stbi_load(fileName.c_str(), &(mat.textureImage.width), &(mat.textureImage.height), &(mat.textureImage.nrChannels), 0);
+	cout << "loaded texture " << fileName << " (" << mat.textureImage.width << ", " << mat.textureImage.height << ", " << mat.textureImage.nrChannels << ")" << endl;
+
+	glGenTextures(1, &mat.textureImage.textureId);
 
 }

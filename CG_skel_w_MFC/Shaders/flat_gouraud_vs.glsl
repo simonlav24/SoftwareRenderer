@@ -12,6 +12,7 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal);
 in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vCenter;
+in vec2 vTexture;
 out vec4 color;
 
 uniform mat4 lookAt;
@@ -33,6 +34,8 @@ uniform vec3 lightColors[MAX_NUM_OF_LIGHTS];
 uniform int lightTypes[MAX_NUM_OF_LIGHTS];
 uniform int lightCount;
 
+uniform sampler2D ourTexture;
+
 void main()
 {
     vec4 pos = vec4(vPosition, 1.0);
@@ -46,7 +49,8 @@ void main()
     totalColor += calculateDiffusionLight(positionInCam, NormalInCam);
     totalColor += calculateSpecularLight(positionInCam, NormalInCam);
     totalColor += matEmissive;
-    
+
+    //totalColor = texture(ourTexture, vTexture).xyz;
     
     vec4 colorTemp = vec4(totalColor, 1.0);
     color = colorTemp;

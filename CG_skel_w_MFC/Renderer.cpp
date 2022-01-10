@@ -22,14 +22,14 @@
 
 Renderer::Renderer() :m_width(DEFAULT_DIMS), m_height(DEFAULT_DIMS)
 {
-	InitOpenGLRendering();
-	CreateBuffers(DEFAULT_DIMS, DEFAULT_DIMS);
+	//InitOpenGLRendering();
+	//CreateBuffers(DEFAULT_DIMS, DEFAULT_DIMS);
 	Init();
 }
 Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 {
-	InitOpenGLRendering();
-	CreateBuffers(width,height);
+	//InitOpenGLRendering();
+	//CreateBuffers(width,height);
 	Init();
 }
 
@@ -39,7 +39,7 @@ void Renderer::Init()
 
 	shadingSetup = Phong;
 	
-	glViewport(0, 0, m_width, m_height);
+	//glViewport(0, 0, m_width, m_height);
 	
 	// init shaders programs
 	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/standart_color.glsl");
@@ -207,7 +207,7 @@ vec3 hsav2rgb(vec3 hsv)
 	return vec3(r, g, b);
 }
 
-void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, int size, Material mat, mat4 worldModel, mat4 normalMat)
+void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexNormals, vec2* texturePositions, int size, Material mat, mat4 worldModel, mat4 normalMat)
 {
 	vec3 Wirecolor = vec3(1.0, 0.5, 0.7);
 
@@ -292,11 +292,12 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 	glUniform1i(lightCountLoc, min(6, sceneLights->size()));
 
 	// make input
-	GLuint buffers[2];
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
+	//GLuint buffers[3];
+	//GLuint vao;
+	//glGenVertexArrays(1, &vao);
+	//glGenBuffers(3, buffers);
 	glBindVertexArray(vao);
-	glGenBuffers(2, buffers);
+	
 
 	// bind first buffer: vertices
 	GLuint vPositionLoc = glGetAttribLocation(currentShading, "vPosition");
@@ -325,6 +326,29 @@ void Renderer::DrawModel(vec3* vertexPositions, vec3* faceNormals, vec3* vertexN
 			glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * size, vertexNormals, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(vNormalLoc);
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	}
+	// bind textures
+	if (mat.isTexturized)
+	{
+		
+		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
+		// TODO: channel check ?
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureImage.width, mat.textureImage.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureImage.data);
+		//glGenerateMipmap(GL_TEXTURE_2D);
+
+		GLuint vTextureLoc = glGetAttribLocation(currentShading, "vTexture");
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * size, texturePositions, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(vTextureLoc);
+		glVertexAttribPointer(vTextureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
 	// draw

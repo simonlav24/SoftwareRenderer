@@ -17,9 +17,11 @@ uniform vec3 viewerPos;
 
 in vec3 vPosition;
 in vec3 vNormal;
+in vec2 vTexture;
 
 out vec4 posInCam;
 out vec3 normalInCam;
+out vec2 TexCoord;
 
 void main()
 {
@@ -27,6 +29,7 @@ void main()
 
     gl_Position = proj * positionInCam;
     posInCam = positionInCam;
+    TexCoord = vTexture;
 
     normalInCam = normalize(lookAt * normalMat * vec4(vNormal, 0.0)).xyz;
 }

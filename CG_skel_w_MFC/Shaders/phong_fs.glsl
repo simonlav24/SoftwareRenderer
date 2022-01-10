@@ -30,8 +30,10 @@ uniform int lightCount;
 
 in vec4 posInCam;
 in vec3 normalInCam;
+in vec2 TexCoord;
 
 out vec4 fcolor;
+uniform sampler2D ourTexture;
 
 void main()
 {
@@ -40,6 +42,8 @@ void main()
     totalColor += calculateDiffusionLight(posInCam, vec4(normalInCam, 0.0));
     totalColor += calculateSpecularLight(posInCam, vec4(normalInCam, 0.0));
     totalColor += matEmissive;
+
+    totalColor *= texture(ourTexture, TexCoord).xyz;
 
     fcolor = vec4(totalColor, 1);
 }
