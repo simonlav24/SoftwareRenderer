@@ -294,6 +294,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	}
 
 	// bind textures
+	glUniform1i(glGetUniformLocation(currentShading, "textureMapping"), mat.textureMapping);
 	if (mat.isTexturized)
 	{
 		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);

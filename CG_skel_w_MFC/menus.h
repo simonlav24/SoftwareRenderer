@@ -58,6 +58,9 @@
 #define MATERIAL_SPECIAL 5
 #define MATERIAL_CHANGE_EMISSION 6
 #define MATERIAL_LOAD_TEXTURE 7
+#define MATERIAL_MAP_UV 8
+#define MATERIAL_MAP_CYLINDER 9
+#define MATERIAL_MAP_PLANAR 10
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -74,6 +77,7 @@ float userInput()
 	cin >> input;
 	return input;
 }
+
 
 void modelMenu(int id)
 {
@@ -306,6 +310,22 @@ void cameraMenu(int id)
 		break;
 	case CAMERA_RESET:
 		scene->resetCameraPosition();
+		break;
+	}
+}
+
+void mappingMenu(int id)
+{
+	switch (id)
+	{
+	case MATERIAL_MAP_UV:
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_UV;
+		break;
+	case MATERIAL_MAP_PLANAR:
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_PLANAR;
+		break;
+	case MATERIAL_MAP_CYLINDER:
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_CYLINDER;
 		break;
 	}
 }

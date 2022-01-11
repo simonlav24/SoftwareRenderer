@@ -7,6 +7,7 @@
 #include <sstream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <math.h>
 
 using namespace std;
 //todo: understand better

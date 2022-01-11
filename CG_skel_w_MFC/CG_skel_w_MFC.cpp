@@ -306,15 +306,22 @@ void initMenu()
 	glutAddMenuEntry("Phong Shading", SHADING_PHONG);
 	glutAddMenuEntry("Gouraud Shading", SHADING_GOURAUD);
 
+	int menuMapping = glutCreateMenu(mappingMenu);
+	glutAddMenuEntry("UV Mapping", MATERIAL_MAP_UV);
+	glutAddMenuEntry("Planar Mapping", MATERIAL_MAP_PLANAR);
+	glutAddMenuEntry("Cylindrical Mapping", MATERIAL_MAP_CYLINDER);
+
 	int menuMaterial = glutCreateMenu(materialMenu);
 	glutAddMenuEntry("Edit Color", MATERIAL_CHANGE_COLOR);
 	glutAddMenuEntry("Load Texture", MATERIAL_LOAD_TEXTURE);
+	glutAddSubMenu("Texture Mapping", menuMapping);
 	glutAddMenuEntry("Edit Ambient Color", MATERIAL_CHANGE_AMBIENT);
 	glutAddMenuEntry("Edit Diffuse Color", MATERIAL_CHANGE_DIFFUSE);
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);
 	glutAddMenuEntry("Edit Emissive Color", MATERIAL_CHANGE_EMISSION);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
-	glutAddMenuEntry("Toggle Special Material", MATERIAL_SPECIAL);
+	
+	
 
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);

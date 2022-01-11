@@ -1,7 +1,10 @@
 #pragma once
 #include "vec.h"
 #include "mat.h"
-//#include "Renderer.h"
+
+#define MAPPING_UV 0
+#define MAPPING_CYLINDER 1
+#define MAPPING_PLANAR 2
 
 enum LightType {point, parallel, ambience};
 
@@ -25,6 +28,7 @@ struct Material
 
 	bool isTexturized;
 	texture textureImage;
+	int textureMapping;
 
 	Material() :
 		color(0.8f, 0.8f, 0.8f),
@@ -33,7 +37,8 @@ struct Material
 		specularColor(0.8f, 0.8f, 0.8f),
 		emissiveColor(0.0f, 0.0f, 0.0f),
 		shininessCoeficient(16.0f),
-		isTexturized(false)
+		isTexturized(false),
+		textureMapping(MAPPING_UV)
 	{}
 };
 

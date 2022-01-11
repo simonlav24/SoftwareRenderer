@@ -5,6 +5,13 @@
 #define LIGHT_PARALLEL 1
 #define LIGHT_AMBIENT 2
 
+#define PI 3.1415926535897932384626433832795
+#define TWOPI 6.2831853071795864769252867665590
+
+#define MAPPING_UV 0
+#define MAPPING_CYLINDER 1
+#define MAPPING_PLANNAR 2
+
 vec3 calculateAmbientLight();
 vec3 calculateDiffusionLight(in vec4 position, in vec4 normal);
 vec3 calculateSpecularLight(in vec4 position, in vec4 normal);
@@ -29,7 +36,7 @@ uniform	vec3 matEmissive;
 uniform float matShininess;
 
 uniform vec3 viewerPos;
-uniform bool isTexturized;
+uniform int textureMapping;
 
 // point lights
 uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
@@ -55,7 +62,23 @@ void main()
     totalColorOut = totalColor;
     
     color = vec4(totalColor, 1.0);
-    vTextureCoordinates = vTexture;
+
+    // texture mapping
+    if(textureMapping == MAPPING_UV)
+    {
+        vTextureCoordinates = vTexture;
+    }
+    else if(textureMapping == MAPPING_CYLINDER)
+    {
+        float theta = (atan(vPosition.z, vPosition.x) + PI) / TWOPI;
+        float h = vPosition.y;
+        vTextureCoordinates = vec2(theta, h);
+    }
+    else if(textureMapping == MAPPING_PLANNAR)
+    {
+        vTextureCoordinates = vec2(vPosition.x, vPosition.y);
+    }
+
 }
 
 vec3 calculateAmbientLight()
