@@ -308,8 +308,9 @@ void initMenu()
 
 	int menuMapping = glutCreateMenu(mappingMenu);
 	glutAddMenuEntry("UV Mapping", MATERIAL_MAP_UV);
-	glutAddMenuEntry("Planar Mapping", MATERIAL_MAP_PLANAR);
 	glutAddMenuEntry("Cylindrical Mapping", MATERIAL_MAP_CYLINDER);
+	glutAddMenuEntry("Spherical Mapping", MATERIAL_MAP_SPHERE);
+	glutAddMenuEntry("Planar Mapping", MATERIAL_MAP_PLANAR);
 
 	int menuMaterial = glutCreateMenu(materialMenu);
 	glutAddMenuEntry("Edit Color", MATERIAL_CHANGE_COLOR);
@@ -321,8 +322,6 @@ void initMenu()
 	glutAddMenuEntry("Edit Emissive Color", MATERIAL_CHANGE_EMISSION);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
 	
-	
-
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
 	glutAddSubMenu("Material", menuMaterial);

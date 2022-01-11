@@ -61,6 +61,7 @@
 #define MATERIAL_MAP_UV 8
 #define MATERIAL_MAP_CYLINDER 9
 #define MATERIAL_MAP_PLANAR 10
+#define MATERIAL_MAP_SPHERE 11
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -326,6 +327,9 @@ void mappingMenu(int id)
 		break;
 	case MATERIAL_MAP_CYLINDER:
 		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_CYLINDER;
+		break;
+	case MATERIAL_MAP_SPHERE:
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_SPHERE;
 		break;
 	}
 }

@@ -10,7 +10,8 @@
 
 #define MAPPING_UV 0
 #define MAPPING_CYLINDER 1
-#define MAPPING_PLANNAR 2
+#define MAPPING_SPHERE 2
+#define MAPPING_PLANAR 3
 
 vec3 calculateAmbientLight();
 vec3 calculateDiffusionLight(in vec4 position, in vec4 normal);
@@ -74,9 +75,16 @@ void main()
         float h = vPosition.y;
         vTextureCoordinates = vec2(theta, h);
     }
-    else if(textureMapping == MAPPING_PLANNAR)
+    else if(textureMapping == MAPPING_PLANAR)
     {
         vTextureCoordinates = vec2(vPosition.x, vPosition.y);
+    }
+    else if(textureMapping == MAPPING_SPHERE)
+    {
+        float r = sqrt(vPosition.x * vPosition.x + vPosition.y * vPosition.y + vPosition.z * vPosition.z);
+        float theta = (atan(vPosition.z, vPosition.x) + PI) / TWOPI;
+        float phi = 1.0f - acos(vPosition.y / r) / PI;
+        vTextureCoordinates = vec2(theta, phi);
     }
 
 }

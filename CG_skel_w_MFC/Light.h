@@ -4,7 +4,8 @@
 
 #define MAPPING_UV 0
 #define MAPPING_CYLINDER 1
-#define MAPPING_PLANAR 2
+#define MAPPING_SPHERE 2
+#define MAPPING_PLANAR 3
 
 enum LightType {point, parallel, ambience};
 
@@ -29,6 +30,7 @@ struct Material
 	bool isTexturized;
 	texture textureImage;
 	int textureMapping;
+
 
 	Material() :
 		color(0.8f, 0.8f, 0.8f),

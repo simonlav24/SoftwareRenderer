@@ -6,7 +6,8 @@
 
 #define MAPPING_UV 0
 #define MAPPING_CYLINDER 1
-#define MAPPING_PLANNAR 2
+#define MAPPING_SPHERE 2
+#define MAPPING_PLANAR 3
 
 uniform mat4 lookAt;
 uniform mat4 proj;
@@ -49,10 +50,16 @@ void main()
         float h = vPosition.y;
         TexCoord = vec2(theta, h);
     }
-    else if(textureMapping == MAPPING_PLANNAR)
+    else if(textureMapping == MAPPING_PLANAR)
     {
         TexCoord = vec2(vPosition.x, vPosition.y);
     }
-
+    else if(textureMapping == MAPPING_SPHERE)
+    {
+        float r = sqrt(vPosition.x * vPosition.x + vPosition.y * vPosition.y + vPosition.z * vPosition.z);
+        float theta = (atan(vPosition.z, vPosition.x) + PI) / TWOPI;
+        float phi = 1.0f - acos(vPosition.y / r) / PI;
+        TexCoord = vec2(theta, phi);
+    }
     
 }
