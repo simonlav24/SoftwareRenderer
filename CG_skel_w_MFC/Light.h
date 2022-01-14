@@ -7,6 +7,10 @@
 #define MAPPING_SPHERE 2
 #define MAPPING_PLANAR 3
 
+#define LOAD_TEX_COLOR 0
+#define LOAD_TEX_ENVIRONMENT 1
+#define LOAD_TEX_NORMAL 2
+
 enum LightType {point, parallel, ambience};
 
 struct texture
@@ -29,8 +33,11 @@ struct Material
 
 	bool isTexturized;
 	texture textureImage;
-	int textureMapping;
+	int textureMappingMode;
 
+	bool isEnvironment;
+	texture textureEnvironment;
+	float environmentStrength;
 
 	Material() :
 		color(0.8f, 0.8f, 0.8f),
@@ -40,7 +47,9 @@ struct Material
 		emissiveColor(0.0f, 0.0f, 0.0f),
 		shininessCoeficient(16.0f),
 		isTexturized(false),
-		textureMapping(MAPPING_UV)
+		textureMappingMode(MAPPING_UV),
+		isEnvironment(false),
+		environmentStrength(0.5f)
 	{}
 };
 

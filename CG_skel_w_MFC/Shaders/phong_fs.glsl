@@ -5,9 +5,13 @@
 #define LIGHT_PARALLEL 1
 #define LIGHT_AMBIENT 2
 
+#define PI 3.1415926535897932384626433832795
+#define TWOPI 6.2831853071795864769252867665590
+
 vec3 calculateAmbientLight();
 vec3 calculateDiffusionLight(in vec4 position, in vec4 normal);
 vec3 calculateSpecularLight(in vec4 position, in vec4 normal);
+vec3 calculateEnvironment(in vec4 position, in vec4 normal);
 
 uniform mat4 lookAt;
 uniform mat4 proj;
@@ -22,6 +26,8 @@ uniform float matShininess;
 
 uniform vec3 viewerPos;
 uniform bool isTexturized;
+uniform bool isEnvironment;
+uniform float environmentStrength;
 
 // point lights
 uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
@@ -34,7 +40,8 @@ in vec3 normalInCam;
 in vec2 TexCoord;
 
 out vec4 fcolor;
-uniform sampler2D ourTexture;
+uniform sampler2D materialTexture;
+uniform sampler2D environmentTexture;
 
 void main()
 {
@@ -45,7 +52,14 @@ void main()
     totalColor += matEmissive;
     
     if(isTexturized)
-        totalColor *= texture(ourTexture, TexCoord).xyz;
+        totalColor *= texture(materialTexture, TexCoord).xyz;
+
+    if(isEnvironment)
+    {
+        vec3 enviroColor = calculateEnvironment(posInCam, vec4(normalInCam, 0.0));
+        totalColor = environmentStrength * enviroColor + (1.0f - environmentStrength) * totalColor;
+    }
+        
 
     fcolor = vec4(totalColor, 1);
 }
@@ -88,7 +102,6 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal)
 {
     vec3 pos = position.xyz;
     vec3 normalInCam = normal.xyz;
-    vec3 reflected;
 
     vec3 totalSpecularLight = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < lightCount; i++)
@@ -113,4 +126,18 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal)
         totalSpecularLight += specularAmount;
     }
     return totalSpecularLight;
+}
+
+vec3 calculateEnvironment(in vec4 position, in vec4 normal)
+{
+    vec3 dirToViewer = (lookAt * vec4(viewerPos, 1.0)).xyz - position.xyz;
+    vec3 reflected = dirToViewer - 2.0 * dot(dirToViewer, normalInCam) * normalInCam;
+    reflected = -normalize(reflected); 
+
+    float r = sqrt(reflected.x * reflected.x + reflected.y * reflected.y + reflected.z * reflected.z);
+    float theta = (atan(reflected.z, reflected.x) + PI) / TWOPI;
+    float phi = 1.0f - acos(reflected.y / r) / PI;
+    vec2 sphericCoord = vec2(theta, phi);
+
+    return texture(environmentTexture, sphericCoord).xyz;
 }

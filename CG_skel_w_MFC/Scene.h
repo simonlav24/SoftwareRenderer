@@ -115,5 +115,5 @@ public:
 	bool showIndicators;
 	bool showGrid;
 
-	void loadTexture(string fileName);
+	void loadTexture(string fileName, int texMode);
 };

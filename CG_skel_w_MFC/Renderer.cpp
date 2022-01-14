@@ -39,8 +39,6 @@ void Renderer::Init()
 
 	shadingSetup = Phong;
 	
-	//glViewport(0, 0, m_width, m_height);
-	
 	// init shaders programs
 	glProgramArray.line = InitShader("Shaders/line_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
@@ -217,21 +215,19 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 
 	// make uniform material
 	glUniformLocArray.ambient = glGetUniformLocation(currentShading, "matAmbient");
-	glUniformLocArray.diffuse = glGetUniformLocation(currentShading, "matDiffuse");
-	glUniformLocArray.specular = glGetUniformLocation(currentShading, "matSpecular");
-	glUniformLocArray.emissive = glGetUniformLocation(currentShading, "matEmissive");
-	glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
 	glUniform3fv(glUniformLocArray.ambient, 1, mat.ambientColor);
+	glUniformLocArray.diffuse = glGetUniformLocation(currentShading, "matDiffuse");
 	glUniform3fv(glUniformLocArray.diffuse, 1, mat.diffuseColor);
+	glUniformLocArray.specular = glGetUniformLocation(currentShading, "matSpecular");
 	glUniform3fv(glUniformLocArray.specular, 1, mat.specularColor);
+	glUniformLocArray.emissive = glGetUniformLocation(currentShading, "matEmissive");
 	glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
+	glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
 	glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
+	//glUniform1i(glGetUniformLocation(currentShading, "matEnvironment"), mat.environment);
 
 	// make uniform color wireframe
 	glUniform3fv(glGetUniformLocation(currentShading, "wireColor"), 1, Wirecolor);
-
-	// make uniform isTexturized
-	glUniform1i(glGetUniformLocation(currentShading, "isTexturized"), mat.isTexturized);
 
 	// make uniform viewer
 	glUniformLocArray.viewer = glGetUniformLocation(currentShading, "viewerPos");
@@ -293,27 +289,32 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 		glVertexAttribPointer(vNormalLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 
+	// make uniform isTexturized
+	glUniform1i(glGetUniformLocation(currentShading, "isTexturized"), mat.isTexturized);
+	glUniform1i(glGetUniformLocation(currentShading, "isEnvironment"), mat.isEnvironment);
+	glUniform1f(glGetUniformLocation(currentShading, "environmentStrength"), mat.environmentStrength);
+
 	// bind textures
-	glUniform1i(glGetUniformLocation(currentShading, "textureMapping"), mat.textureMapping);
+	glUniform1i(glGetUniformLocation(currentShading, "textureMapping"), mat.textureMappingMode);
 	if (mat.isTexturized)
 	{
+		GLuint texLoc = glGetUniformLocation(currentShading, "materialTexture");
+		glUniform1i(texLoc, 0);
+
+		GLuint envLoc = glGetUniformLocation(currentShading, "environmentTexture");
+		glUniform1i(envLoc, 1);
+
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
-		// TODO: channel check ?
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureImage.width, mat.textureImage.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureImage.data);
-		//glGenerateMipmap(GL_TEXTURE_2D); - not needed i think
 
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, mat.textureEnvironment.textureId);
+		
+		// bind texture coordinates
 		GLuint vTextureLoc = glGetAttribLocation(currentShading, "vTexture");
-
 		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[3]);
-
 		glEnableVertexAttribArray(vTextureLoc);
 		glVertexAttribPointer(vTextureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
 	// draw

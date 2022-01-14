@@ -58,10 +58,8 @@
 #define MATERIAL_SPECIAL 5
 #define MATERIAL_CHANGE_EMISSION 6
 #define MATERIAL_LOAD_TEXTURE 7
-#define MATERIAL_MAP_UV 8
-#define MATERIAL_MAP_CYLINDER 9
-#define MATERIAL_MAP_PLANAR 10
-#define MATERIAL_MAP_SPHERE 11
+#define MATERIAL_LOAD_TEXTURE_ENVIRONMENT 12
+#define MATERIAL_CHANGE_ENVIRONMENT_STRENGTH 13
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -317,21 +315,7 @@ void cameraMenu(int id)
 
 void mappingMenu(int id)
 {
-	switch (id)
-	{
-	case MATERIAL_MAP_UV:
-		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_UV;
-		break;
-	case MATERIAL_MAP_PLANAR:
-		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_PLANAR;
-		break;
-	case MATERIAL_MAP_CYLINDER:
-		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_CYLINDER;
-		break;
-	case MATERIAL_MAP_SPHERE:
-		static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMapping = MAPPING_SPHERE;
-		break;
-	}
+	static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.textureMappingMode = id;
 }
 
 void materialMenu(int id)
@@ -353,7 +337,14 @@ void materialMenu(int id)
 		if (dlgFile.DoModal() == IDOK)
 		{
 			std::string s((LPCTSTR)dlgFile.GetPathName());
-			scene->loadTexture((LPCTSTR)dlgFile.GetPathName());
+			scene->loadTexture((LPCTSTR)dlgFile.GetPathName(), LOAD_TEX_COLOR);
+		}
+		break;
+	case MATERIAL_LOAD_TEXTURE_ENVIRONMENT:
+		if (dlgFile.DoModal() == IDOK)
+		{
+			std::string s((LPCTSTR)dlgFile.GetPathName());
+			scene->loadTexture((LPCTSTR)dlgFile.GetPathName(), LOAD_TEX_ENVIRONMENT);
 		}
 		break;
 	case MATERIAL_CHANGE_AMBIENT:
@@ -396,8 +387,14 @@ void materialMenu(int id)
 			scene->changeMaterial(emission, v);
 		}
 		break;
-	case MATERIAL_SPECIAL:
-		scene->changeMaterial(materialProperty::special, vec3());
+	case MATERIAL_CHANGE_ENVIRONMENT_STRENGTH:
+		fdlg.mTitle = "Pick Value";
+		fdlg.insertData(scene->getMaterial(shine).x);
+		if (fdlg.DoModal() == IDOK) {
+			float v = fdlg.Getfloat();
+			static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.environmentStrength = v;
+		}
+		
 		break;
 	}
 }

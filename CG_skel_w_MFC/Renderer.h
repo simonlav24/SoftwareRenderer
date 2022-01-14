@@ -61,6 +61,8 @@ class Renderer
 	//GLuint glprogramsArray[10];
 	//GLuint glUniformLocArray[10]; 
 
+	texture environmentTexture;
+
 public:
 	Renderer();
 	Renderer(int width, int height);
@@ -95,4 +97,6 @@ public:
 
 	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat);
 	void drawOriginAxis();
+
+	void loadEnvironmentTexture(char* fileName);
 };

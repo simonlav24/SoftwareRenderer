@@ -533,9 +533,9 @@ vec3 Scene::getMaterial(materialProperty prop)
 	return result;
 }
 
-void Scene::loadTexture(string fileName)
+void Scene::loadTexture(string fileName, int texMode)
 {
 	if (activeModel == -1)
 		return;
-	static_cast<MeshModel*>(models[activeModel])->loadTexture(fileName);
+	static_cast<MeshModel*>(models[activeModel])->loadTexture(fileName, texMode);
 }

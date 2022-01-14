@@ -55,7 +55,7 @@ public:
 	vec3 getPosition() override;
 	void setPosition(vec3 pos) override;
 
-	void loadTexture(std::string fileName);
+	void loadTexture(std::string fileName, int texMode);
 	void bindData();
 	
 };

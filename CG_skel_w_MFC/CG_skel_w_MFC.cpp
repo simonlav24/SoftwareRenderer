@@ -307,13 +307,13 @@ void initMenu()
 	glutAddMenuEntry("Gouraud Shading", SHADING_GOURAUD);
 
 	int menuMapping = glutCreateMenu(mappingMenu);
-	glutAddMenuEntry("UV Mapping", MATERIAL_MAP_UV);
-	glutAddMenuEntry("Cylindrical Mapping", MATERIAL_MAP_CYLINDER);
-	glutAddMenuEntry("Spherical Mapping", MATERIAL_MAP_SPHERE);
-	glutAddMenuEntry("Planar Mapping", MATERIAL_MAP_PLANAR);
+	glutAddMenuEntry("UV Mapping", MAPPING_UV);
+	glutAddMenuEntry("Cylindrical Mapping", MAPPING_CYLINDER);
+	glutAddMenuEntry("Spherical Mapping", MAPPING_SPHERE);
+	glutAddMenuEntry("Planar Mapping", MAPPING_PLANAR);
 
 	int menuMaterial = glutCreateMenu(materialMenu);
-	glutAddMenuEntry("Edit Color", MATERIAL_CHANGE_COLOR);
+	//glutAddMenuEntry("Edit Color", MATERIAL_CHANGE_COLOR);
 	glutAddMenuEntry("Load Texture", MATERIAL_LOAD_TEXTURE);
 	glutAddSubMenu("Texture Mapping", menuMapping);
 	glutAddMenuEntry("Edit Ambient Color", MATERIAL_CHANGE_AMBIENT);
@@ -321,6 +321,9 @@ void initMenu()
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);
 	glutAddMenuEntry("Edit Emissive Color", MATERIAL_CHANGE_EMISSION);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
+	glutAddMenuEntry("Load Environment Texture", MATERIAL_LOAD_TEXTURE_ENVIRONMENT);
+	glutAddMenuEntry("Edit Environment Strength", MATERIAL_CHANGE_ENVIRONMENT_STRENGTH);
+
 	
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);

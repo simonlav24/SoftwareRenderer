@@ -531,17 +531,53 @@ PrimMeshModel::PrimMeshModel()
 
 }
 
-void MeshModel::loadTexture(std::string fileName)
+void MeshModel::loadTexture(std::string fileName, int texMode)
 {
-	if (mat.isTexturized)
+	texture* newTex;
+	switch (texMode)
 	{
-		stbi_image_free(mat.textureImage.data);
+	case LOAD_TEX_COLOR:
+		if (mat.isTexturized)
+		{
+			stbi_image_free(mat.textureImage.data);
+		}
+		mat.isTexturized = true;
+		stbi_set_flip_vertically_on_load(true);
+		mat.textureImage.data = stbi_load(fileName.c_str(), &(mat.textureImage.width), &(mat.textureImage.height), &(mat.textureImage.nrChannels), 0);
+		std::cout << "loaded texture " << fileName << " (" << mat.textureImage.width << ", " << mat.textureImage.height << ", " << mat.textureImage.nrChannels << ")" << endl;
+
+		// generate texture for opengl
+		glGenTextures(1, &mat.textureImage.textureId);
+
+		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
+		// TODO: channel check ?
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureImage.width, mat.textureImage.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureImage.data);
+		newTex = &mat.textureImage;
+		break;
+
+	case LOAD_TEX_ENVIRONMENT:
+		if (mat.isEnvironment)
+		{
+			stbi_image_free(mat.textureEnvironment.data);
+		}
+		mat.isEnvironment = true;
+		stbi_set_flip_vertically_on_load(true);
+		mat.textureEnvironment.data = stbi_load(fileName.c_str(), &(mat.textureEnvironment.width), &(mat.textureEnvironment.height), &(mat.textureEnvironment.nrChannels), 0);
+		std::cout << "loaded texture " << fileName << " (" << mat.textureEnvironment.width << ", " << mat.textureEnvironment.height << ", " << mat.textureEnvironment.nrChannels << ")" << endl;
+
+		// generate texture for opengl
+		glGenTextures(1, &mat.textureEnvironment.textureId);
+
+		glBindTexture(GL_TEXTURE_2D, mat.textureEnvironment.textureId);
+		// TODO: channel check ?
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureEnvironment.width, mat.textureEnvironment.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureEnvironment.data);
+		newTex = &mat.textureEnvironment;
+		break;
 	}
-	mat.isTexturized = true;
-	stbi_set_flip_vertically_on_load(true);
-	mat.textureImage.data = stbi_load(fileName.c_str(), &(mat.textureImage.width), &(mat.textureImage.height), &(mat.textureImage.nrChannels), 0);
-	cout << "loaded texture " << fileName << " (" << mat.textureImage.width << ", " << mat.textureImage.height << ", " << mat.textureImage.nrChannels << ")" << endl;
 
-	glGenTextures(1, &mat.textureImage.textureId);
-
+	glBindTexture(GL_TEXTURE_2D, newTex->textureId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
