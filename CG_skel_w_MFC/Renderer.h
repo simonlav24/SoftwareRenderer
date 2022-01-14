@@ -96,6 +96,7 @@ public:
 
 	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat);
 	void drawOriginAxis();
+	void drawGrid();
 
 	void loadEnvironmentTexture(char* fileName);
 };

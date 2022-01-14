@@ -31,8 +31,8 @@ void Scene::draw()
 
 
 
-	/*if(showGrid)
-		drawGrid();*/
+	if(showGrid)
+		m_renderer->drawGrid();
 
 	// for all models: draw yourself
 	for (int i = 0; i < models.size(); i++)

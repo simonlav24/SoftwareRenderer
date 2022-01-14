@@ -72,8 +72,29 @@ void Renderer::drawOriginAxis()
 
 	mat4 transform = Proj * lookAt;
 
+	glDisable(GL_DEPTH_TEST);
 	glDrawLines(vertices, colors, 6, transform, GL_LINES);
 	
+}
+
+void Renderer::drawGrid()
+{
+	vec4 vertices[84];
+	int k = 0;
+	vec4 color[1] = { vec4(0.5f, 0.5f, 0.5f, 1.0f) };
+	for (int j = 0; j < 21; j++)
+	{
+		vertices[k++] = vec4(-10.0f + (float)j, 0.0f, -10.0f, 1.0f);
+		vertices[k++] = vec4(-10.0f + (float)j, 0.0f, 10.0f, 1.0f);
+	}
+	for (int j = 0; j < 21; j++)
+	{
+		vertices[k++] = vec4(-10.0f, 0.0f, -10.0f + (float)j, 1.0f);
+		vertices[k++] = vec4(10.0f, 0.0f, -10.0f + (float)j, 1.0f);
+	}
+	glEnable(GL_DEPTH_TEST);
+	glDrawLines(vertices, color, 84, Proj * lookAt, GL_LINES, true);
+
 }
 
 void Renderer::glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode, bool singleColor)
@@ -113,8 +134,8 @@ void Renderer::glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transfor
 		glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 	
-
-	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
 	glBindVertexArray(vao);
 	glLineWidth(1);
 	glDrawArrays(lineMode, 0, size);
@@ -143,6 +164,48 @@ void Renderer::clearBuffer()
 {
 	glClearColor(0.2, 0.2, 0.2, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	glUseProgram(glProgramArray.line);
+	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
+
+	mat4 identity;
+	vec4 first(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4 second(0.5f, 0.5f, 0.5f, 1.0f);
+	vec4 vertices[] = { vec4(-1.0f, -1.0f, 0.0f, 1.0f), vec4(-1.0f, 1.0f, 0.0f, 1.0f), vec4(1.0f, -1.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 0.0f, 1.0f) };
+	vec4 colors[] = { first, second, first, second };
+
+	// set transform
+	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, identity);
+
+	// draw
+	GLuint buffers[2];
+	GLuint vao;
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(2, buffers);
+
+	GLuint vPositionLoc = glGetAttribLocation(glProgramArray.line, "vPosition");
+	GLuint vColorLoc = glGetAttribLocation(glProgramArray.line, "vColor");
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * 4, vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vPositionLoc);
+	glVertexAttribPointer(vPositionLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec4) * 4, colors, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(vColorLoc);
+	glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDisable(GL_DEPTH_TEST);
+	glBindVertexArray(vao);
+	glLineWidth(1);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glUseProgram(0);
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(2, buffers);
 }
 
 // hsv, h:0->360, s:0->1, v:0->1 to rgb: 0->1 
