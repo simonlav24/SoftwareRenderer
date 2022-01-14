@@ -250,6 +250,8 @@ void timer(int id)
 {
 	glutPostRedisplay();
 	glutTimerFunc(1000 / framesPerSecond, timer, 0);
+	
+	renderer->timeStep = fmod(renderer->timeStep + 0.1f, 6.2831853071f);
 }
 
 // menu initialization function
@@ -313,7 +315,6 @@ void initMenu()
 	glutAddMenuEntry("Planar Mapping", MAPPING_PLANAR);
 
 	int menuMaterial = glutCreateMenu(materialMenu);
-	//glutAddMenuEntry("Edit Color", MATERIAL_CHANGE_COLOR);
 	glutAddMenuEntry("Load Texture", MATERIAL_LOAD_TEXTURE);
 	glutAddSubMenu("Texture Mapping", menuMapping);
 	glutAddMenuEntry("Edit Ambient Color", MATERIAL_CHANGE_AMBIENT);
@@ -324,6 +325,8 @@ void initMenu()
 	glutAddMenuEntry("Load Environment Texture", MATERIAL_LOAD_TEXTURE_ENVIRONMENT);
 	glutAddMenuEntry("Edit Environment Strength", MATERIAL_CHANGE_ENVIRONMENT_STRENGTH);
 
+	int menuAnimate = glutCreateMenu(animateMenu);
+	glutAddMenuEntry("Toggle Vertex Animation", ANIMATE_TOGGLE_VERTEX);
 	
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
@@ -334,6 +337,7 @@ void initMenu()
 	glutAddSubMenu("Light", menuLight);
 	glutAddSubMenu("Shading mode", menuShadingSetup);
 	glutAddSubMenu("Show", menuShow);
+	glutAddSubMenu("Animate", menuAnimate);
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }

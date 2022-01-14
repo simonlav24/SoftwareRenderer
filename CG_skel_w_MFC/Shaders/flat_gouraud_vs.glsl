@@ -38,6 +38,9 @@ uniform vec3 matSpecular;
 uniform	vec3 matEmissive;
 uniform float matShininess;
 
+uniform float timeStep;
+uniform bool isVertexAnimating;
+
 uniform vec3 viewerPos;
 uniform int textureMapping;
 uniform bool isEnvironment;
@@ -50,7 +53,10 @@ uniform int lightCount;
 
 void main()
 {
-    vec4 pos = vec4(vPosition, 1.0);
+    vec3 addition = vec3(0.0f, 0.0f, 0.0f);
+    if(isVertexAnimating)
+        addition = vec3(0.0f, cos(vPosition.x + timeStep), sin(vPosition.x + timeStep));
+    vec4 pos = vec4(vPosition + addition, 1.0);
     vec4 positionInCam = lookAt * worldModelMat * pos;
     vec4 NormalInCam = lookAt * normalMat * vec4(vNormal, 0.0);
     

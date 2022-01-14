@@ -49,11 +49,11 @@
   - [ ] normals vertex
 - [ ] texture
   - [x] texture mapping
-  - [ ] two canonical texture coordinates
+  - [x] two canonical texture coordinates
   - [x] multiply by texture instead of color
   - [x] use stb_image load textures
   - [ ] normal mapping
-  - [ ] environment mapping
+  - [x] environment mapping
   - [ ] toon shading
   - [ ] color animation
   - [ ] vertex animation

@@ -23,6 +23,9 @@ uniform float matShininess;
 uniform vec3 viewerPos;
 uniform int textureMapping;
 
+uniform float timeStep;
+uniform bool isVertexAnimating;
+
 in vec3 vPosition;
 in vec3 vNormal;
 in vec2 vTexture;
@@ -33,8 +36,15 @@ out vec2 TexCoord;
 
 void main()
 {
-    vec4 positionInCam = lookAt * worldModelMat * vec4(vPosition, 1.0);
+    vec3 addition = vec3(0.0f, 0.0f, 0.0f);
 
+    // calc vertex animation
+    if (isVertexAnimating)
+        addition = vec3(0.0f, cos(vPosition.x + timeStep), sin(vPosition.x + timeStep));
+    vec3 position = vPosition + addition;
+
+    
+    vec4 positionInCam = lookAt * worldModelMat * vec4(position, 1.0);
     gl_Position = proj * positionInCam;
     posInCam = positionInCam;
     normalInCam = normalize(lookAt * normalMat * vec4(vNormal, 0.0)).xyz;

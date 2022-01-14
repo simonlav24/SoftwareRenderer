@@ -44,6 +44,9 @@ void Renderer::Init()
 	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/flat_gouraud_fs.glsl");
 	glProgramArray.phong = InitShader("Shaders/phong_vs.glsl", "Shaders/phong_fs.glsl");
+
+	timeStep = 0.0f;
+	isVertexAnimating = false;
 }
 
 void Renderer::drawOriginAxis()
@@ -224,7 +227,11 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
 	glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
 	glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
-	//glUniform1i(glGetUniformLocation(currentShading, "matEnvironment"), mat.environment);
+	glUniform1f(glGetUniformLocation(currentShading, "environmentStrength"), mat.environmentStrength);
+
+	// bind animation
+	glUniform1f(glGetUniformLocation(currentShading, "timeStep"), timeStep);
+	glUniform1i(glGetUniformLocation(currentShading, "isVertexAnimating"), isVertexAnimating);
 
 	// make uniform color wireframe
 	glUniform3fv(glGetUniformLocation(currentShading, "wireColor"), 1, Wirecolor);
@@ -292,7 +299,6 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	// make uniform isTexturized
 	glUniform1i(glGetUniformLocation(currentShading, "isTexturized"), mat.isTexturized);
 	glUniform1i(glGetUniformLocation(currentShading, "isEnvironment"), mat.isEnvironment);
-	glUniform1f(glGetUniformLocation(currentShading, "environmentStrength"), mat.environmentStrength);
 
 	// bind textures
 	glUniform1i(glGetUniformLocation(currentShading, "textureMapping"), mat.textureMappingMode);

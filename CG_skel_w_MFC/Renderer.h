@@ -58,10 +58,6 @@ class Renderer
 	/// hw3 stuff
 	GLProgramsArray glProgramArray;
 	GLUniformLocArray glUniformLocArray;
-	//GLuint glprogramsArray[10];
-	//GLuint glUniformLocArray[10]; 
-
-	texture environmentTexture;
 
 public:
 	Renderer();
@@ -73,6 +69,10 @@ public:
 	mat4 Proj;
 	mat4 ProjCam;
 	bool orthogonal;
+
+	bool isVertexAnimating;
+	float timeStep;
+
 
 	void SwapBuffers();
 	void DestroyBuffers();
