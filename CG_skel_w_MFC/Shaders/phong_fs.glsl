@@ -61,7 +61,7 @@ void main()
     }
         
 
-    fcolor = vec4(totalColor, 1);
+    fcolor = vec4(totalColor, 1.0f);
 }
 
 vec3 calculateAmbientLight()

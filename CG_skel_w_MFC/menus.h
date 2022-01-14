@@ -389,7 +389,7 @@ void materialMenu(int id)
 		break;
 	case MATERIAL_CHANGE_ENVIRONMENT_STRENGTH:
 		fdlg.mTitle = "Pick Value";
-		fdlg.insertData(scene->getMaterial(shine).x);
+		fdlg.insertData(static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.environmentStrength);
 		if (fdlg.DoModal() == IDOK) {
 			float v = fdlg.Getfloat();
 			static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.environmentStrength = v;
