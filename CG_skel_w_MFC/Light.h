@@ -13,7 +13,7 @@
 
 enum LightType {point, parallel, ambience};
 
-struct texture
+struct Texture
 {
 	int width;
 	int height;
@@ -32,12 +32,16 @@ struct Material
 	GLfloat shininessCoeficient;
 
 	bool isTexturized;
-	texture textureImage;
+	Texture textureImage;
 	int textureMappingMode;
 
 	bool isEnvironment;
-	texture textureEnvironment;
+	Texture textureEnvironment;
 	float environmentStrength;
+
+	bool isNormalMap;
+	Texture textureNormal;
+	float normalStrength;
 
 	Material() :
 		color(0.8f, 0.8f, 0.8f),

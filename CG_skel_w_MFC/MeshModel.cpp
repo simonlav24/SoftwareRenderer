@@ -191,6 +191,8 @@ void MeshModel::loadFile(string fileName)
 		}
 	}
 
+
+
 	// iterate through all stored faces and create triangles
 	bool printDebug = false;
 	for (int i = 0, k = 0; i < faces.size(); i++)
@@ -217,17 +219,13 @@ void MeshModel::loadFile(string fileName)
 	}
 	delete[] vertexNormalsForCalc;
 
-	// define texturized
-	//if (!vertices_texture_fromInput.empty())
-	//	mat.texturized = true;
-
 	//calculate center points & normals
-	vec3* faceNorms = new vec3[faceCount];
+	vec3* faceNormsForCalc = new vec3[faceCount];
 	centerPoints = new vec3[faceCount];
 	for (int i = 0, k = 0; i < vertexCount; i += 3)
 	{
 		vec3 p1 = vertex_positions[i], p2 = vertex_positions[i + 1], p3 = vertex_positions[i + 2];
-		faceNorms[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
+		faceNormsForCalc[k] = normalize(cross(p2 - p1, p3 - p1)); //normal according to formula
 		centerPoints[k] = (p1 + p2 + p3) / 3.0;//center point according to formula
 		k++;
 	}
@@ -235,9 +233,40 @@ void MeshModel::loadFile(string fileName)
 	faceNormals = new vec3[vertexCount];
 	for (int i = 0; i < vertexCount; i++)
 	{
-		faceNormals[i] = faceNorms[i / 3];
+		faceNormals[i] = faceNormsForCalc[i / 3];
 	}
-	delete[] faceNorms;
+	
+
+	// calculate vertex normals if none
+	if (vertices_normals_fromInput.empty())
+	{
+		vec3* vertexNormalsForCalc = new vec3[vertices_fromInput.size()];
+		for (int i = 0; i < vertices_fromInput.size(); i++)
+		{
+			vertexNormalsForCalc[i] = vec3(0.0f, 0.0f, 0.0f);
+		}
+
+
+		for (int i = 0; i < faceCount; i++)
+		{
+			vertexNormalsForCalc[faces[i].v[0] - 1] += faceNormsForCalc[i];
+			vertexNormalsForCalc[faces[i].v[1] - 1] += faceNormsForCalc[i];
+			vertexNormalsForCalc[faces[i].v[2] - 1] += faceNormsForCalc[i];
+		}
+
+		for (int i = 0, k = 0; i < faceCount; i++)
+		{
+			vertexNormal_positions[k++] = normalize(vertexNormalsForCalc[faces[i].v[0] - 1]);
+			vertexNormal_positions[k++] = normalize(vertexNormalsForCalc[faces[i].v[1] - 1]);
+			vertexNormal_positions[k++] = normalize(vertexNormalsForCalc[faces[i].v[2] - 1]);
+			if (false) cout << "point: " << vertices_fromInput[faces[i].v[0] - 1] << " normal: " << normalize(vertexNormalsForCalc[faces[i].v[0] - 1]) << endl;
+		}
+		delete[] vertexNormalsForCalc;
+	}
+	delete[] faceNormsForCalc;
+	
+
+
 
 	// generate buffers and vao
 	glGenVertexArrays(1, &vao);
@@ -533,7 +562,7 @@ PrimMeshModel::PrimMeshModel()
 
 void MeshModel::loadTexture(std::string fileName, int texMode)
 {
-	texture* newTex;
+	Texture* newTex;
 	switch (texMode)
 	{
 	case LOAD_TEX_COLOR:

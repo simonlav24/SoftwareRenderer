@@ -56,7 +56,7 @@
   - [x] environment mapping
   - [ ] toon shading
   - [ ] color animation
-  - [ ] vertex animation
+  - [x] vertex animation
   - [ ] turbulance function
 
 ### for lighting shader I need:

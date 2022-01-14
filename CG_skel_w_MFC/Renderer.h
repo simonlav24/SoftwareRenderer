@@ -73,7 +73,6 @@ public:
 	bool isVertexAnimating;
 	float timeStep;
 
-
 	void SwapBuffers();
 	void DestroyBuffers();
 	
