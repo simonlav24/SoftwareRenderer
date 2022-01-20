@@ -11,6 +11,7 @@
 vec3 calculateAmbientLight();
 vec3 calculateDiffusionLight(in vec4 position, in vec4 normal);
 vec3 calculateSpecularLight(in vec4 position, in vec4 normal);
+
 vec3 calculateEnvironment(in vec4 position, in vec4 normal);
 
 uniform mat4 lookAt;
@@ -27,6 +28,7 @@ uniform float matShininess;
 uniform vec3 viewerPos;
 uniform bool isTexturized;
 uniform bool isEnvironment;
+uniform bool isNormalMap;
 uniform float environmentStrength;
 
 // point lights
@@ -39,27 +41,43 @@ in vec4 posInCam;
 in vec3 normalInCam;
 in vec2 TexCoord;
 
+in vec3 vPosition;
+in vec3 vNormal;
+
+in mat3 TBN;
+
 out vec4 fcolor;
 uniform sampler2D materialTexture;
 uniform sampler2D environmentTexture;
+uniform sampler2D normalMapTexture;
 
 void main()
 {
+    vec3 normal = normalInCam;
+
+    if(isNormalMap)
+	{
+        normal = TBN * normalize(texture2D(normalMapTexture, TexCoord).xyz * 2.0f - 1.0f);
+	}
+
 	vec3 totalColor = vec3(0.0, 0.0, 0.0);
     totalColor += calculateAmbientLight();
-    totalColor += calculateDiffusionLight(posInCam, vec4(normalInCam, 0.0));
-    totalColor += calculateSpecularLight(posInCam, vec4(normalInCam, 0.0));
+    totalColor += calculateDiffusionLight(posInCam, vec4(normal, 0.0));
+    totalColor += calculateSpecularLight(posInCam, vec4(normal, 0.0));
     totalColor += matEmissive;
     
     if(isTexturized)
+    {
         totalColor *= texture(materialTexture, TexCoord).xyz;
+    }
 
     if(isEnvironment)
     {
-        vec3 enviroColor = calculateEnvironment(posInCam, vec4(normalInCam, 0.0));
+        vec3 enviroColor = calculateEnvironment(posInCam, vec4(normal, 1.0f));
         totalColor = environmentStrength * enviroColor + (1.0f - environmentStrength) * totalColor;
     }
         
+
 
     fcolor = vec4(totalColor, 1.0f);
 }
@@ -130,9 +148,11 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal)
 
 vec3 calculateEnvironment(in vec4 position, in vec4 normal)
 {
-    vec3 dirToViewer = (lookAt * vec4(viewerPos, 1.0)).xyz - position.xyz;
-    vec3 reflected = dirToViewer - 2.0 * dot(dirToViewer, normalInCam) * normalInCam;
+    vec3 dirToViewer = normalize((lookAt * vec4(viewerPos, 1.0)).xyz - position.xyz);
+    vec3 reflected = reflect(dirToViewer, normal.xyz);
     reflected = -normalize(reflected); 
+
+    reflected = (transpose(lookAt) * vec4(reflected, 1.0)).xyz;
 
     float r = sqrt(reflected.x * reflected.x + reflected.y * reflected.y + reflected.z * reflected.z);
     float theta = (atan(reflected.z, reflected.x) + PI) / TWOPI;

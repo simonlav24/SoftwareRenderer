@@ -322,8 +322,10 @@ void initMenu()
 	glutAddMenuEntry("Edit Specular Color", MATERIAL_CHANGE_SPECULAR);
 	glutAddMenuEntry("Edit Emissive Color", MATERIAL_CHANGE_EMISSION);
 	glutAddMenuEntry("Edit Shininess Coeficient", MATERIAL_CHANGE_SHININESS);
-	glutAddMenuEntry("Load Environment Texture", MATERIAL_LOAD_TEXTURE_ENVIRONMENT);
+	glutAddMenuEntry("Load Environment Map", MATERIAL_LOAD_TEXTURE_ENVIRONMENT);
 	glutAddMenuEntry("Edit Environment Strength", MATERIAL_CHANGE_ENVIRONMENT_STRENGTH);
+	glutAddMenuEntry("Load Normal Map", MATERIAL_LOAD_NORMAL_MAP);
+	glutAddMenuEntry("Edit Normal Strength", MATERIAL_CHANGE_NORMAL_STRENGTH);
 
 	int menuAnimate = glutCreateMenu(animateMenu);
 	glutAddMenuEntry("Toggle Vertex Animation", ANIMATE_TOGGLE_VERTEX);

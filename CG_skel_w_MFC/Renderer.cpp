@@ -175,10 +175,10 @@ void Renderer::clearBuffer()
 	vec4 vertices[] = { vec4(-1.0f, -1.0f, 0.0f, 1.0f), vec4(-1.0f, 1.0f, 0.0f, 1.0f), vec4(1.0f, -1.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 0.0f, 1.0f) };
 	vec4 colors[] = { first, second, first, second };
 
-	// set transform
+	// set transform identity for background
 	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, identity);
 
-	// draw
+	// draw background
 	GLuint buffers[2];
 	GLuint vao;
 
@@ -291,6 +291,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
 	glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
 	glUniform1f(glGetUniformLocation(currentShading, "environmentStrength"), mat.environmentStrength);
+	glUniform1f(glGetUniformLocation(currentShading, "normalMapStrength"), mat.normalStrength);
 
 	// bind animation
 	glUniform1f(glGetUniformLocation(currentShading, "timeStep"), timeStep);
@@ -362,6 +363,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	// make uniform isTexturized
 	glUniform1i(glGetUniformLocation(currentShading, "isTexturized"), mat.isTexturized);
 	glUniform1i(glGetUniformLocation(currentShading, "isEnvironment"), mat.isEnvironment);
+	glUniform1i(glGetUniformLocation(currentShading, "isNormalMap"), mat.isNormalMap);
 
 	// bind textures
 	glUniform1i(glGetUniformLocation(currentShading, "textureMapping"), mat.textureMappingMode);
@@ -373,17 +375,35 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 		GLuint envLoc = glGetUniformLocation(currentShading, "environmentTexture");
 		glUniform1i(envLoc, 1);
 
+		GLuint norLoc = glGetUniformLocation(currentShading, "normalMapTexture");
+		glUniform1i(norLoc, 2);
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, mat.textureEnvironment.textureId);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, mat.textureNormal.textureId);
 		
 		// bind texture coordinates
 		GLuint vTextureLoc = glGetAttribLocation(currentShading, "vTexture");
 		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[3]);
 		glEnableVertexAttribArray(vTextureLoc);
 		glVertexAttribPointer(vTextureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+		// bind tangents
+		GLuint vTangentLoc = glGetAttribLocation(currentShading, "vTangent");
+		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[4]);
+		glEnableVertexAttribArray(vTangentLoc);
+		glVertexAttribPointer(vTangentLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		// bind bitangents
+		GLuint vBitangentLoc = glGetAttribLocation(currentShading, "vBitangent");
+		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[5]);
+		glEnableVertexAttribArray(vBitangentLoc);
+		glVertexAttribPointer(vBitangentLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	}
 
 	// draw
@@ -440,7 +460,7 @@ void Renderer::drawLightIndicator(vec4 pos, vec3 color, vec4 direction)
 
 void Renderer::reshape(int width, int height)
 {
-	DestroyBuffers();
+	//DestroyBuffers();
 	CreateBuffers(width, height);
 }
 

@@ -53,7 +53,9 @@ struct Material
 		isTexturized(false),
 		textureMappingMode(MAPPING_UV),
 		isEnvironment(false),
-		environmentStrength(0.5f)
+		environmentStrength(0.5f),
+		isNormalMap(false),
+		normalStrength(1.0f)
 	{}
 };
 

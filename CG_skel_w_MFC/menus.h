@@ -60,6 +60,8 @@
 #define MATERIAL_LOAD_TEXTURE 7
 #define MATERIAL_LOAD_TEXTURE_ENVIRONMENT 12
 #define MATERIAL_CHANGE_ENVIRONMENT_STRENGTH 13
+#define MATERIAL_LOAD_NORMAL_MAP 14
+#define MATERIAL_CHANGE_NORMAL_STRENGTH 15
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -350,6 +352,13 @@ void materialMenu(int id)
 		{
 			std::string s((LPCTSTR)dlgFile.GetPathName());
 			scene->loadTexture((LPCTSTR)dlgFile.GetPathName(), LOAD_TEX_ENVIRONMENT);
+		}
+		break;
+	case MATERIAL_LOAD_NORMAL_MAP:
+		if (dlgFile.DoModal() == IDOK)
+		{
+			std::string s((LPCTSTR)dlgFile.GetPathName());
+			scene->loadTexture((LPCTSTR)dlgFile.GetPathName(), LOAD_TEX_NORMAL);
 		}
 		break;
 	case MATERIAL_CHANGE_AMBIENT:

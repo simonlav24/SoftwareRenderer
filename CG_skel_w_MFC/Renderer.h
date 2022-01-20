@@ -38,6 +38,8 @@ struct vaoData {
 	vec3* faceNormals;
 	vec3* vertexNormals;
 	vec2* vertexTexture;
+	vec3* tangents;
+	vec3* bitangents;
 };
 
 class Renderer

@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 
+// buffer size: vertices, facenormals, vertexNormals, vertexTexture, tangents, bitangents
+#define BUFFER_SIZE 6
+
 using namespace std;
 
 class MeshModel : public Model
@@ -17,6 +20,9 @@ protected :
 	vec2* vertexTexture_positions;
 	vec3* faceNormals;
 	vec3* centerPoints;
+
+	vec3* tangents_positions;
+	vec3* bitangents_positions;
 	//transform matrix
 	mat4 _model_transform;
 	mat4 _world_transform;
@@ -31,7 +37,7 @@ protected :
 	vec4 bounding_BoxFull[24];
 
 	GLuint vao;
-	GLuint buffers[4];
+	GLuint buffers[BUFFER_SIZE];
 	
 public:
 	
@@ -58,6 +64,8 @@ public:
 	void loadTexture(std::string fileName, int texMode);
 	void bindData();
 	
+	void calculateTangents();
+
 };
 
 class PrimMeshModel : public MeshModel

@@ -22,6 +22,7 @@ uniform float matShininess;
 
 uniform vec3 viewerPos;
 uniform int textureMapping;
+uniform bool isNormalMap;
 
 uniform float timeStep;
 uniform bool isVertexAnimating;
@@ -29,10 +30,13 @@ uniform bool isVertexAnimating;
 in vec3 vPosition;
 in vec3 vNormal;
 in vec2 vTexture;
+in vec3 vTangent;
+in vec3 vBitangent;
 
 out vec4 posInCam;
 out vec3 normalInCam;
 out vec2 TexCoord;
+out mat3 TBN;
 
 void main()
 {
@@ -72,4 +76,12 @@ void main()
         TexCoord = vec2(theta, phi);
     }
     
+    if(isNormalMap)
+	{
+        vec3 tanInCam = normalize(lookAt * normalMat * vec4(vTangent, 0)).xyz;
+	    vec3 bitanInCam = normalize(lookAt * normalMat * vec4(vBitangent, 0) ).xyz;
+        tanInCam = normalize(tanInCam - normalInCam * dot(normalInCam, tanInCam));
+		bitanInCam = normalize(bitanInCam - normalInCam * dot(normalInCam, bitanInCam));
+		TBN =  mat3( tanInCam, bitanInCam, normalInCam);
+	}
 }

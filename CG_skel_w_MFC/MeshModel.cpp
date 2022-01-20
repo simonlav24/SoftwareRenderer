@@ -93,7 +93,7 @@ MeshModel::MeshModel(string fileName)
 MeshModel::~MeshModel(void)
 {
 	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(2, buffers);
+	glDeleteBuffers(BUFFER_SIZE, buffers);
 	if(mat.isTexturized)
 		stbi_image_free(mat.textureImage.data);
 	delete[] vertex_positions;
@@ -101,6 +101,10 @@ MeshModel::~MeshModel(void)
 	delete[] vertexTexture_positions;
 	delete[] faceNormals;
 	delete[] centerPoints;
+
+	delete[] tangents_positions;
+	delete[] bitangents_positions;
+	
 }
 
 void MeshModel::loadFile(string fileName)
@@ -265,12 +269,14 @@ void MeshModel::loadFile(string fileName)
 	}
 	delete[] faceNormsForCalc;
 	
+	tangents_positions = new vec3[vertexCount];
+	bitangents_positions = new vec3[vertexCount];
 
-
+	calculateTangents();
 
 	// generate buffers and vao
 	glGenVertexArrays(1, &vao);
-	glGenBuffers(4, buffers);
+	glGenBuffers(BUFFER_SIZE, buffers);
 
 	bindData();
 }
@@ -288,6 +294,12 @@ void MeshModel::bindData()
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[3]); // vertex normals positions
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * vertexCount, vertexTexture_positions, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[4]); // tangents positions
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexCount, tangents_positions, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[5]); // bitangents positions
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertexCount, bitangents_positions, GL_STATIC_DRAW);
 }
 
 vec3 transformPoint(vec4 point, mat4 m, vec2 rendererDims)
@@ -336,10 +348,11 @@ void MeshModel::draw(Renderer* r)
 	vData.faceNormals = faceNormals;
 	vData.vertexNormals = vertexNormal_positions;
 	vData.vertexTexture = vertexTexture_positions;
+	vData.tangents = tangents_positions;
+	vData.bitangents = bitangents_positions;
 	vData.size = vertexCount;
 
 	r->DrawModel(vData, mat, worldModel, normalTransform);
-
 }
 
 vec3 MeshModel::getPosition()
@@ -557,56 +570,99 @@ void MeshModel::transform(const mat4& transform, bool world, bool scalling)
 PrimMeshModel::PrimMeshModel()
 {
 	return;
-
 }
 
 void MeshModel::loadTexture(std::string fileName, int texMode)
 {
 	Texture* newTex;
+	bool* isTextured;
 	switch (texMode)
 	{
 	case LOAD_TEX_COLOR:
-		if (mat.isTexturized)
-		{
-			stbi_image_free(mat.textureImage.data);
-		}
-		mat.isTexturized = true;
-		stbi_set_flip_vertically_on_load(true);
-		mat.textureImage.data = stbi_load(fileName.c_str(), &(mat.textureImage.width), &(mat.textureImage.height), &(mat.textureImage.nrChannels), 0);
-		std::cout << "loaded texture " << fileName << " (" << mat.textureImage.width << ", " << mat.textureImage.height << ", " << mat.textureImage.nrChannels << ")" << endl;
-
-		// generate texture for opengl
-		glGenTextures(1, &mat.textureImage.textureId);
-
-		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
-		// TODO: channel check ?
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureImage.width, mat.textureImage.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureImage.data);
 		newTex = &mat.textureImage;
+		isTextured = &mat.isTexturized;
 		break;
-
 	case LOAD_TEX_ENVIRONMENT:
-		if (mat.isEnvironment)
-		{
-			stbi_image_free(mat.textureEnvironment.data);
-		}
-		mat.isEnvironment = true;
-		stbi_set_flip_vertically_on_load(true);
-		mat.textureEnvironment.data = stbi_load(fileName.c_str(), &(mat.textureEnvironment.width), &(mat.textureEnvironment.height), &(mat.textureEnvironment.nrChannels), 0);
-		std::cout << "loaded texture " << fileName << " (" << mat.textureEnvironment.width << ", " << mat.textureEnvironment.height << ", " << mat.textureEnvironment.nrChannels << ")" << endl;
-
-		// generate texture for opengl
-		glGenTextures(1, &mat.textureEnvironment.textureId);
-
-		glBindTexture(GL_TEXTURE_2D, mat.textureEnvironment.textureId);
-		// TODO: channel check ?
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mat.textureEnvironment.width, mat.textureEnvironment.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mat.textureEnvironment.data);
 		newTex = &mat.textureEnvironment;
+		isTextured = &mat.isEnvironment;
+		break;
+	case LOAD_TEX_NORMAL:
+		newTex = &mat.textureNormal;
+		isTextured = &mat.isNormalMap;
+		//calculateTangents();
 		break;
 	}
+
+	if (*isTextured)
+	{
+		stbi_image_free(newTex->data);
+	}
+	*isTextured = true;
+	stbi_set_flip_vertically_on_load(true);
+	newTex->data = stbi_load(fileName.c_str(), &(newTex->width), &(newTex->height), &(newTex->nrChannels), 0);
+	std::cout << "loaded texture " << fileName << " (" << newTex->width << ", " << newTex->height << ", " << newTex->nrChannels << ")" << endl;
+
+	// generate texture for opengl
+	glGenTextures(1, &(newTex->textureId));
+
+	glBindTexture(GL_TEXTURE_2D, newTex->textureId);
+	// TODO: channel check ?
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, newTex->width, newTex->height, 0, GL_RGB, GL_UNSIGNED_BYTE, newTex->data);
 
 	glBindTexture(GL_TEXTURE_2D, newTex->textureId);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	cout << "istext: " << mat.isTexturized << " isenv: " << mat.isEnvironment << " isnorm: " << mat.isNormalMap << endl;
+
+}
+
+void MeshModel::calculateTangents()
+{
+	vec3 p1, p2, p3, nm;
+	vec2 t1, t2, t3;
+	vec3 edge1, edge2;
+	vec2 delta1, delta2;
+
+	for (int i = 0; i < vertexCount; i+=3)
+	{
+		p1 = vertex_positions[i];
+		p2 = vertex_positions[i + 1];
+		p3 = vertex_positions[i + 2];
+
+		t1 = vertexTexture_positions[i];
+		t2 = vertexTexture_positions[i + 1];
+		t3 = vertexTexture_positions[i + 2];
+
+		nm = faceNormals[i];
+
+		// calc edges and deltas
+		edge1 = p2 - p1;
+		edge2 = p3 - p1;
+		delta1 = t2 - t1;
+		delta2 = t3 - t1;
+
+		// calculate tangets, bitangents
+		float f = 1.0f / (delta1.x * delta2.y - delta2.x * delta1.y);
+		vec3 tangent, bitangent;
+		
+		tangent = (edge1 * delta2.y - edge2 * delta1.y) * f;
+		bitangent = (edge2 * delta1.x - edge1 * delta2.x) * f;
+
+		tangents_positions[i] = tangent;
+		tangents_positions[i + 1] = tangent;
+		tangents_positions[i + 2] = tangent;
+
+		bitangents_positions[i] = bitangent;
+		bitangents_positions[i + 1] = bitangent;
+		bitangents_positions[i + 2] = bitangent;
+	}
+
+	/*for (int i = 0; i < vertexCount; i++)
+	{
+		cout << tangents_positions[i] << " " << bitangents_positions[i] << endl;
+	}*/
+
 }

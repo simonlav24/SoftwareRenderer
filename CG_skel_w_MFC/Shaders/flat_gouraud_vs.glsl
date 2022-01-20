@@ -167,7 +167,7 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal)
     return totalSpecularLight;
 }
 
-vec2 calculateEnvironment(in vec4 position, in vec4 normal)
+/*vec2 calculateEnvironment(in vec4 position, in vec4 normal)
 {
     vec3 normalInCam = normal.xyz;
 
@@ -182,4 +182,20 @@ vec2 calculateEnvironment(in vec4 position, in vec4 normal)
 
     return sphericCoord;
     //return texture(environmentTexture, sphericCoord).xyz;
+}*/
+
+vec2 calculateEnvironment(in vec4 position, in vec4 normal)
+{
+    vec3 dirToViewer = normalize((lookAt * vec4(viewerPos, 1.0)).xyz - position.xyz);
+    vec3 reflected = reflect(dirToViewer, normal.xyz);
+    reflected = -normalize(reflected); 
+
+    reflected = (transpose(lookAt) * vec4(reflected, 1.0)).xyz;
+
+    float r = sqrt(reflected.x * reflected.x + reflected.y * reflected.y + reflected.z * reflected.z);
+    float theta = (atan(reflected.z, reflected.x) + PI) / TWOPI;
+    float phi = 1.0f - acos(reflected.y / r) / PI;
+    vec2 sphericCoord = vec2(theta, phi);
+
+    return sphericCoord;
 }
