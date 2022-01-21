@@ -52,7 +52,7 @@
   - [x] two canonical texture coordinates
   - [x] multiply by texture instead of color
   - [x] use stb_image load textures
-  - [ ] normal mapping
+  - [x] normal mapping (with texture)
   - [x] environment mapping
   - [ ] toon shading
   - [ ] color animation

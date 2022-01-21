@@ -82,6 +82,6 @@ void main()
 	    vec3 bitanInCam = normalize(lookAt * normalMat * vec4(vBitangent, 0) ).xyz;
         tanInCam = normalize(tanInCam - normalInCam * dot(normalInCam, tanInCam));
 		bitanInCam = normalize(bitanInCam - normalInCam * dot(normalInCam, bitanInCam));
-		TBN =  mat3( tanInCam, bitanInCam, normalInCam);
+		TBN = mat3(tanInCam, bitanInCam, normalInCam);
 	}
 }

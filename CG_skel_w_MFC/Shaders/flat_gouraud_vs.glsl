@@ -27,6 +27,9 @@ out vec4 color;
 out vec3 totalColorOut;
 out vec2 environmentCoords;
 
+in vec3 vTangent;
+in vec3 vBitangent;
+
 uniform mat4 lookAt;
 uniform mat4 proj;
 uniform mat4 worldModelMat;
@@ -40,6 +43,7 @@ uniform float matShininess;
 
 uniform float timeStep;
 uniform bool isVertexAnimating;
+uniform bool isNormalMap;
 
 uniform vec3 viewerPos;
 uniform int textureMapping;
@@ -51,21 +55,35 @@ uniform vec3 lightColors[MAX_NUM_OF_LIGHTS];
 uniform int lightTypes[MAX_NUM_OF_LIGHTS];
 uniform int lightCount;
 
+uniform sampler2D normalMapTexture;
+
 void main()
 {
     vec3 addition = vec3(0.0f, 0.0f, 0.0f);
     if(isVertexAnimating)
         addition = vec3(0.0f, cos(vPosition.x + timeStep), sin(vPosition.x + timeStep));
-    vec4 pos = vec4(vPosition + addition, 1.0);
+    vec4 pos = vec4(vPosition + addition, 1.0f);
     vec4 positionInCam = lookAt * worldModelMat * pos;
-    vec4 NormalInCam = lookAt * normalMat * vec4(vNormal, 0.0);
+    vec4 normalInCam = lookAt * normalMat * vec4(vNormal, 0.0f);
     
+    if(isNormalMap)
+	{
+        vec3 normal = normalInCam.xyz;
+        vec3 tanInCam = normalize(lookAt * normalMat * vec4(vTangent, 0)).xyz;
+	    vec3 bitanInCam = normalize(lookAt * normalMat * vec4(vBitangent, 0)).xyz;
+        tanInCam = normalize(tanInCam - normal * dot(normal, tanInCam));
+		bitanInCam = normalize(bitanInCam - normal * dot(normal, bitanInCam));
+		mat3 TBN = mat3(tanInCam, bitanInCam, normal);
+        normal = TBN * normalize(texture2D(normalMapTexture, vTexture).xyz * 2.0f - 1.0f);
+        normalInCam = vec4(normal, 0.0f);
+	}
+
     gl_Position = proj * positionInCam;
 
     vec3 totalColor = vec3(0.0, 0.0, 0.0);
     totalColor += calculateAmbientLight();
-    totalColor += calculateDiffusionLight(positionInCam, NormalInCam);
-    totalColor += calculateSpecularLight(positionInCam, NormalInCam);
+    totalColor += calculateDiffusionLight(positionInCam, normalInCam);
+    totalColor += calculateSpecularLight(positionInCam, normalInCam);
     totalColor += matEmissive;
 
     totalColorOut = totalColor;
@@ -97,7 +115,7 @@ void main()
 
     if(isEnvironment)
     {
-        environmentCoords = calculateEnvironment(positionInCam, NormalInCam);
+        environmentCoords = calculateEnvironment(positionInCam, normalInCam);
     }
 
 }
@@ -166,23 +184,6 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal)
     }
     return totalSpecularLight;
 }
-
-/*vec2 calculateEnvironment(in vec4 position, in vec4 normal)
-{
-    vec3 normalInCam = normal.xyz;
-
-    vec3 dirToViewer = (lookAt * vec4(viewerPos, 1.0)).xyz - position.xyz;
-    vec3 reflected = dirToViewer - 2.0 * dot(dirToViewer, normalInCam) * normalInCam;
-    reflected = -normalize(reflected); 
-
-    float r = sqrt(reflected.x * reflected.x + reflected.y * reflected.y + reflected.z * reflected.z);
-    float theta = (atan(reflected.z, reflected.x) + PI) / TWOPI;
-    float phi = 1.0f - acos(reflected.y / r) / PI;
-    vec2 sphericCoord = vec2(theta, phi);
-
-    return sphericCoord;
-    //return texture(environmentTexture, sphericCoord).xyz;
-}*/
 
 vec2 calculateEnvironment(in vec4 position, in vec4 normal)
 {

@@ -589,7 +589,6 @@ void MeshModel::loadTexture(std::string fileName, int texMode)
 	case LOAD_TEX_NORMAL:
 		newTex = &mat.textureNormal;
 		isTextured = &mat.isNormalMap;
-		//calculateTangents();
 		break;
 	}
 
@@ -659,10 +658,4 @@ void MeshModel::calculateTangents()
 		bitangents_positions[i + 1] = bitangent;
 		bitangents_positions[i + 2] = bitangent;
 	}
-
-	/*for (int i = 0; i < vertexCount; i++)
-	{
-		cout << tangents_positions[i] << " " << bitangents_positions[i] << endl;
-	}*/
-
 }
