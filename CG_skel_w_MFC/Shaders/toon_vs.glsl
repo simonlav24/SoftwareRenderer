@@ -25,7 +25,7 @@ uniform int textureMapping;
 uniform bool isNormalMap;
 
 uniform float timeStep;
-uniform bool isVertexAnimating;
+uniform int isVertexAnimating;
 
 in vec3 vPosition;
 in vec3 vNormal;
@@ -43,8 +43,10 @@ void main()
     vec3 addition = vec3(0.0f, 0.0f, 0.0f);
 
     // calc vertex animation
-    if (isVertexAnimating)
+    if (isVertexAnimating == 1)
         addition = vec3(0.0f, cos(vPosition.x + timeStep), sin(vPosition.x + timeStep));
+    if (isVertexAnimating == 2)
+        addition = vNormal * exp(-pow(- vPosition.x - 5.0 * sin(timeStep), 2.0f));
     vec3 position = vPosition + addition;
 
     

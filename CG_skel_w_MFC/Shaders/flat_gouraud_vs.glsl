@@ -42,7 +42,7 @@ uniform	vec3 matEmissive;
 uniform float matShininess;
 
 uniform float timeStep;
-uniform bool isVertexAnimating;
+uniform int isVertexAnimating;
 uniform bool isNormalMap;
 
 uniform vec3 viewerPos;
@@ -60,8 +60,10 @@ uniform sampler2D normalMapTexture;
 void main()
 {
     vec3 addition = vec3(0.0f, 0.0f, 0.0f);
-    if(isVertexAnimating)
+    if (isVertexAnimating == 1)
         addition = vec3(0.0f, cos(vPosition.x + timeStep), sin(vPosition.x + timeStep));
+    if (isVertexAnimating == 2)
+        addition = vNormal * exp(-pow(- vPosition.x - 5.0 * sin(timeStep), 2.0f));
     vec4 pos = vec4(vPosition + addition, 1.0f);
     vec4 positionInCam = lookAt * worldModelMat * pos;
     vec4 normalInCam = lookAt * normalMat * vec4(vNormal, 0.0f);

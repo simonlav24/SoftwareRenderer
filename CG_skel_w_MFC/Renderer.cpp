@@ -49,7 +49,8 @@ void Renderer::Init()
 
 	timeStep = 0.0f;
 	quantizationNum = 3;
-	isVertexAnimating = false;
+	isVertexAnimating = 0;
+	isColorAnimating = 0;
 }
 
 void Renderer::drawOriginAxis()
@@ -212,7 +213,7 @@ void Renderer::clearBuffer()
 }
 
 // hsv, h:0->360, s:0->1, v:0->1 to rgb: 0->1 
-vec3 hsav2rgb(vec3 hsv)
+vec3 hsv2rgb(vec3 hsv)
 {
 	static GLfloat max = 0;
 	static GLfloat min = 360;
@@ -303,6 +304,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	// bind animation
 	glUniform1f(glGetUniformLocation(currentShading, "timeStep"), timeStep);
 	glUniform1i(glGetUniformLocation(currentShading, "isVertexAnimating"), isVertexAnimating);
+	glUniform1i(glGetUniformLocation(currentShading, "isColorAnimating"), isColorAnimating);
 
 	// make uniform color wireframe
 	glUniform3fv(glGetUniformLocation(currentShading, "wireColor"), 1, Wirecolor);

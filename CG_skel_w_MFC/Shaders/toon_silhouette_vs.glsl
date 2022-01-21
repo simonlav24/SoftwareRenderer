@@ -25,7 +25,7 @@ uniform int textureMapping;
 uniform bool isNormalMap;
 
 uniform float timeStep;
-uniform bool isVertexAnimating;
+uniform int isVertexAnimating;
 
 in vec3 vPosition;
 in vec3 vNormal;
@@ -41,8 +41,10 @@ out mat3 TBN;
 void main()
 {
     vec3 addition = vec3(0.0f, 0.0f, 0.0f);
-    if(isVertexAnimating)
+    if (isVertexAnimating == 1)
         addition = vec3(0.0f, cos(vPosition.x + timeStep), sin(vPosition.x + timeStep));
+    if (isVertexAnimating == 2)
+        addition = vNormal * exp(-pow(- vPosition.x - 5.0 * sin(timeStep), 2.0f));
     vec4 pos = vec4(vPosition + addition, 1.0);
     gl_Position = proj * lookAt * worldModelMat * pos;
 }

@@ -71,8 +71,6 @@
 
 #define ANIMATE_TOGGLE_VERTEX 0
 #define ANIMATE_TOGGLE_COLOR 1
-#define ANIMATE_COLOR_1 2
-#define ANIMATE_COLOR_2 3
 
 // global variables from main
 extern Scene* scene;
@@ -422,7 +420,10 @@ void animateMenu(int id)
 	switch (id)
 	{
 	case ANIMATE_TOGGLE_VERTEX:
-		renderer->isVertexAnimating = !renderer->isVertexAnimating;
+		renderer->isVertexAnimating = ((renderer->isVertexAnimating + 1) % 3);
+		break;
+	case ANIMATE_TOGGLE_COLOR:
+		renderer->isColorAnimating = ((renderer->isColorAnimating + 1) % 3);
 		break;
 	}
 	

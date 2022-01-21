@@ -14,6 +14,9 @@ vec3 calculateSpecularLight(in vec4 position, in vec4 normal);
 
 vec3 calculateEnvironment(in vec4 position, in vec4 normal);
 
+vec3 hsv2rgb(in vec3 hsv);
+vec3 rgb2hsv(in vec3 rgb);
+
 uniform mat4 lookAt;
 uniform mat4 proj;
 uniform mat4 worldModelMat;
@@ -36,6 +39,8 @@ uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
 uniform vec3 lightColors[MAX_NUM_OF_LIGHTS];
 uniform int lightTypes[MAX_NUM_OF_LIGHTS];
 uniform int lightCount;
+uniform int isColorAnimating;
+uniform float timeStep;
 
 in vec4 posInCam;
 in vec3 normalInCam;
@@ -43,6 +48,7 @@ in vec2 TexCoord;
 
 in vec3 vPosition;
 in vec3 vNormal;
+in vec3 modelPosition;
 
 in mat3 TBN;
 
@@ -65,10 +71,27 @@ void main()
     totalColor += calculateDiffusionLight(posInCam, vec4(normal, 0.0));
     totalColor += calculateSpecularLight(posInCam, vec4(normal, 0.0));
     totalColor += matEmissive;
-    
+
+    if(isColorAnimating == 1)
+    {
+        float hue = 78.0f * sqrt(modelPosition.x * modelPosition.x + modelPosition.z * modelPosition.z) + 360.0f * timeStep / TWOPI;
+        totalColor *= hsv2rgb(vec3(hue, 1.0f, 1.0f));
+    }
+    if(isColorAnimating == 2)
+    {
+        
+    }
+        
     if(isTexturized)
     {
         totalColor *= texture(materialTexture, TexCoord).xyz;
+    }
+
+    if(isColorAnimating == 2)
+    {
+        vec3 hsv = rgb2hsv(totalColor);
+        hsv.x += 360 * timeStep / TWOPI;
+        totalColor = hsv2rgb(hsv);
     }
 
     if(isEnvironment)
@@ -113,6 +136,7 @@ vec3 calculateDiffusionLight(in vec4 position, in vec4 normal)
         totalDiffusionLight += diffusionAmount;
         
     }
+
     return totalDiffusionLight;
 }
 
@@ -160,4 +184,77 @@ vec3 calculateEnvironment(in vec4 position, in vec4 normal)
     vec2 sphericCoord = vec2(theta, phi);
 
     return texture(environmentTexture, sphericCoord).xyz;
+}
+
+vec3 rgb2hsv(in vec3 rgb)
+{
+    float fR = rgb.x;
+    float fG = rgb.y;
+    float fB = rgb.z;
+
+    float fH, fS, fV;
+
+    float fCMax = max(max(fR, fG), fB);
+    float fCMin = min(min(fR, fG), fB);
+    float fDelta = fCMax - fCMin;
+  
+    if(fDelta > 0) {
+      if(fCMax == fR) {
+        fH = 60 * (mod(((fG - fB) / fDelta), 6));
+      } else if(fCMax == fG) {
+        fH = 60 * (((fB - fR) / fDelta) + 2);
+      } else if(fCMax == fB) {
+        fH = 60 * (((fR - fG) / fDelta) + 4);
+      }
+      
+      if(fCMax > 0) {
+        fS = fDelta / fCMax;
+      } else {
+        fS = 0;
+      }
+      
+      fV = fCMax;
+    } else {
+      fH = 0;
+      fS = 0;
+      fV = fCMax;
+    }
+    
+    if(fH < 0) {
+      fH = 360 + fH;
+    }
+    return vec3(fH, fS, fV);
+}
+
+vec3 hsv2rgb(in vec3 hsv)
+{
+	float s = hsv.y;
+	float v = hsv.z;
+	float C = s * v;
+    float h = mod(hsv.x, 360.0f);
+	float X = C * (1 - abs(mod(h / 60.0, 2.0) - 1.0));
+	float m = v - C;
+	float r, g, b;
+	if (h >= 0 && h < 60) {
+		r = C, g = X, b = 0;
+	}
+	else if (h >= 60 && h < 120) {
+		r = X, g = C, b = 0;
+	}
+	else if (h >= 120 && h < 180) {
+		r = 0, g = C, b = X;
+	}
+	else if (h >= 180 && h < 240) {
+		r = 0, g = X, b = C;
+	}
+	else if (h >= 240 && h < 300) {
+		r = X, g = 0, b = C;
+	}
+	else {
+		r = C, g = 0, b = X;
+	}
+	float R = (r + m);
+	float G = (g + m);
+	float B = (b + m);
+	return vec3(R, G, B);
 }

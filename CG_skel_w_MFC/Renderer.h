@@ -59,7 +59,8 @@ public:
 	mat4 ProjCam;
 	bool orthogonal;
 
-	bool isVertexAnimating;
+	int isVertexAnimating;
+	int isColorAnimating;
 	float timeStep;
 
 	void SwapBuffers();

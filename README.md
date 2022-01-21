@@ -54,18 +54,7 @@
   - [x] use stb_image load textures
   - [x] normal mapping (with texture)
   - [x] environment mapping
-  - [ ] toon shading
+  - [x] toon shading
   - [ ] color animation
   - [x] vertex animation
   - [ ] turbulance function
-
-### for lighting shader I need:
-
-material: emissive, diffuse, ambient, specular, shininess
-
-model (in): vertex_positions, face_normals, vertex_normals
-
-matrices (uniform):  model, world, ctransform, proj
-
-lights: 
-

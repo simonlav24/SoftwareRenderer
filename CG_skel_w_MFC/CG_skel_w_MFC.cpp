@@ -251,7 +251,7 @@ void timer(int id)
 	glutPostRedisplay();
 	glutTimerFunc(1000 / framesPerSecond, timer, 0);
 	
-	renderer->timeStep = fmod(renderer->timeStep + 0.1f, 6.2831853071f);
+	renderer->timeStep = fmod(renderer->timeStep + 0.05f, 6.2831853071f);
 }
 
 // menu initialization function
@@ -330,6 +330,7 @@ void initMenu()
 
 	int menuAnimate = glutCreateMenu(animateMenu);
 	glutAddMenuEntry("Toggle Vertex Animation", ANIMATE_TOGGLE_VERTEX);
+	glutAddMenuEntry("Toggle Color Animation", ANIMATE_TOGGLE_COLOR);
 	
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Model", menuModel);
@@ -374,9 +375,6 @@ int my_main(int argc, char** argv)
 	scene->currentCamera().LookAt(vec4(8.0f, 8.0f, -8.0f, 1.0f), vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(0.0f, 1.0f, 0.0f, 1.0f));
 	scene->currentCamera().Frustum(-0.5f, 0.5f, -0.5f, 0.5f, 1.0f, 200.0f);
 
-	//scene->addLight();
-	//scene->moveLight(vec3(4.0f, 4.0f, 8.0f));
-
 	scene->addLight(parallel);
 	scene->moveLight(vec3(0.0f, 8.0f, 0.0f));
 	scene->changeLightColor(vec3(1.0f, 1.0f, 0.8f));
@@ -385,6 +383,10 @@ int my_main(int argc, char** argv)
 	scene->moveLight(vec3(0.0f, -8.0f, 0.0f));
 	scene->changeLightDirection(vec3(0.0f, 1.0f, 0.0f));
 	scene->changeLightColor(vec3(0.8f, 0.8f, 1.0f));
+
+	scene->loadOBJModel("D:\\study\\graphics2\\SoftwareRenderer2\\obj_examples\\cowUV.obj");
+	scene->tState = world;
+	scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
 
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks
