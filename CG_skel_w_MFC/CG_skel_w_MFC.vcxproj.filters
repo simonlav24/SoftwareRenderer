@@ -124,5 +124,17 @@
     <None Include="Shaders\flat_gouraud_fs.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\toon_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\toon_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\toon_silhouette_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\toon_silhouette_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

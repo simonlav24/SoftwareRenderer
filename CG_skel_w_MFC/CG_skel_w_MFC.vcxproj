@@ -137,6 +137,10 @@
     <None Include="Shaders\standart_color.glsl" />
     <None Include="Shaders\flat_gouraud_vs.glsl" />
     <None Include="Shaders\line_vs.glsl" />
+    <None Include="Shaders\toon_fs.glsl" />
+    <None Include="Shaders\toon_silhouette_fs.glsl" />
+    <None Include="Shaders\toon_silhouette_vs.glsl" />
+    <None Include="Shaders\toon_vs.glsl" />
     <None Include="Shaders\wireFrame_vs.glsl" />
     <None Include="vshader.glsl" />
     <None Include="ReadMe.txt" />

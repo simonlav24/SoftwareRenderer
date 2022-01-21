@@ -307,6 +307,7 @@ void initMenu()
 	glutAddMenuEntry("Flat Shading", SHADING_FLAT);
 	glutAddMenuEntry("Phong Shading", SHADING_PHONG);
 	glutAddMenuEntry("Gouraud Shading", SHADING_GOURAUD);
+	glutAddMenuEntry("Toon Shading", SHADING_TOON);
 
 	int menuMapping = glutCreateMenu(mappingMenu);
 	glutAddMenuEntry("UV Mapping", MAPPING_UV);

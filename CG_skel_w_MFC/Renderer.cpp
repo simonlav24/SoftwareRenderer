@@ -44,8 +44,11 @@ void Renderer::Init()
 	glProgramArray.wireFrame = InitShader("Shaders/wireFrame_vs.glsl", "Shaders/standart_color.glsl");
 	glProgramArray.flat_gouraud = InitShader("Shaders/flat_gouraud_vs.glsl", "Shaders/flat_gouraud_fs.glsl");
 	glProgramArray.phong = InitShader("Shaders/phong_vs.glsl", "Shaders/phong_fs.glsl");
+	glProgramArray.toon = InitShader("Shaders/toon_vs.glsl", "Shaders/toon_fs.glsl");
+	glProgramArray.toon_silhouette = InitShader("Shaders/toon_silhouette_vs.glsl", "Shaders/toon_silhouette_fs.glsl");
 
 	timeStep = 0.0f;
+	quantizationNum = 3;
 	isVertexAnimating = false;
 }
 
@@ -72,6 +75,7 @@ void Renderer::drawOriginAxis()
 
 	mat4 transform = Proj * lookAt;
 
+	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
 	glDrawLines(vertices, colors, 6, transform, GL_LINES);
 	
@@ -93,6 +97,7 @@ void Renderer::drawGrid()
 		vertices[k++] = vec4(10.0f, 0.0f, -10.0f + (float)j, 1.0f);
 	}
 	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 	glDrawLines(vertices, color, 84, Proj * lookAt, GL_LINES, true);
 
 }
@@ -100,10 +105,9 @@ void Renderer::drawGrid()
 void Renderer::glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode, bool singleColor)
 {
 	glUseProgram(glProgramArray.line);
-	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
 
 	// set transform
-	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, transform);
+	glUniformMatrix4fv(glGetUniformLocation(glProgramArray.line, "transform"), 1, GL_TRUE, transform);
 
 	// draw
 	GLuint buffers[2];
@@ -135,7 +139,7 @@ void Renderer::glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transfor
 	}
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
+	glDisable(GL_CULL_FACE);
 	glBindVertexArray(vao);
 	glLineWidth(1);
 	glDrawArrays(lineMode, 0, size);
@@ -165,9 +169,7 @@ void Renderer::clearBuffer()
 	glClearColor(0.2, 0.2, 0.2, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
 	glUseProgram(glProgramArray.line);
-	glUniformLocArray.worldModel = glGetUniformLocation(glProgramArray.line, "transform");
 
 	mat4 identity;
 	vec4 first(0.2f, 0.2f, 0.2f, 1.0f);
@@ -176,7 +178,7 @@ void Renderer::clearBuffer()
 	vec4 colors[] = { first, second, first, second };
 
 	// set transform identity for background
-	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, identity);
+	glUniformMatrix4fv(glGetUniformLocation(glProgramArray.line, "transform"), 1, GL_TRUE, identity);
 
 	// draw background
 	GLuint buffers[2];
@@ -200,6 +202,7 @@ void Renderer::clearBuffer()
 	glVertexAttribPointer(vColorLoc, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 	glBindVertexArray(vao);
 	glLineWidth(1);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -244,52 +247,56 @@ vec3 hsav2rgb(vec3 hsv)
 	return vec3(r, g, b);
 }
 
-void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat)
+void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat, int shading)
 {
 	vec3 Wirecolor = vec3(1.0, 0.5, 0.7);
 
 	GLuint currentShading;
-	switch (shadingSetup)
+	if (shading == 0)
 	{
-	case WireFrame:
-		currentShading = glProgramArray.wireFrame;
-		break;
-	case Flat:
-	case Gouraud:
-		currentShading = glProgramArray.flat_gouraud;
-		break;
-	case Phong:
-		currentShading = glProgramArray.phong;
-		break;
+		switch (shadingSetup)
+		{
+		case WireFrame:
+			currentShading = glProgramArray.wireFrame;
+			break;
+		case Flat:
+		case Gouraud:
+			currentShading = glProgramArray.flat_gouraud;
+			break;
+		case Phong:
+			currentShading = glProgramArray.phong;
+			break;
+		case Toon:
+			// first, draw silhouette
+			DrawModel(vData, mat, worldModel, normalMat, 1);
+			// secondly draw toon shading
+			currentShading = glProgramArray.toon;
+			break;
+		}
+	}
+	else if (shading == 1)
+	{
+		currentShading = glProgramArray.toon_silhouette;
 	}
 
 	glUseProgram(currentShading);
 
 	// make uniform: camtransform, projection
-	glUniformLocArray.lookAt = glGetUniformLocation(currentShading, "lookAt");
-	glUniformLocArray.projection = glGetUniformLocation(currentShading, "proj");
-	glUniformMatrix4fv(glUniformLocArray.lookAt, 1, GL_TRUE, lookAt);
-	glUniformMatrix4fv(glUniformLocArray.projection, 1, GL_TRUE, Proj);
+	glUniformMatrix4fv(glGetUniformLocation(currentShading, "lookAt"), 1, GL_TRUE, lookAt);
+	glUniformMatrix4fv(glGetUniformLocation(currentShading, "proj"), 1, GL_TRUE, Proj);
 
 	// make uniform: model, world
-	glUniformLocArray.worldModel = glGetUniformLocation(currentShading, "worldModelMat");
-	glUniformMatrix4fv(glUniformLocArray.worldModel, 1, GL_TRUE, worldModel);
+	glUniformMatrix4fv(glGetUniformLocation(currentShading, "worldModelMat"), 1, GL_TRUE, worldModel);
 
 	// make uniform normal mat
-	glUniformLocArray.normals = glGetUniformLocation(currentShading, "normalMat");
-	glUniformMatrix4fv(glUniformLocArray.normals, 1, GL_TRUE, normalMat);
+	glUniformMatrix4fv(glGetUniformLocation(currentShading, "normalMat"), 1, GL_TRUE, normalMat);
 
 	// make uniform material
-	glUniformLocArray.ambient = glGetUniformLocation(currentShading, "matAmbient");
-	glUniform3fv(glUniformLocArray.ambient, 1, mat.ambientColor);
-	glUniformLocArray.diffuse = glGetUniformLocation(currentShading, "matDiffuse");
-	glUniform3fv(glUniformLocArray.diffuse, 1, mat.diffuseColor);
-	glUniformLocArray.specular = glGetUniformLocation(currentShading, "matSpecular");
-	glUniform3fv(glUniformLocArray.specular, 1, mat.specularColor);
-	glUniformLocArray.emissive = glGetUniformLocation(currentShading, "matEmissive");
-	glUniform3fv(glUniformLocArray.emissive, 1, mat.emissiveColor);
-	glUniformLocArray.shininess = glGetUniformLocation(currentShading, "matShininess");
-	glUniform1f(glUniformLocArray.shininess, mat.shininessCoeficient);
+	glUniform3fv(glGetUniformLocation(currentShading, "matAmbient"), 1, mat.ambientColor);
+	glUniform3fv(glGetUniformLocation(currentShading, "matDiffuse"), 1, mat.diffuseColor);
+	glUniform3fv(glGetUniformLocation(currentShading, "matSpecular"), 1, mat.specularColor);
+	glUniform3fv(glGetUniformLocation(currentShading, "matEmissive"), 1, mat.emissiveColor);
+	glUniform1f(glGetUniformLocation(currentShading, "matShininess"), mat.shininessCoeficient);
 	glUniform1f(glGetUniformLocation(currentShading, "environmentStrength"), mat.environmentStrength);
 	glUniform1f(glGetUniformLocation(currentShading, "normalMapStrength"), mat.normalStrength);
 
@@ -301,8 +308,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	glUniform3fv(glGetUniformLocation(currentShading, "wireColor"), 1, Wirecolor);
 
 	// make uniform viewer
-	glUniformLocArray.viewer = glGetUniformLocation(currentShading, "viewerPos");
-	glUniform3fv(glUniformLocArray.viewer, 1, viewerPos[0]);
+	glUniform3fv(glGetUniformLocation(currentShading, "viewerPos"), 1, viewerPos[0]);
 
 	// make uniform Lights
 	vec3 lightPositions[MAX_NUM_OF_LIGHTS];
@@ -334,8 +340,8 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 		GLuint lightTypeLoc = glGetUniformLocation(currentShading, variable);
 		glUniform1iv(lightTypeLoc, 1, &lightTypes[i]);
 	}
-	GLuint lightCountLoc = glGetUniformLocation(currentShading, "lightCount");
-	glUniform1i(lightCountLoc, min(6, sceneLights->size()));
+	glUniform1i(glGetUniformLocation(currentShading, "lightCount"), min(6, sceneLights->size()));
+	glUniform1i(glGetUniformLocation(currentShading, "quantizationNum"), quantizationNum);
 
 	// bind data
 	glBindVertexArray(vData.vao);
@@ -352,7 +358,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	{
 		drawingMode = GL_LINE;
 	}
-	else if (shadingSetup == Flat || shadingSetup == Gouraud || shadingSetup == Phong)
+	else if (shadingSetup == Flat || shadingSetup == Gouraud || shadingSetup == Phong || shadingSetup == Toon)
 	{
 		GLuint vNormalLoc = glGetAttribLocation(currentShading, "vNormal");
 		glBindBuffer(GL_ARRAY_BUFFER, vData.buffers[shadingSetup == Flat ? 1 : 2]);
@@ -407,9 +413,24 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	}
 
 	// draw
-	glEnable(GL_DEPTH_TEST);
+	if (shading == 0)
+	{
+		glLineWidth(1);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+	}
+	else
+	{
+		// silhoueete
+		glLineWidth(5);
+		glEnable(GL_DEPTH_TEST);
+		drawingMode = GL_LINE;
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+	}
+	
 	glPolygonMode(GL_FRONT_AND_BACK, drawingMode);
-	glLineWidth(1);
 	glDrawArrays(GL_TRIANGLES, 0, vData.size);
 }
 

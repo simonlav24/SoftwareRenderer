@@ -8,26 +8,15 @@
 
 using namespace std;
 
-enum ShadingSetup { WireFrame, Flat, Phong, Gouraud };
+enum ShadingSetup { WireFrame, Flat, Phong, Gouraud, Toon };
 
 struct GLProgramsArray {
 	GLuint line;
 	GLuint wireFrame;
 	GLuint flat_gouraud;
 	GLuint phong;
-};
-
-struct GLUniformLocArray {
-	GLuint lookAt;
-	GLuint projection;
-	GLuint worldModel;
-	GLuint normals;
-	GLuint ambient;
-	GLuint diffuse;
-	GLuint specular;
-	GLuint emissive;
-	GLuint shininess;
-	GLuint viewer;
+	GLuint toon;
+	GLuint toon_silhouette;
 };
 
 struct vaoData {
@@ -57,9 +46,7 @@ class Renderer
 	void InitOpenGLRendering();
 	//////////////////////////////
 
-	/// hw3 stuff
 	GLProgramsArray glProgramArray;
-	GLUniformLocArray glUniformLocArray;
 
 public:
 	Renderer();
@@ -92,11 +79,12 @@ public:
 
 	vec2 getDims();
 	ShadingSetup shadingSetup;
+	int quantizationNum;
 
 	void glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode = GL_LINE_STRIP, bool singleColor = false);
 	//void glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
 
-	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat);
+	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat, int shading=0);
 	void drawOriginAxis();
 	void drawGrid();
 

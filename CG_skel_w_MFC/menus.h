@@ -49,6 +49,7 @@
 #define SHADING_FLAT 1
 #define SHADING_PHONG 2
 #define SHADING_GOURAUD 3
+#define SHADING_TOON 4
 
 #define MATERIAL_CHANGE_COLOR 0
 #define MATERIAL_CHANGE_AMBIENT 1
@@ -171,6 +172,9 @@ void shadingSetupMenu(int id)
 		break;
 	case SHADING_PHONG:
 		renderer->shadingSetup = Phong;
+		break;
+	case SHADING_TOON:
+		renderer->shadingSetup = Toon;
 		break;
 	}
 }
