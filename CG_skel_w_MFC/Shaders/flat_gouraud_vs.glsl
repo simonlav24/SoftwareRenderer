@@ -18,6 +18,8 @@ vec3 calculateDiffusionLight(in vec4 position, in vec4 normal);
 vec3 calculateSpecularLight(in vec4 position, in vec4 normal);
 vec2 calculateEnvironment(in vec4 position, in vec4 normal);
 
+vec3 hsv2rgb(in vec3 hsv);
+
 in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vCenter;
@@ -48,6 +50,7 @@ uniform bool isNormalMap;
 uniform vec3 viewerPos;
 uniform int textureMapping;
 uniform bool isEnvironment;
+uniform int isColorAnimating;
 
 // point lights
 uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
@@ -87,6 +90,13 @@ void main()
     totalColor += calculateDiffusionLight(positionInCam, normalInCam);
     totalColor += calculateSpecularLight(positionInCam, normalInCam);
     totalColor += matEmissive;
+
+    if(isColorAnimating == 1)
+    {
+        vec4 modelPosition = worldModelMat * pos;
+        float hue = 78.0f * sqrt(modelPosition.x * modelPosition.x + modelPosition.z * modelPosition.z) + 360.0f * timeStep / TWOPI;
+        totalColor *= hsv2rgb(vec3(hue, 1.0f, 1.0f));
+    }
 
     totalColorOut = totalColor;
     
@@ -201,4 +211,37 @@ vec2 calculateEnvironment(in vec4 position, in vec4 normal)
     vec2 sphericCoord = vec2(theta, phi);
 
     return sphericCoord;
+}
+
+vec3 hsv2rgb(in vec3 hsv)
+{
+	float s = hsv.y;
+	float v = hsv.z;
+	float C = s * v;
+    float h = mod(hsv.x, 360.0f);
+	float X = C * (1 - abs(mod(h / 60.0, 2.0) - 1.0));
+	float m = v - C;
+	float r, g, b;
+	if (h >= 0 && h < 60) {
+		r = C, g = X, b = 0;
+	}
+	else if (h >= 60 && h < 120) {
+		r = X, g = C, b = 0;
+	}
+	else if (h >= 120 && h < 180) {
+		r = 0, g = C, b = X;
+	}
+	else if (h >= 180 && h < 240) {
+		r = 0, g = X, b = C;
+	}
+	else if (h >= 240 && h < 300) {
+		r = X, g = 0, b = C;
+	}
+	else {
+		r = C, g = 0, b = X;
+	}
+	float R = (r + m);
+	float G = (g + m);
+	float B = (b + m);
+	return vec3(R, G, B);
 }

@@ -77,10 +77,6 @@ void main()
         float hue = 78.0f * sqrt(modelPosition.x * modelPosition.x + modelPosition.z * modelPosition.z) + 360.0f * timeStep / TWOPI;
         totalColor *= hsv2rgb(vec3(hue, 1.0f, 1.0f));
     }
-    if(isColorAnimating == 2)
-    {
-        
-    }
         
     if(isTexturized)
     {

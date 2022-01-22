@@ -48,7 +48,6 @@ void main()
     if (isVertexAnimating == 2)
         addition = vNormal * exp(-pow(- vPosition.x - 5.0 * sin(timeStep), 2.0f));
     vec3 position = vPosition + addition;
-
     
     vec4 positionInCam = lookAt * worldModelMat * vec4(position, 1.0);
     gl_Position = proj * positionInCam;
