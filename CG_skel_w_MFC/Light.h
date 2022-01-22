@@ -43,6 +43,9 @@ struct Material
 	Texture textureNormal;
 	float normalStrength;
 
+	bool isNoiseTexture;
+	Texture textureNoise;
+
 	Material() :
 		color(0.8f, 0.8f, 0.8f),
 		ambientColor(0.1f, 0.1f, 0.1f),
@@ -55,7 +58,8 @@ struct Material
 		isEnvironment(false),
 		environmentStrength(0.5f),
 		isNormalMap(false),
-		normalStrength(1.0f)
+		normalStrength(1.0f),
+		isNoiseTexture(false)
 	{}
 };
 

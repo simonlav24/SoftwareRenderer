@@ -65,6 +65,7 @@ public:
 	void bindData();
 	
 	void calculateTangents();
+	void createNoiseTexture();
 
 };
 

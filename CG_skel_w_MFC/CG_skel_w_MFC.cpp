@@ -327,6 +327,7 @@ void initMenu()
 	glutAddMenuEntry("Edit Environment Strength", MATERIAL_CHANGE_ENVIRONMENT_STRENGTH);
 	glutAddMenuEntry("Load Normal Map", MATERIAL_LOAD_NORMAL_MAP);
 	glutAddMenuEntry("Edit Normal Strength", MATERIAL_CHANGE_NORMAL_STRENGTH);
+	glutAddMenuEntry("Apply Wood Texture", MATERIAL_NOISE_TEXTURE);
 
 	int menuAnimate = glutCreateMenu(animateMenu);
 	glutAddMenuEntry("Toggle Vertex Animation", ANIMATE_TOGGLE_VERTEX);

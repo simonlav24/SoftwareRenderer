@@ -66,6 +66,9 @@ public:
 	void SwapBuffers();
 	void DestroyBuffers();
 	
+	unsigned char noiseKernel[64*64];
+	GLuint noiseId;
+
 	// viewer eye, at vec:
 	vec4 viewerPos[2];
 	vector<Light*> *sceneLights;

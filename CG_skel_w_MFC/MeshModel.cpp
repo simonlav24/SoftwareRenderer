@@ -14,6 +14,9 @@ using namespace std;
 #define screen(temp) vec3((temp.x) * r->getDims().x, (temp.y) * r->getDims().y, 0.0)
 #define viewPort(dims, a) vec3((dims.x / 2.0) * (a.x + 1), (dims.y / 2.0) * (a.y + 1), a.z)
 
+#define ind(x, y, size) y * size + x
+#define NOISE_SIZE 64
+
 //triangle object
 struct FaceIdcs
 {
@@ -615,6 +618,42 @@ void MeshModel::loadTexture(std::string fileName, int texMode)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	cout << "istext: " << mat.isTexturized << " isenv: " << mat.isEnvironment << " isnorm: " << mat.isNormalMap << endl;
+}
+
+void MeshModel::createNoiseTexture()
+{
+	Texture* newTex = &mat.textureNoise;
+	bool* isTextured = &mat.isNoiseTexture;
+
+	if (*isTextured)
+	{
+		delete[] newTex->data;
+	}
+	*isTextured = true;
+
+	newTex->data = new unsigned char[NOISE_SIZE * NOISE_SIZE * 3];
+
+	for (int y = 0; y < NOISE_SIZE; y ++)
+		for (int x = 0; x < NOISE_SIZE; x++)
+		{
+			unsigned char value = rand() % 256;
+			for (int c = 0; c < 3; c++)
+			{
+				newTex->data[3 * (y * NOISE_SIZE + x) + c] = value;
+			}
+		}
+	
+	glGenTextures(1, &(newTex->textureId));
+
+	glBindTexture(GL_TEXTURE_2D, newTex->textureId);
+	// TODO: channel check ?
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NOISE_SIZE, NOISE_SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, newTex->data);
+
+	glBindTexture(GL_TEXTURE_2D, newTex->textureId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 }
 

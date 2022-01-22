@@ -51,6 +51,23 @@ void Renderer::Init()
 	quantizationNum = 3;
 	isVertexAnimating = 0;
 	isColorAnimating = 0;
+
+	for(int y = 0; y < 64; y++)
+		for (int x = 0; x < 64; x++)
+		{
+			noiseKernel[y * 64 + x] = rand() % 256;
+		}
+
+	glGenTextures(1, &noiseId);
+
+	glBindTexture(GL_TEXTURE_2D, noiseId);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 64, 64, 0, GL_RED, GL_UNSIGNED_BYTE, noiseKernel);
+
+	glBindTexture(GL_TEXTURE_2D, noiseId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void Renderer::drawOriginAxis()
@@ -306,6 +323,8 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 	glUniform1i(glGetUniformLocation(currentShading, "isVertexAnimating"), isVertexAnimating);
 	glUniform1i(glGetUniformLocation(currentShading, "isColorAnimating"), isColorAnimating);
 
+	glUniform1i(glGetUniformLocation(currentShading, "isNoiseTexture"), mat.isNoiseTexture);
+
 	// make uniform color wireframe
 	glUniform3fv(glGetUniformLocation(currentShading, "wireColor"), 1, Wirecolor);
 
@@ -375,7 +394,7 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 
 	// bind textures
 	glUniform1i(glGetUniformLocation(currentShading, "textureMapping"), mat.textureMappingMode);
-	if (mat.isTexturized)
+	if (mat.isTexturized || mat.isNormalMap || mat.isEnvironment || mat.isNoiseTexture)
 	{
 		GLuint texLoc = glGetUniformLocation(currentShading, "materialTexture");
 		glUniform1i(texLoc, 0);
@@ -386,6 +405,9 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 		GLuint norLoc = glGetUniformLocation(currentShading, "normalMapTexture");
 		glUniform1i(norLoc, 2);
 
+		GLuint noiLoc = glGetUniformLocation(currentShading, "noiseTexture");
+		glUniform1i(noiLoc, 3);
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mat.textureImage.textureId);
 
@@ -394,6 +416,9 @@ void Renderer::DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 norm
 
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, mat.textureNormal.textureId);
+
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, mat.textureNoise.textureId);
 		
 		// bind texture coordinates
 		GLuint vTextureLoc = glGetAttribLocation(currentShading, "vTexture");

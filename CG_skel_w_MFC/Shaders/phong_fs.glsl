@@ -17,6 +17,9 @@ vec3 calculateEnvironment(in vec4 position, in vec4 normal);
 vec3 hsv2rgb(in vec3 hsv);
 vec3 rgb2hsv(in vec3 rgb);
 
+float gen_noise(in vec2 coordinates);
+vec3 woodColor(in vec2 coordinates);
+
 uniform mat4 lookAt;
 uniform mat4 proj;
 uniform mat4 worldModelMat;
@@ -33,6 +36,7 @@ uniform bool isTexturized;
 uniform bool isEnvironment;
 uniform bool isNormalMap;
 uniform float environmentStrength;
+uniform bool isNoiseTexture;
 
 // point lights
 uniform vec3 lightPositions[MAX_NUM_OF_LIGHTS];
@@ -56,6 +60,7 @@ out vec4 fcolor;
 uniform sampler2D materialTexture;
 uniform sampler2D environmentTexture;
 uniform sampler2D normalMapTexture;
+uniform sampler2D noiseTexture;
 
 void main()
 {
@@ -81,6 +86,29 @@ void main()
     if(isTexturized)
     {
         totalColor *= texture(materialTexture, TexCoord).xyz;
+    }
+
+    if (isNoiseTexture)
+    {
+        vec3 turbulanceColor = vec3(0.0f, 0.0f, 0.0f);
+        float sizeMult = 0.125f;
+        turbulanceColor += texture(noiseTexture, TexCoord * 1.0f * sizeMult).xyz * 0.5;
+        turbulanceColor += texture(noiseTexture, TexCoord * 2.0f * sizeMult).xyz * 0.25;
+        turbulanceColor += texture(noiseTexture, TexCoord * 4.0f * sizeMult).xyz * 0.1875;
+        turbulanceColor += texture(noiseTexture, TexCoord * 8.0f * sizeMult).xyz * 0.0625;
+
+        float xyPeriod = 80.0;
+        float turbPower = 0.1;
+        float turbSize = 32.0;
+        
+        float xval = (TexCoord.x - 512 / 2) / 512;
+        float yval = (TexCoord.y - 512 / 2) / 512;
+        
+        float distValue = sqrt(xval * xval + yval * yval) + turbPower * turbulanceColor.x;
+        float sinValue = 0.5f * abs(sin(2.0f * xyPeriod * distValue * PI));
+        vec3 color = vec3(0.3125f + sinValue, 0.1171875f + sinValue, 0.1171875);
+
+        totalColor *= color;
     }
 
     if(isColorAnimating == 2)
@@ -253,4 +281,18 @@ vec3 hsv2rgb(in vec3 hsv)
 	float G = (g + m);
 	float B = (b + m);
 	return vec3(R, G, B);
+}
+
+vec3 woodColor(in vec2 coordinates){
+	vec2 pos = coordinates.yx * vec2(2, -7);
+	float deg = gen_noise(pos) * 7.7;
+	mat2 rotate = mat2(cos(deg), - sin(deg), sin(deg), cos(deg)) ;
+	pos= rotate* pos;
+	//smoothstep is just like activation function in ML
+	float pattern = smoothstep(0.0, 1.0, abs(cos(pos.x * 5.0) - 1.0) * 0.8);
+	return mix(vec3(0.5,0.2,0.1), vec3(0.8,0.5,0.4), pattern);
+}
+
+float gen_noise(in vec2 coordinates){
+	return pow(sin(coordinates.x),2)-cos(coordinates.y);	
 }

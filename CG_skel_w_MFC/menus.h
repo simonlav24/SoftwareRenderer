@@ -63,6 +63,7 @@
 #define MATERIAL_CHANGE_ENVIRONMENT_STRENGTH 13
 #define MATERIAL_LOAD_NORMAL_MAP 14
 #define MATERIAL_CHANGE_NORMAL_STRENGTH 15
+#define MATERIAL_NOISE_TEXTURE 16
 
 #define POST_FOG_TOGGLE 0
 #define POST_FOG_COLOR 1
@@ -411,6 +412,9 @@ void materialMenu(int id)
 			static_cast<MeshModel*>(scene->models[scene->activeModel])->mat.environmentStrength = v;
 		}
 		
+		break;
+	case MATERIAL_NOISE_TEXTURE:
+		static_cast<MeshModel*>(scene->models[scene->activeModel])->createNoiseTexture();
 		break;
 	}
 }

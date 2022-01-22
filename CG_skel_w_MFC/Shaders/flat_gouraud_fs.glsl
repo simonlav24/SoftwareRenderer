@@ -1,12 +1,14 @@
 
 #version 150 
 #define TWOPI 6.2831853071795864769252867665590
+#define PI 3.1415926535897932384626433832795
 in vec4 color;
 in vec2 vTexture;
 in vec2 vTextureCoordinates;
 
 uniform bool isTexturized;
 uniform bool isEnvironment;
+uniform bool isNoiseTexture;
 uniform float environmentStrength;
 
 uniform int isColorAnimating;
@@ -20,6 +22,7 @@ in vec2 environmentCoords;
 
 uniform sampler2D materialTexture;
 uniform sampler2D environmentTexture;
+uniform sampler2D noiseTexture;
 
 void main()
 {
@@ -28,6 +31,29 @@ void main()
 	{
 		totalColor = totalColor * texture(materialTexture, vTextureCoordinates).xyz;
 	}
+
+	if (isNoiseTexture)
+    {
+        vec3 turbulanceColor = vec3(0.0f, 0.0f, 0.0f);
+        float sizeMult = 0.125f;
+        turbulanceColor += texture(noiseTexture, vTextureCoordinates * 1.0f * sizeMult).xyz * 0.5;
+        turbulanceColor += texture(noiseTexture, vTextureCoordinates * 2.0f * sizeMult).xyz * 0.25;
+        turbulanceColor += texture(noiseTexture, vTextureCoordinates * 4.0f * sizeMult).xyz * 0.1875;
+        turbulanceColor += texture(noiseTexture, vTextureCoordinates * 8.0f * sizeMult).xyz * 0.0625;
+
+        float xyPeriod = 80.0;
+        float turbPower = 0.1;
+        float turbSize = 32.0;
+        
+        float xval = (vTextureCoordinates.x - 512 / 2) / 512;
+        float yval = (vTextureCoordinates.y - 512 / 2) / 512;
+        
+        float distValue = sqrt(xval * xval + yval * yval) + turbPower * turbulanceColor.x;
+        float sinValue = 0.5f * abs(sin(2.0f * xyPeriod * distValue * PI));
+        vec3 color = vec3(0.3125f + sinValue, 0.1171875f + sinValue, 0.1171875);
+
+        totalColor *= color;
+    }
 
 	if (isEnvironment)
 	{
