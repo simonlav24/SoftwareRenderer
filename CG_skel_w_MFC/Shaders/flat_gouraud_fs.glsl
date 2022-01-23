@@ -44,7 +44,7 @@ void main()
         float xyPeriod = 80.0;
         float turbPower = 0.1;
         float turbSize = 32.0;
-        
+
         float xval = (vTextureCoordinates.x - 512 / 2) / 512;
         float yval = (vTextureCoordinates.y - 512 / 2) / 512;
         

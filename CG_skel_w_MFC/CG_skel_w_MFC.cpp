@@ -385,9 +385,9 @@ int my_main(int argc, char** argv)
 	scene->changeLightDirection(vec3(0.0f, 1.0f, 0.0f));
 	scene->changeLightColor(vec3(0.8f, 0.8f, 1.0f));
 
-	scene->loadOBJModel("D:\\study\\graphics2\\SoftwareRenderer2\\obj_examples\\cowUV.obj");
-	scene->tState = world;
-	scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
+	//scene->loadOBJModel("D:\\study\\graphics2\\SoftwareRenderer2\\obj_examples\\cowUV.obj");
+	//scene->tState = world;
+	//scene->models[scene->activeModel]->showIndicators = scene->showIndicators;
 
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks
