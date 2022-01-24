@@ -4,25 +4,32 @@
 #include <vector>
 #include <string>
 #include "Renderer.h"
-#include "Light.h"
-
 using namespace std;
 
-enum transformFrame { world, model, camera, light };
+enum transformFrame { world, model, camera };
 enum transformMode { position, scale, rotation };
-enum materialProperty {color, ambient, diffuse, specular, shine, special, emission};
+
+struct Line {
+	vec3 p1;
+	vec3 p2;
+	Line(vec3 p1, vec3 p2) :p1(p1), p2(p2){}
+};
 
 class Model {
-public:
+protected:
 	virtual ~Model() {}
-	bool showIndicators;
-	void virtual draw(Renderer* r)=0;
+public:
+	void virtual draw(Renderer* r, mat4& cTransform, mat4& projection, vec3& color)=0;
+
 	// multiply by modelTransform matrix
-	//void virtual transformModel(const mat4& trans, bool scalling=false)=0;
-	//void virtual transformWorld(const mat4& trans)=0;
-	void virtual transform(const mat4& transform, bool world, bool scalling = false)=0;
-	vec3 virtual getPosition() = 0;
-	void virtual setPosition(vec3 pos) = 0;
+	void virtual transformModel(const mat4& trans, bool scalling=false)=0;
+	void virtual transformWorld(const mat4& trans)=0;
+	vec3 virtual getPosition()=0;
+};
+
+
+class Light {
+
 };
 
 class Camera {
@@ -33,10 +40,6 @@ public:
 	vec4 Eye;
 	vec4 At;
 	vec4 Up;
-
-	vec4 rectPos;
-	vec2 zPos;
-	bool orthogonal;
 
 	Camera();
 	void setTransformation(const mat4& transform);
@@ -54,7 +57,6 @@ public:
 
 class Scene {
 
-public:
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
@@ -62,58 +64,38 @@ public:
 
 	vector<vec4> grid;
 
+public:
 	transformFrame tState;
 	transformMode tMode;
-
-	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(world), tMode(position),
-		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false), showIndicators(true)
-		{
-		m_renderer->sceneLights = &(this->lights);
-	};
-
+	
+	Scene(Renderer *renderer) : m_renderer(renderer), activeModel(-1), activeCamera(-1), tState(model), tMode(position),
+		showBoundingBox(false), showFaceNormals(false), showVertexNormals(false), showGrid(false)
+		{};
+	void transformActiveModel(const mat4& transform, bool scalling=false);
+	void loadOBJModel(string fileName);
 	void draw();
 	void drawOriginPoint();
 	void drawGrid();
-	void toggleIndicators();
-
-	// models
+	void drawDemo();
+	
 	void createPrimitive();
+
 	void switchActiveModel();
 	void deleteActiveModel();
-	void transformActiveModel(const mat4& transform, bool scalling = false, bool rotation = false);
-	void loadOBJModel(string fileName);
-	void changeMaterial(materialProperty prop, vec3 values);
-	vec3 getMaterial(materialProperty prop);
-
-	// cameras
+	void switchActiveCamera();
 	void addCamera();
-	void rotateZoomCamera(int dx, int dy, int scroll, GLfloat step);
+	void rotateZoomCamera(int dx, int dy, int scroll);
 	void translateCamera(int dx, int dy);
 	void lookAtModel();
-	void switchActiveCamera();
 	void resetCameraPosition();
-	void reshapeCamera(int width, int height);
-	Camera& currentCamera();
-	void setProjCam();
-
-	// lights
-	void addLight(LightType type=point);
-	void moveLight(vec3 pos);
-	void deleteActiveLight();
-	void switchActiveLight();
-	void changeLightColor(vec3 color);
-	void changeLightPosition(vec3 pos);
-	void changeLightDirection(vec3 dir);
 
 	int activeModel;
 	int activeLight;
 	int activeCamera;
+	Camera& currentCamera();
 	
 	bool showBoundingBox;
 	bool showFaceNormals;
 	bool showVertexNormals;
-	bool showIndicators;
 	bool showGrid;
-
-	void loadTexture(string fileName, int texMode);
 };

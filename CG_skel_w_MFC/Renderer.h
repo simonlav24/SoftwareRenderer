@@ -4,93 +4,54 @@
 #include "vec.h"
 #include "mat.h"
 #include "GL/glew.h"
-#include "Light.h"
 
 using namespace std;
-
-enum ShadingSetup { WireFrame, Flat, Phong, Gouraud, Toon };
-
-struct GLProgramsArray {
-	GLuint line;
-	GLuint wireFrame;
-	GLuint flat_gouraud;
-	GLuint phong;
-	GLuint toon;
-	GLuint toon_silhouette;
-};
-
-struct vaoData {
-	GLuint vao;
-	int size;
-	GLuint* buffers;
-	vec3* vertexPos;
-	vec3* faceNormals;
-	vec3* vertexNormals;
-	vec2* vertexTexture;
-	vec3* tangents;
-	vec3* bitangents;
-};
-
 class Renderer
 {
+	float *m_outBuffer; // 3*width*height
+	float *m_zbuffer; // width*height
 	int m_width, m_height;
+	int border = 200;
 
 	void CreateBuffers(int width, int height);
+	void CreateLocalBuffer();
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
-	int border = 100;
+
 	GLuint gScreenTex;
 	GLuint gScreenVtc;
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
 	//////////////////////////////
-
-	GLProgramsArray glProgramArray;
-
 public:
 	Renderer();
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
-
-	mat4 lookAt;
-	mat4 Proj;
-	mat4 ProjCam;
-	bool orthogonal;
-
-	int isVertexAnimating;
-	int isColorAnimating;
-	float timeStep;
-
+	void DrawTriangles(const std::vector<vec3>& vertices, const int count, const vec3& color);
+	void SetCameraTransform(const mat4& cTransform);
+	void SetProjection(const mat4& projection);
+	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
 	void SwapBuffers();
-	void DestroyBuffers();
+	void ClearColorBuffer();
+	void ClearDepthBuffer();
+	void SetDemoBuffer();
 	
-	unsigned char noiseKernel[64*64];
-	GLuint noiseId;
+	// extra stuff:
 
-	// viewer eye, at vec:
-	vec4 viewerPos[2];
-	vector<Light*> *sceneLights;
-
-	// clear buffer
+	// draw single pixel (0 < RGB < 1)
+	void drawPixel(int x, int y, const vec3& color);
+	// clear m_out buffer
 	void clearBuffer();
+	void DestroyBuffers();
 
-	void drawPlusSign(vec4 pos, vec3 color);
-	void drawLightIndicator(vec4 pos, vec3 color, vec4 direction);
+	void drawLine(int x0, int y0, int x1, int y1, const vec3& color);
+	void lineSteep(int x0, int y0, int x1, int y1, const vec3& color);
+	void lineflat(int x0, int y0, int x1, int y1, const vec3& color);
 
+	void drawCameraIndicator(vec4 pos);
 	void reshape(int width, int height);
 
 	vec2 getDims();
-	ShadingSetup shadingSetup;
-	int quantizationNum;
-
-	void glDrawLines(vec4* vertices, vec4* colors, int size, mat4 transform, GLuint lineMode = GL_LINE_STRIP, bool singleColor = false);
-	//void glDrawLines(vec4* vertices, int size, vec4 color, mat4 transform, GLuint lineMode = GL_LINE_STRIP);
-
-	void DrawModel(vaoData vData, Material mat, mat4 worldModel, mat4 normalMat, int shading=0);
-	void drawOriginAxis();
-	void drawGrid();
-
-	void loadEnvironmentTexture(char* fileName);
 };

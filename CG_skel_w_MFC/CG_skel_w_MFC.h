@@ -2,7 +2,6 @@
 
 #include "resource.h"
 
-
 void display( void );
 void reshape( int width, int height );
 void keyboard( unsigned char key, int x, int y );

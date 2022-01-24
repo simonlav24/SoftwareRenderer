@@ -36,12 +36,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Light.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CG_skel_w_MFC.h">
@@ -74,18 +68,6 @@
     <ClInclude Include="vec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputDialog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="menus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CG_skel_w_MFC.rc">
@@ -100,41 +82,5 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="ReadMe.txt" />
-    <None Include="Shaders\line_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\wireFrame_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\flat_gouraud_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\standart_color.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\phong_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\phong_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\normals_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\flat_gouraud_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\toon_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\toon_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\toon_silhouette_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\toon_silhouette_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>

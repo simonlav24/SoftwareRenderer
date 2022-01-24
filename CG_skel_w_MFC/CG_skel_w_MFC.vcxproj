@@ -14,7 +14,7 @@
     <ProjectGuid>{849F10CE-4916-4A83-A3CB-A19AF397A995}</ProjectGuid>
     <RootNamespace>CG_skel_w_MFC</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -60,7 +60,7 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../glew/include; ../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEGLUT_STATIC;GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
+      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -99,11 +99,9 @@
   <ItemGroup>
     <ClCompile Include="CG_skel_w_MFC.cpp" />
     <ClCompile Include="InitShader.cpp" />
-    <ClCompile Include="InputDialog.cpp" />
     <ClCompile Include="MeshModel.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="Light.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -111,16 +109,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CG_skel_w_MFC.h" />
-    <ClInclude Include="menus.h" />
     <ClInclude Include="InitShader.h" />
-    <ClInclude Include="InputDialog.h" />
-    <ClInclude Include="Light.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="MeshModel.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene.h" />
-    <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="vec.h" />
@@ -130,18 +124,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
-    <None Include="Shaders\flat_gouraud_fs.glsl" />
-    <None Include="Shaders\normals_vs.glsl" />
-    <None Include="Shaders\phong_fs.glsl" />
-    <None Include="Shaders\phong_vs.glsl" />
-    <None Include="Shaders\standart_color.glsl" />
-    <None Include="Shaders\flat_gouraud_vs.glsl" />
-    <None Include="Shaders\line_vs.glsl" />
-    <None Include="Shaders\toon_fs.glsl" />
-    <None Include="Shaders\toon_silhouette_fs.glsl" />
-    <None Include="Shaders\toon_silhouette_vs.glsl" />
-    <None Include="Shaders\toon_vs.glsl" />
-    <None Include="Shaders\wireFrame_vs.glsl" />
     <None Include="vshader.glsl" />
     <None Include="ReadMe.txt" />
   </ItemGroup>

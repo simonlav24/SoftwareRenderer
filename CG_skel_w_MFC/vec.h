@@ -113,22 +113,6 @@ struct vec2 {
 	{ return static_cast<GLfloat*>( &x ); }
 };
 
-inline
-GLfloat q_sqrt2(GLfloat number)
-{
-    long i;
-    GLfloat x2, y;
-    const GLfloat threehalfs = 1.5f;
-
-    x2 = number * 0.5f;
-    y = number;
-    i = *(long*)&y;
-    i = 0x5f3759df - (i >> 1);
-    y = *(GLfloat*)&i;
-    y = y * (threehalfs - (x2 * y * y));
-    return y;
-}
-
 //----------------------------------------------------------------------------
 //
 //  Non-class vec2 Methods
@@ -222,7 +206,7 @@ struct vec3 {
 	{ x -= v.x;  y -= v.y;  z -= v.z;  return *this; }
 
     vec3& operator *= ( const GLfloat s )
-	{ x *= s;  y *= s;  z *= s;  return *this; }
+	{ x *= 0;  y *= 0;  z *= 0;  return *this; } /*BUG*/
 
     vec3& operator *= ( const vec3& v )
 	{ x *= v.x;  y *= v.y;  z *= v.z;  return *this; }
@@ -275,8 +259,7 @@ GLfloat length( const vec3& v ) {
 
 inline
 vec3 normalize( const vec3& v ) {
-    //return v / length(v);
-    return v * q_sqrt2(v.x * v.x + v.y * v.y + v.z * v.z);
+    return v / length(v);
 }
 
 inline
@@ -360,16 +343,6 @@ struct vec4 {
     //  --- (modifying) Arithematic Operators ---
     //
 
-    vec4& operator = (const vec4& v)
-    {
-        x = v.x;  y = v.y;  z = v.z;  w = v.w;  return *this;
-    }
-
-    vec4& operator = (const vec3& v)
-    {
-        x = v.x;  y = v.y;  z = v.z;  w = 1.0;  return *this;
-    }
-
     vec4& operator += ( const vec4& v )
 	{ x += v.x;  y += v.y;  z += v.z;  w += v.w;  return *this; }
 
@@ -442,14 +415,9 @@ vec3 cross(const vec4& a, const vec4& b )
 }
 
 inline
-vec3 homo2noHomo(const vec4& v)
+vec4 homo2noHomo(const vec4& v)
 {
-    return vec3(v.x / v.w, v.y / v.w, v.z / v.w);
-}
-
-inline
-vec4 noHomo2homo(const vec3& v) {
-    return vec4(v.x, v.y, v.z , 1);
+    return vec4(v.x / v.w, v.y / v.w, v.z / v.w, 1);
 }
 
 //----------------------------------------------------------------------------
